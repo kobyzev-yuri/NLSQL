@@ -9,7 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import httpx
 import logging
+import os
 from typing import Optional
+from src.vanna.vanna_pgvector_native import create_native_vanna_client
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,27 @@ templates = Jinja2Templates(directory="templates")
 
 # Конфигурация
 NL_SQL_API_URL = "http://localhost:8000"
-MOCK_CUSTOMER_API_URL = "http://localhost:8080"
+MOCK_CUSTOMER_API_URL = "http://localhost:8081"
+
+# Инициализация обученного Vanna AI агента
+def get_vanna_agent():
+    """Получение обученного Vanna AI агента"""
+    try:
+        # Загружаем переменные окружения для ProxyAPI
+        os.environ['PROXYAPI_KEY'] = 'sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV'
+        os.environ['PROXYAPI_BASE_URL'] = 'https://api.proxyapi.ru/openai/v1'
+        os.environ['PROXYAPI_CHAT_MODEL'] = 'gpt-4o'
+        
+        # Создаем обученного агента
+        vanna = create_native_vanna_client(use_proxyapi=True)
+        logger.info("✅ Обученный Vanna AI агент инициализирован")
+        return vanna
+    except Exception as e:
+        logger.error(f"❌ Ошибка инициализации Vanna AI агента: {e}")
+        return None
+
+# Глобальная переменная для агента
+vanna_agent = None
 
 @web_app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -38,7 +60,7 @@ async def home(request: Request):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>NL→SQL Тестовый Интерфейс</title>
+        <title>NL→SQL Тестовый Интерфейс v2</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -196,6 +218,14 @@ async def home(request: Request):
         <script>
             // Проверка статуса API при загрузке
             window.onload = function() {
+                // Принудительная очистка кэша
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        for (let name of names) {
+                            caches.delete(name);
+                        }
+                    });
+                }
                 checkAPIStatus();
             };
             
@@ -213,7 +243,7 @@ async def home(request: Request):
                 
                 // Проверка Mock Customer API
                 try {
-                    const response = await fetch('http://localhost:8080/health');
+                    const response = await fetch('http://localhost:8081/health?v=' + Date.now());
                     const data = await response.json();
                     document.getElementById('customer-api-status').textContent = data.status === 'healthy' ? 'Работает' : 'Ошибка';
                     document.getElementById('customer-api-status').className = 'status-indicator ' + (data.status === 'healthy' ? 'status-healthy' : 'status-unhealthy');

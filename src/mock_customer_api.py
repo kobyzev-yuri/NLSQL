@@ -4,6 +4,7 @@ Mock API заказчика для отладки NL→SQL системы
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import asyncio
@@ -18,6 +19,15 @@ mock_app = FastAPI(
     title="Mock Customer API",
     description="Mock API заказчика для отладки NL→SQL системы",
     version="1.0.0"
+)
+
+# Добавление CORS middleware
+mock_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Модели для mock API

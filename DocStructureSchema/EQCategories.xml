@@ -1,0 +1,382 @@
+<?xml version="1.0" standalone="yes"?>
+<RECORDS>
+	<RECORD>
+		<id>cb06bfdf-1a0f-48b6-9a5d-f772fae0b60f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<creationdatetime>9/10/2008 17:55:00</creationdatetime>
+		<statusid>f99bb693-56ac-4cd9-9c59-702b372dcb08</statusid>
+		<deleted>0</deleted>
+		<categoryname>Система</categoryname>
+		<imageurl>fas fa-assistive-listening-systems</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip>Категория для настройки документов системы</tooltip>
+		<sortorder>90</sortorder>
+		<description>&lt;p&gt;Описание системы&lt;/p&gt;
+</description>
+	</RECORD>
+	<RECORD>
+		<id>88a0d17a-23e4-4bf3-b72f-cf7509a67c57</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<creationdatetime>9/10/2008 17:53:00</creationdatetime>
+		<statusid>f99bb693-56ac-4cd9-9c59-702b372dcb08</statusid>
+		<deleted>0</deleted>
+		<categoryname>Права доступа</categoryname>
+		<imageurl>~/images/icons/grey/access.png</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip>Настройки прав доступа к системе</tooltip>
+		<sortorder>70</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>a5696442-ed09-48c0-ac89-41efb708422f</id>
+		<ownerid/>
+		<creationdatetime>11/7/2024 07:17:51.03505</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname/>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>18902665-41a9-4e3e-aa1a-00c645cb6d7f</id>
+		<ownerid/>
+		<creationdatetime>19/9/2021 14:05:43.668672</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>IQ.Fitness</categoryname>
+		<imageurl>fab fa-adn</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>30</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>95ea0cf3-8d62-493e-a0c3-fef1eec24973</id>
+		<ownerid/>
+		<creationdatetime>26/7/2024 08:00:42.845092</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>Соглашения</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>8474f7f9-615d-45b2-82d1-242644235e68</id>
+		<ownerid/>
+		<creationdatetime>26/7/2024 08:00:13.271888</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>Вагоны</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>54b8936f-580f-4261-b26f-9f99235fb34c</id>
+		<ownerid/>
+		<creationdatetime>11/7/2024 13:06:16.61036</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>Офисная техника</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>1d041096-c076-45fd-8aaa-6d588bdf21d6</id>
+		<ownerid/>
+		<creationdatetime>14/5/2024 09:20:47.726328</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>qwe</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>ddc6e52a-a4b6-42e6-9a54-2fe10efcc138</id>
+		<ownerid/>
+		<creationdatetime>2/5/2024 11:28:43.835001</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>Услуги</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>5814a319-59c6-4d62-a975-368e213476d4</id>
+		<ownerid/>
+		<creationdatetime>24/7/2024 10:19:24.179622</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Справочники</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>20</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>9d01d877-623f-4e2c-a52a-fa15ee13521d</id>
+		<ownerid/>
+		<creationdatetime>23/9/2024 09:58:53.421937</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Формы</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>10</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>4a0bd006-9014-4041-bcaa-84d3f12e2008</id>
+		<ownerid/>
+		<creationdatetime>28/9/2024 14:18:27.300522</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Поручение</categoryname>
+		<imageurl>fas fa-file-alt</imageurl>
+		<navigateurl>/ru/PrincipalAssignment/Index</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>40</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>4b3a1f8b-abc3-4386-bb68-120f85838dbe</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<creationdatetime>9/10/2008 17:53:00</creationdatetime>
+		<statusid>f99bb693-56ac-4cd9-9c59-702b372dcb08</statusid>
+		<deleted>0</deleted>
+		<categoryname>Настройки</categoryname>
+		<imageurl>~/images/icons/grey/settings.png</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip>Пользовательские настройки системы</tooltip>
+		<sortorder>50</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>18c6873d-21a3-41b9-913a-4ecf1f00817a</id>
+		<ownerid/>
+		<creationdatetime>28/9/2024 13:59:34.653523</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Профиль</categoryname>
+		<imageurl>fas fa-address-book</imageurl>
+		<navigateurl>/ru/BusinessUnit/Index</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>30</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>300f90cb-a70a-49fc-a8b9-598f80d8c553</id>
+		<ownerid/>
+		<creationdatetime>11/12/2024 13:49:30.939779</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Казначейство</categoryname>
+		<imageurl>fas fa-file-invoice-dollar</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>73a39997-f45e-40d0-a7cd-c4656f6a194a</id>
+		<ownerid/>
+		<creationdatetime>12/12/2024 11:26:47.80246</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>test</categoryname>
+		<imageurl/>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>c65c6bde-585d-4cfe-99bf-e9fd239566ce</id>
+		<ownerid/>
+		<creationdatetime>13/12/2024 12:20:38.430997</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Выписки</categoryname>
+		<imageurl>far fa-credit-card</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>1</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>ba89cd2f-0db8-4863-a47d-fe17832afd8a</id>
+		<ownerid/>
+		<creationdatetime>13/1/2025 09:10:02.942012</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Входящие платежи</categoryname>
+		<imageurl/>
+		<navigateurl>/ru/IncomingPayments/Index</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>ed0a91d9-5c04-4a65-9895-fb992ff529b1</id>
+		<ownerid/>
+		<creationdatetime>28/3/2025 10:11:00.316071</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Центральное казначейство</categoryname>
+		<imageurl>fas fa-business-time</imageurl>
+		<navigateurl>/ru/TreasuryStatistics/Index</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>100</sortorder>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>d21a7a5f-efc6-4ee9-82f8-b112a5ef155a</id>
+		<ownerid/>
+		<creationdatetime>31/3/2025 10:03:48.880044</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Заявки на подборе</categoryname>
+		<imageurl>fas fa-file-alt</imageurl>
+		<navigateurl>/ru/PrincipalAssignment/Index?eqViewId=4c06c40f-7658-4f10-90c9-64cba7977468</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder>41</sortorder>
+		<description>&lt;p&gt;Заявки на подборе&lt;/p&gt;
+</description>
+	</RECORD>
+	<RECORD>
+		<id>5fe7b241-0579-4695-a0fb-b1678cbf2c26</id>
+		<ownerid/>
+		<creationdatetime>29/5/2025 14:44:22.67137</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Личный кабинет</categoryname>
+		<imageurl>far fa-address-card</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>7c29aaac-c2d5-43f1-9d09-567fc175c1d2</id>
+		<ownerid/>
+		<creationdatetime>9/6/2025 05:52:23.433295</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Отчет по статусам</categoryname>
+		<imageurl>far fa-calendar-alt</imageurl>
+		<navigateurl>/ru/PrincipalAssignment/GetAssigmentStatuses</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>1ccfbb7b-27d1-4b8b-8bd0-edab47891ffe</id>
+		<ownerid/>
+		<creationdatetime>24/6/2025 08:54:02.790853</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Учетные записи </categoryname>
+		<imageurl>far fa-address-card</imageurl>
+		<navigateurl>/ru/Accounts/</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+	<RECORD>
+		<id>489247fc-0b5e-4617-a606-42b8b78a2d45</id>
+		<ownerid/>
+		<creationdatetime>7/8/2025 11:36:01.198867</creationdatetime>
+		<statusid/>
+		<deleted>0</deleted>
+		<categoryname>Санкционный список</categoryname>
+		<imageurl>fab fa-accessible-icon</imageurl>
+		<navigateurl>/ru/SDNRegistry/Index</navigateurl>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description>&lt;p&gt;Список объектов попавших в санкционный список США - SDN&lt;/p&gt;
+</description>
+	</RECORD>
+	<RECORD>
+		<id>4abf58ab-f1f6-45c9-b014-aab1fef75db5</id>
+		<ownerid/>
+		<creationdatetime>28/8/2025 10:15:21.893562</creationdatetime>
+		<statusid/>
+		<deleted>1</deleted>
+		<categoryname>СУБД</categoryname>
+		<imageurl>fas fa-database</imageurl>
+		<navigateurl/>
+		<popoutimageurl/>
+		<separatorimageurl/>
+		<tooltip/>
+		<sortorder/>
+		<description/>
+	</RECORD>
+</RECORDS>
+

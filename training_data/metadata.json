@@ -1,0 +1,27 @@
+{
+  "database": "DocStructureSchema",
+  "total_tables": 200,
+  "main_tables": [
+    "equsers",
+    "eq_departments",
+    "eqgroups",
+    "eqroles",
+    "eqdoctypes",
+    "eqdocstructure",
+    "eqview",
+    "eqviewfields",
+    "tbl_business_unit",
+    "tbl_principal_assignment",
+    "tbl_incoming_payments",
+    "tbl_currencies",
+    "tbl_countries",
+    "tbl_swift",
+    "tbl_bik"
+  ],
+  "business_domains": [
+    "Пользователи и роли",
+    "Документооборот",
+    "Бизнес-данные",
+    "Справочники"
+  ]
+}

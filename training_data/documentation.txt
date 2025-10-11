@@ -1,0 +1,47 @@
+
+        DocStructureSchema - система управления документами и пользователями
+        
+        ОСНОВНЫЕ ТАБЛИЦЫ:
+        
+        1. ПОЛЬЗОВАТЕЛИ И РОЛИ:
+        - equsers: пользователи системы (логин, email, отдел, права доступа)
+        - eq_departments: отделы организации (название, родительский отдел)
+        - eqgroups: группы пользователей (название группы, описание)
+        - eqroles: роли системы (название роли, описание)
+        
+        2. ДОКУМЕНТООБОРОТ:
+        - eqdoctypes: типы документов (название типа, категория, связанная таблица)
+        - eqdocstructure: структура полей документов (имя поля, тип, обязательность)
+        - eqview: представления данных (название представления, условия)
+        - eqviewfields: поля представлений (связь с представлением, тип поля)
+        
+        3. БИЗНЕС-ДАННЫЕ:
+        - tbl_business_unit: профили клиентов (название организации, ИНН, КПП, ОГРН)
+        - tbl_principal_assignment: поручения принципала (номер, дата, сумма, клиент)
+        - tbl_incoming_payments: входящие платежи (номер, дата, сумма, поручение)
+        
+        4. СПРАВОЧНИКИ:
+        - tbl_currencies: валюты (код валюты, название)
+        - tbl_countries: страны (код страны, название)
+        - tbl_swift: SWIFT коды банков (код, название банка)
+        - tbl_bik: БИК коды банков (код, название банка, город)
+        
+        БИЗНЕС-ЛОГИКА:
+        - Каждый пользователь принадлежит отделу (equsers.department → eq_departments.id)
+        - Пользователи могут иметь несколько ролей (связь многие-ко-многим)
+        - Роли определяют доступ к данным и операциям
+        - Поручения связаны с клиентами (tbl_principal_assignment.business_unit_id → tbl_business_unit.id)
+        - Платежи связаны с поручениями (tbl_incoming_payments.assignment_id → tbl_principal_assignment.id)
+        - Документы имеют настраиваемую структуру полей (eqdocstructure → eqdoctypes)
+        
+        РОЛЕВАЯ МОДЕЛЬ:
+        - admin: полный доступ ко всем данным
+        - manager: доступ к данным своего отдела
+        - user: доступ только к своим данным
+        
+        ТИПИЧНЫЕ ЗАПРОСЫ:
+        - "Покажи всех пользователей" → SELECT * FROM equsers
+        - "Пользователи по отделам" → SELECT u.*, d.departmentname FROM equsers u JOIN eq_departments d ON u.department = d.id
+        - "Клиенты с поручениями" → SELECT bu.*, pa.assignment_number FROM tbl_business_unit bu JOIN tbl_principal_assignment pa ON bu.id = pa.business_unit_id
+        - "Платежи за период" → SELECT * FROM tbl_incoming_payments WHERE payment_date BETWEEN '2024-01-01' AND '2024-12-31'
+        

@@ -269,6 +269,75 @@ ls -la TradecoTemplateTestDB.sql
 
 ---
 
+## 🌐 **Веб-интерфейс для администрирования PostgreSQL**
+
+### **Вариант 1: pgAdmin (рекомендуется)**
+
+#### **Linux:**
+```bash
+# Установка pgAdmin
+sudo apt install pgadmin4
+
+# Запуск pgAdmin
+sudo systemctl start apache2
+sudo systemctl enable apache2
+
+# Доступ: http://localhost/pgadmin4
+```
+
+#### **Windows:**
+```cmd
+# Скачать с https://www.pgadmin.org/download/
+# Установить pgAdmin 4
+# Запустить pgAdmin 4
+# Доступ: http://localhost:5050
+```
+
+### **Вариант 2: phpPgAdmin (через Apache)**
+
+#### **Linux:**
+```bash
+# Установка Apache и phpPgAdmin
+sudo apt install apache2 php php-pgsql phppgadmin
+
+# Настройка phpPgAdmin
+sudo nano /etc/phppgadmin/config.inc.php
+
+# Изменить:
+# $conf['extra_login_security'] = true;
+# на:
+# $conf['extra_login_security'] = false;
+
+# Перезапуск Apache
+sudo systemctl restart apache2
+
+# Доступ: http://localhost/phppgadmin
+```
+
+#### **Windows:**
+```cmd
+# Установка XAMPP или WAMP
+# Скачать с https://www.apachefriends.org/
+# Установить Apache + PHP + PostgreSQL модули
+# Настроить phpPgAdmin
+# Доступ: http://localhost/phppgadmin
+```
+
+### **Вариант 3: Docker с pgAdmin**
+
+```bash
+# Запуск pgAdmin в Docker
+docker run --name pgadmin \
+  -e PGADMIN_DEFAULT_EMAIL=admin@example.com \
+  -e PGADMIN_DEFAULT_PASSWORD=admin \
+  -p 8080:80 \
+  -d dpage/pgadmin4
+
+# Доступ: http://localhost:8080
+# Email: admin@example.com
+# Пароль: admin
+```
+
 ## 🚀 **Следующие шаги**
 
 После успешной загрузки дампа:
@@ -286,6 +355,7 @@ ls -la TradecoTemplateTestDB.sql
 3. **Проверка работы:**
    - Веб-интерфейс: http://localhost:3000
    - API: http://localhost:8000/health
+   - pgAdmin: http://localhost:8080 (Docker) или http://localhost/pgadmin4 (Linux)
 
 ---
 

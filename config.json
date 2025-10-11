@@ -1,0 +1,29 @@
+{
+  "database_url": "postgresql://postgres:1234@localhost:5432/test_docstructure",
+  "vanna_model": "gpt-4o",
+  "vector_db": "pgvector",
+  "training_data_dir": "training_data",
+  "api_key": "sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV",
+  "base_url": "https://api.proxyapi.ru/openai/v1",
+  "model": "gpt-4o",
+  "temperature": 0.2,
+  "test_questions": [
+    "Покажи всех пользователей",
+    "Сколько клиентов в системе?",
+    "Покажи поручения за последний месяц",
+    "Статистика по отделам",
+    "Покажи платежи за сегодня"
+  ],
+  "training_settings": {
+    "max_tokens": 4000,
+    "temperature": 0.1,
+    "top_p": 0.9,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0
+  },
+  "vector_db_settings": {
+    "collection_name": "docstructure_schema",
+    "distance_metric": "cosine",
+    "n_results": 5
+  }
+}

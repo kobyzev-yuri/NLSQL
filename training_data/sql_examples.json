@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Покажи всех пользователей",
+    "sql": "SELECT id, login, email, surname, firstname, department FROM equsers WHERE deleted = false"
+  },
+  {
+    "question": "Список отделов",
+    "sql": "SELECT id, departmentname, parentid, description FROM eq_departments WHERE deleted = false"
+  },
+  {
+    "question": "Все клиенты",
+    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false"
+  },
+  {
+    "question": "Пользователи по отделам",
+    "sql": "\n                SELECT u.login, u.email, u.surname, u.firstname, d.departmentname \n                FROM equsers u \n                LEFT JOIN eq_departments d ON u.department = d.id \n                WHERE u.deleted = false\n                "
+  },
+  {
+    "question": "Поручения с клиентами",
+    "sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, \n                       bu.business_unit_name, bu.inn\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.deleted = false\n                "
+  },
+  {
+    "question": "Платежи по клиентам",
+    "sql": "\n                SELECT bu.business_unit_name, SUM(ip.amount) as total_payments\n                FROM tbl_incoming_payments ip\n                JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id\n                WHERE ip.deleted = false\n                GROUP BY bu.id, bu.business_unit_name\n                ORDER BY total_payments DESC\n                "
+  },
+  {
+    "question": "Пользователи с ролями",
+    "sql": "\n                SELECT u.login, u.email, r.rolename, r.description\n                FROM equsers u\n                JOIN user_roles ur ON u.id = ur.user_id\n                JOIN eqroles r ON ur.role_id = r.id\n                WHERE u.deleted = false\n                "
+  },
+  {
+    "question": "Количество пользователей по отделам",
+    "sql": "\n                SELECT d.departmentname, COUNT(u.id) as user_count\n                FROM eq_departments d\n                LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false\n                WHERE d.deleted = false\n                GROUP BY d.id, d.departmentname\n                ORDER BY user_count DESC\n                "
+  },
+  {
+    "question": "Поручения за последний месяц",
+    "sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.assignment_date >= CURRENT_DATE - INTERVAL '1 month'\n                AND pa.deleted = false\n                ORDER BY pa.assignment_date DESC\n                "
+  },
+  {
+    "question": "Сумма платежей по месяцам",
+    "sql": "\n                SELECT DATE_TRUNC('month', payment_date) as month, \n                       SUM(amount) as total_amount\n                FROM tbl_incoming_payments\n                WHERE deleted = false\n                GROUP BY DATE_TRUNC('month', payment_date)\n                ORDER BY month DESC\n                "
+  }
+]

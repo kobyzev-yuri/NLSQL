@@ -1,0 +1,1265 @@
+<?xml version="1.0" standalone="yes"?>
+<RECORDS>
+	<RECORD>
+		<id>50981f32-439d-43a1-b781-8b5afdce54be</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>7</rowid>
+		<statename>Заблокирован</statename>
+		<statedescription>ProfileBlocked</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>16/5/2025 14:06:36.026647</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>cfe1e23a-02ca-49f1-8286-180022f8296b</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>8</rowid>
+		<statename>На доработке акцепта</statename>
+		<statedescription>AcceptanceUnderRevision</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>24/6/2025 14:21:37.145922</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>4096f573-a3d2-425f-8f4f-cd3468c992f3</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>9</rowid>
+		<statename>На согласовании ЮД</statename>
+		<statedescription>OnApprovalLawDepartment</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>1/8/2025 13:08:57.525476</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>2027c8a4-2098-4f18-931e-db8fd650abf5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Ожидание</statename>
+		<statedescription>StandbyBenef</statedescription>
+		<doctypeid/>
+		<docid>cfd9aa19-69af-4136-a4ee-64431835e046</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>10/7/2025 17:23:00.627734</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>41227db4-016b-4bf4-8d80-a7d11033d2bd</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Проверен</statename>
+		<statedescription>VerifiedBenef</statedescription>
+		<doctypeid/>
+		<docid>cfd9aa19-69af-4136-a4ee-64431835e046</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>10/7/2025 17:23:00.627786</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>b355ce11-85e3-48b6-bfe7-b7c9c2117567</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Отклонен</statename>
+		<statedescription>RejectBenef</statedescription>
+		<doctypeid/>
+		<docid>cfd9aa19-69af-4136-a4ee-64431835e046</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>10/7/2025 17:23:00.627864</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>ec7bdc77-2b92-437c-a29d-b2edfe8c9298</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>49</rowid>
+		<statename>На подборе у структуратора</statename>
+		<statedescription>PayerSelectionByStructurer</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>5/8/2025 16:10:59.711361</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1d93a227-3bb2-44ec-adeb-377e2b3a16c5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>50</rowid>
+		<statename>На доработке у структуратора</statename>
+		<statedescription>UnderRevisionStructurer</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>2/9/2025 14:52:22.599177</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>af9e2791-20c8-4d0e-9704-5197f9ac9091</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>51</rowid>
+		<statename>test</statename>
+		<statedescription>test123123</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>3/9/2025 12:46:23.876387</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>bbd0bb7e-99ec-4b1a-95c2-e1c70cd88c98</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>В работе у Казначейства</statename>
+		<statedescription>TreasuryWorking</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1723dfb2-ad43-4324-ab61-d9d48fdf020a</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>В работе у Бухгалтерии</statename>
+		<statedescription>BookkeeperWorking</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>df84e9ae-022d-49a6-8c71-9a244830f118</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Платёж направлен</statename>
+		<statedescription>PaymentSended</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>90545720-dc72-40ca-9756-b874bafe09b4</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>Исполнено</statename>
+		<statedescription>Completed</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>80d0e543-9bdd-4bee-8d7d-62b31f5107ae</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>42</rowid>
+		<statename>Возврат клиенту на доработку с подбора плательщика</statename>
+		<statedescription>PayerReturnToClientForRevisionFromSelection</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>88b69d8b-719c-4bc8-8156-7a6eb5357e52</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Подготовка пакета</statename>
+		<statedescription>Preparation</statedescription>
+		<doctypeid/>
+		<docid>45ff530b-89d5-4074-a9aa-3ef539357b67</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>996d865c-43ed-487b-8812-6cf1ad1807a6</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Новый пакет</statename>
+		<statedescription>New</statedescription>
+		<doctypeid/>
+		<docid>45ff530b-89d5-4074-a9aa-3ef539357b67</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d33d82d8-70d5-4319-962d-4294919e39b3</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Пакет успешно обработан</statename>
+		<statedescription>Success</statedescription>
+		<doctypeid/>
+		<docid>45ff530b-89d5-4074-a9aa-3ef539357b67</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>ce153c7e-3d2a-49be-a6fe-4208318ca8e8</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>Ошибка отправки</statename>
+		<statedescription>SendError</statedescription>
+		<doctypeid/>
+		<docid>45ff530b-89d5-4074-a9aa-3ef539357b67</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>09f24f0f-a92c-480c-8477-0443399f616d</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>4</rowid>
+		<statename>Пакет обработан с ошибкой</statename>
+		<statedescription>Error</statedescription>
+		<doctypeid/>
+		<docid>45ff530b-89d5-4074-a9aa-3ef539357b67</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>625bb720-4328-4764-ba9a-eb8b503e8692</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>45</rowid>
+		<statename>Акт отчет на подписании</statename>
+		<statedescription>ReportOnSinging</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>dacd350f-f096-4922-a9fa-b20eb85d40ff</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>46</rowid>
+		<statename>Запрос клиенту</statename>
+		<statedescription>RequestToClient</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>18/7/2025 11:55:27.666996</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>27ba247f-441b-4568-b1d7-71d1dd08b048</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>На доработке в КЦ</statename>
+		<statedescription>ProfileContactCenterUnderRevision</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>4f20f89a-6ddf-484d-8795-7e0db73afbe2</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>4</rowid>
+		<statename>Отклонён</statename>
+		<statedescription>Rejected</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>ae026d08-2168-4746-b1d4-ff5eecb717ef</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>5</rowid>
+		<statename>На доработке у Клиента</statename>
+		<statedescription>ProfileUnderRevision</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>8a80ac2e-e703-4696-b411-f1f50643c434</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>6</rowid>
+		<statename>На согласовании Онбордера</statename>
+		<statedescription>OnProfileManagerApproval</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates>[{&quot;roleId&quot;:&quot;1cff05a0-918e-46e9-bba4-bf350e26563b&quot;,&quot;rolename&quot;:&quot;Представитель организации&quot;,&quot;visibleComments&quot;:true,&quot;statusNameForRole&quot;:&quot;На согласовании Онбордера&quot;,&quot;statusCodeForRole&quot;:&quot;OnProfileManagerApproval&quot;,&quot;displayButtons&quot;:[],&quot;modifyFields&quot;:[{&quot;fieldName&quot;:&quot;inn&quot;,&quot;isVisible&quot;:true,&quot;isReadonly&quot;:false},{&quot;fieldName&quot;:&quot;kpp&quot;,&quot;isVisible&quot;:true,&quot;isReadonly&quot;:false},{&quot;fieldName&quot;:&quot;ogrn&quot;,&quot;isVisible&quot;:true,&quot;isReadonly&quot;:false},{&quot;fieldName&quot;:&quot;okpo&quot;,&quot;isVisible&quot;:true,&quot;isReadonly&quot;:false}],&quot;modifySpecifications&quot;:[{&quot;doctypeid&quot;:&quot;05e5b178-61be-4fc9-853c-44488e658e04&quot;,&quot;tablename&quot;:&quot;tbl_business_unit_signatories&quot;,&quot;canInsertRow&quot;:true,&quot;canDeleteRow&quot;:false,&quot;isVisible&quot;:true,&quot;modifyFields&quot;:[{&quot;fieldName&quot;:&quot;is_gen_dir&quot;,&quot;isVisible&quot;:true,&quot;isReadonly&quot;:false}]}]}]</rolestates>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>ed5703da-c052-47f8-a175-1c969a911f1b</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>48</rowid>
+		<statename>На согласование структуратора</statename>
+		<statedescription>OnStructurerApproval</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>1/8/2025 16:47:20.519119</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>b00dfac2-fe71-4c8b-98bc-486418013f12</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Подтверждён</statename>
+		<statedescription>ProfileConfirmed</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>4edea0d6-a1b4-40d5-bcb3-d3e6fdbaad32</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Черновик</statename>
+		<statedescription>ProfileDraft</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>e58be3c3-412a-4ec6-88e4-6a7da49aee7d</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>44</rowid>
+		<statename>Особый контроль</statename>
+		<statedescription>SpecialControl</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>0b44a537-3c62-4b3c-a2ac-2caaa29072dd</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>Новое</statename>
+		<statedescription>NewBenef</statedescription>
+		<doctypeid/>
+		<docid>cfd9aa19-69af-4136-a4ee-64431835e046</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>14/7/2025 16:35:54.067696</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1e181a10-e9fb-47dd-bc05-070ecec4921a</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>47</rowid>
+		<statename>Запрос выполнен</statename>
+		<statedescription>RequestToClientCompleted</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>18/7/2025 11:57:59.701359</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1ebf67a3-e607-44c7-b922-a0beacb7848c</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>4</rowid>
+		<statename>Ожидает подтверждения</statename>
+		<statedescription>VerifConfirmed</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>060d65d0-be83-4c4f-8ceb-4144f84c78b9</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>5</rowid>
+		<statename>Черновик</statename>
+		<statedescription>Draft</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>720f99be-9c7e-4a74-9d71-150d7a538cbf</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>36</rowid>
+		<statename>В работе у инвойсера</statename>
+		<statedescription>PrepareInvoice</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>f9312a47-f27c-4cc5-8f29-34364d347c44</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Активирован</statename>
+		<statedescription>ProfileKycConfirmed</statedescription>
+		<doctypeid/>
+		<docid>05e5b178-61be-4fc9-853c-44488e658e04</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a44c4e63-87c1-42a6-8f7d-c6446c53983f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Test</statename>
+		<statedescription>tteteette</statedescription>
+		<doctypeid/>
+		<docid>147fa9c3-3739-4c4f-b595-75d9b0c8d209</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d45c688a-7d78-4a83-baa3-efed0c408bc8</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>ddfdf</statename>
+		<statedescription>sssssss</statedescription>
+		<doctypeid/>
+		<docid>147fa9c3-3739-4c4f-b595-75d9b0c8d209</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>68ffa293-85d0-496c-bd79-28995a346d42</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>testname</statename>
+		<statedescription>tessss</statedescription>
+		<doctypeid/>
+		<docid>71de849e-6d13-4416-8ad6-a5c7b43d247c</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>f4f4a0e9-72be-445e-b562-c42d6778fc45</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>testname2</statename>
+		<statedescription>teststst</statedescription>
+		<doctypeid/>
+		<docid>71de849e-6d13-4416-8ad6-a5c7b43d247c</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d1f2cd18-d6e5-45b7-bd1b-40889a0269a6</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>base</statename>
+		<statedescription>Base state</statedescription>
+		<doctypeid/>
+		<docid>5503c607-8992-42d2-9ba5-5a4161b709dd</docid>
+		<icon>fa-sa</icon>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>f06cf996-812f-4154-a3e7-6ef7fd7ab1e9</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>new</statename>
+		<statedescription>new state</statedescription>
+		<doctypeid/>
+		<docid>5503c607-8992-42d2-9ba5-5a4161b709dd</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a05d584f-5733-4a29-aad3-dc2e7f376db2</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>test</statename>
+		<statedescription>test</statedescription>
+		<doctypeid/>
+		<docid>5503c607-8992-42d2-9ba5-5a4161b709dd</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>496c5e98-1f55-461f-b132-f4dff1a594f2</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>first</statename>
+		<statedescription>первое состояние</statedescription>
+		<doctypeid/>
+		<docid>06ac39a5-bd01-459a-9130-159e5ccb7767</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>cf9ae6a0-e358-41a6-82fe-8ad03352bcf3</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>second</statename>
+		<statedescription> второе состояние</statedescription>
+		<doctypeid/>
+		<docid>06ac39a5-bd01-459a-9130-159e5ccb7767</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7c117909-e6c0-4b12-ad66-aad5ac256227</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>third</statename>
+		<statedescription>третье состояние</statedescription>
+		<doctypeid/>
+		<docid>06ac39a5-bd01-459a-9130-159e5ccb7767</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a02b6b98-05d4-45d4-8a9a-c9e1177eaa83</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Первая линия роутеры</statename>
+		<statedescription>Первая линия</statedescription>
+		<doctypeid/>
+		<docid>294abf4a-9182-4c1d-87ee-978a41ed8901</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a5099f3e-752a-4b2f-a909-13212e3e118c</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Вторая линия роутеры</statename>
+		<statedescription>Вторая линия</statedescription>
+		<doctypeid/>
+		<docid>294abf4a-9182-4c1d-87ee-978a41ed8901</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d6a0029d-758f-447e-ac80-53971a8efac4</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Завершена роутеры</statename>
+		<statedescription>Завершена</statedescription>
+		<doctypeid/>
+		<docid>294abf4a-9182-4c1d-87ee-978a41ed8901</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>8a7c4a83-734e-45a6-b42f-4e552432b1ba</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Первая линия принтеры</statename>
+		<statedescription>Первая линия</statedescription>
+		<doctypeid/>
+		<docid>6f889684-9dce-45e6-a9b0-f2a3d6da816d</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>69fe1161-4053-433d-a6f6-ef88ffde2fea</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Вторая линия принтеры</statename>
+		<statedescription>Вторая линия</statedescription>
+		<doctypeid/>
+		<docid>6f889684-9dce-45e6-a9b0-f2a3d6da816d</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>4b7a100b-97d5-4eb0-bcf4-5f8ab61759b9</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Завершена принтеры</statename>
+		<statedescription>Заявка завершена</statedescription>
+		<doctypeid/>
+		<docid>6f889684-9dce-45e6-a9b0-f2a3d6da816d</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d0ddc3d5-85d3-4f2a-b742-2a7006432de4</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>37</rowid>
+		<statename>Запрос смены плательщика от менеджера с изменениями</statename>
+		<statedescription>PayerChangeRequiredWithChangeOnBackoffice</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>368402b6-32c0-4182-8a1f-12fcb3faaf69</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>38</rowid>
+		<statename>Запрос смены плательщика с изменениями</statename>
+		<statedescription>PayerChangeWithChangeRequired</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>8f561821-b821-4eac-b806-568e69ce1235</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>39</rowid>
+		<statename>Запрос по УНК</statename>
+		<statedescription>UNKrequest</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>b4ef7b3d-c5dc-41b5-ba24-bd03afafee84</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>41</rowid>
+		<statename>Отклонено клиентом на подборе</statename>
+		<statedescription>RejectedByClientOnSelection</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>b2d6ba3d-84e1-4873-a432-e5d468a19f52</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>43</rowid>
+		<statename>На доработке Back-Office</statename>
+		<statedescription>UnderRevisionBackOffice</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>e99f8519-bf04-418a-b537-32e95b0f1029</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>Заявка создана</statename>
+		<statedescription>создание заявки</statedescription>
+		<doctypeid/>
+		<docid>6f889684-9dce-45e6-a9b0-f2a3d6da816d</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>6dacca3e-6c55-4ade-8cc8-f8bec03eb996</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>первый статус эвм</statename>
+		<statedescription>статус эвм</statedescription>
+		<doctypeid/>
+		<docid>d77bb793-71d2-44df-b7f8-fea61366b9ae</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a65b0b2a-3465-4c69-858a-39ad0a375245</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>второй статус эвм</statename>
+		<statedescription>статус эвм</statedescription>
+		<doctypeid/>
+		<docid>d77bb793-71d2-44df-b7f8-fea61366b9ae</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7671926d-5ed8-4d31-9cee-641eb8d1185f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>завершено</statename>
+		<statedescription>статус эвм</statedescription>
+		<doctypeid/>
+		<docid>d77bb793-71d2-44df-b7f8-fea61366b9ae</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a71b725f-d553-42a1-9be1-549f1423b06d</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>status</statename>
+		<statedescription>123</statedescription>
+		<doctypeid/>
+		<docid>4d76f9e6-a68a-45c9-8341-4a7ef1b277f8</docid>
+		<icon>#</icon>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>2ac535ca-033a-41a6-9774-64b424da01e0</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>1</rowid>
+		<statename>Подтверждена вручную</statename>
+		<statedescription>PaidManually</statedescription>
+		<doctypeid/>
+		<docid>2b86249f-859f-41cb-b37f-5df1a66db370</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>9b3c15f3-c565-4262-b4cb-07509c327c40</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>2</rowid>
+		<statename>Возвращен</statename>
+		<statedescription>Returned</statedescription>
+		<doctypeid/>
+		<docid>2b86249f-859f-41cb-b37f-5df1a66db370</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d6edb6c8-f8ca-487e-a1fa-1fa49f7178eb</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>0</rowid>
+		<statename>Ожидает подтверждения</statename>
+		<statedescription>ManualProccess</statedescription>
+		<doctypeid/>
+		<docid>2b86249f-859f-41cb-b37f-5df1a66db370</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>8c7da508-ac7e-44c6-a688-e0db7d9874f6</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>3</rowid>
+		<statename>Подтверждена автоматически</statename>
+		<statedescription>Paid</statedescription>
+		<doctypeid/>
+		<docid>2b86249f-859f-41cb-b37f-5df1a66db370</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7393e509-225b-4c8a-a4a9-9879bc3db436</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>4</rowid>
+		<statename>Не оплачен</statename>
+		<statedescription>NotPaid</statedescription>
+		<doctypeid/>
+		<docid>2b86249f-859f-41cb-b37f-5df1a66db370</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>3263f042-e325-4ead-b0bb-5f3b6fd7747a</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>26</rowid>
+		<statename>На подборе у бэкофиса</statename>
+		<statedescription>PayerSelectionByBackoffice</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>2b0a2ade-648a-4b19-ba72-6ee127a8d7aa</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>27</rowid>
+		<statename>Плательщик согласован</statename>
+		<statedescription>PayerApproved</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>ec978480-ea7a-4ff9-9d40-8f0ac1ccbb6b</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>40</rowid>
+		<statename>Согласованно клиентом</statename>
+		<statedescription>PreparedClient</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>d5b229f6-f177-4ef6-8265-7cdb97f8e3c2</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>6</rowid>
+		<statename>На согласовании Менеджера</statename>
+		<statedescription>OnManagerApproval</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>5274847b-e0ca-4dfb-aa9c-a3e433f572a6</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>7</rowid>
+		<statename>Платежка сформирована</statename>
+		<statedescription>OnSWIFTWorking</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>2bab8277-583b-4ac0-8fc4-7604298e6022</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>8</rowid>
+		<statename>Направлен по ЭДО</statename>
+		<statedescription>SendViaEdo</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7dc1a355-eb8b-491d-afdb-000decb6bb60</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>9</rowid>
+		<statename>Подписан по ЭДО</statename>
+		<statedescription>SignViaEdo</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>6c30fad3-f7d9-4d78-be37-0cd44bf647cb</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>10</rowid>
+		<statename>Отклонено</statename>
+		<statedescription>Rejected</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>2a554995-df83-4609-afad-cf587be16d3f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>11</rowid>
+		<statename>Отправлен в рейс</statename>
+		<statedescription>SendFlight</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1809872a-c422-410b-bc0a-bed7d13d88e5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>12</rowid>
+		<statename>Возврат платежа плательщику</statename>
+		<statedescription>RefundToPayer</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>40ac65a9-39af-42d5-98c6-0c38c8240cd4</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>13</rowid>
+		<statename>Возврат платежа клиенту</statename>
+		<statedescription>RefundToClient</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>a4f86ca2-b300-4c57-8ec2-d006dbeb9722</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>14</rowid>
+		<statename>На согласовании Верификатора</statename>
+		<statedescription>OnVerificatorApproval</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>667f2e39-65a9-4bbb-a5d6-b2716cbd7cd5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>15</rowid>
+		<statename>Не согласовано клиентом</statename>
+		<statedescription>NotConfirmedByClient</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>198b7fa9-a8c8-4e7a-afcc-c9f719edc115</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>16</rowid>
+		<statename>Необработано</statename>
+		<statedescription>Confirmed</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1bf74087-3952-47c7-96d4-95fbba68b0ff</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>17</rowid>
+		<statename>В работе у операциониста</statename>
+		<statedescription>OperatorWorking</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>04e3e2a2-c686-4c14-bc90-7b9cac826c85</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>18</rowid>
+		<statename>На доработке у менеджера</statename>
+		<statedescription>ManagerUnderRevision</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7a0e578a-fc2c-49f7-bd03-b5a731190ddf</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>19</rowid>
+		<statename>На доработке</statename>
+		<statedescription>UnderRevision</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>5661c9f2-b223-4542-92d8-907d5b8584c5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>20</rowid>
+		<statename>На согласовании структуратора</statename>
+		<statedescription>OnApproval</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>09ef2272-a7b6-4323-8ebc-0c672be55b5f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>21</rowid>
+		<statename>Запрос смены плательщика</statename>
+		<statedescription>PayerChangeRequired</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>653c0913-dde6-4703-98fb-5f01c9cf9693</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>22</rowid>
+		<statename>Аннуляция в ЭДО</statename>
+		<statedescription>CancellationInEDO</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;AcceptPayments;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>1363e0bc-5f40-484b-8074-a8facb163fe8</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>23</rowid>
+		<statename>Возврат на обработке в бухгалтерии</statename>
+		<statedescription>RefundOnProcessInBookkeeper</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>4535c8c9-e244-40d6-8f21-b25b51e853b8</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>24</rowid>
+		<statename>Запрос смены плательщика от менеджера</statename>
+		<statedescription>PayerChangeRequiredOnBackoffice</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>964c5f5a-6984-42c3-bccc-add1e30ce49a</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>25</rowid>
+		<statename>На подборе у менеджера</statename>
+		<statedescription>PayerSelectionByManager</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>b6bcc9c4-116f-4589-a415-883950d17e8f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>28</rowid>
+		<statename>На согласовании юр.службы и комплаенса</statename>
+		<statedescription>OnboardManagerApproval</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Client;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>68ab3a9a-b3bf-4cb1-9bfc-e77bd8215f8f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>29</rowid>
+		<statename>Согласование выгрузки в 1С</statename>
+		<statedescription>UploadApprovalIn1C</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>efe6c588-d483-49fe-8592-92ff9ac94244</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>30</rowid>
+		<statename>Бухгалтерия: на доработку</statename>
+		<statedescription>AccountingDepartmentForRevision</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Agent;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>c98385e8-7948-4b31-8e04-ae685b507b7f</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>31</rowid>
+		<statename>Выгружено в 1С</statename>
+		<statedescription>UploadedTo1C</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>c7123a08-6e5f-4920-873d-18db6ed9ce17</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>32</rowid>
+		<statename>Бухгалтерия: на доработку бух.операционисту</statename>
+		<statedescription>AccountingDepartmentForRevisionAccountantOperator</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>fc79dba5-27fa-4a38-a770-86c97ef84c03</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>33</rowid>
+		<statename>Возвращен на доработку клиенту</statename>
+		<statedescription>PayerReturnToClientForRevision</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags/>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>e28b7609-e29e-4666-8976-ce06c327b691</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>34</rowid>
+		<statename>Акт отчет подписан</statename>
+		<statedescription>ReportSigned</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+	<RECORD>
+		<id>7fdb9268-e7ba-47f0-9cc2-c98de39f1cc5</id>
+		<ownerid>12345678-9012-3456-7890-123456789012</ownerid>
+		<rowid>35</rowid>
+		<statename>Завершено</statename>
+		<statedescription>Finish</statedescription>
+		<doctypeid/>
+		<docid>49cdfbc3-0906-41c3-8cc4-d3c1946ca8d2</docid>
+		<icon/>
+		<rolestates/>
+		<tags>;Book;</tags>
+		<creationdatetime>15/5/2025 15:38:28.245974</creationdatetime>
+	</RECORD>
+</RECORDS>
+
