@@ -32,13 +32,26 @@ cp config.env.example .env
 # Отредактируйте .env файл с вашими настройками
 ```
 
-### 3. Запуск сервера
+### 3. Загрузка базы данных
+
+**Linux/macOS:**
+```bash
+chmod +x load_database.sh
+./load_database.sh
+```
+
+**Windows:**
+```cmd
+load_database.bat
+```
+
+### 4. Запуск сервера
 
 ```bash
 python -m src.api.main
 ```
 
-### 4. Проверка работы
+### 5. Проверка работы
 
 ```bash
 curl http://localhost:8000/health
