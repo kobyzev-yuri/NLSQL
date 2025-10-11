@@ -1,0 +1,1 @@
+# Pydantic модели для API
