@@ -422,6 +422,77 @@ class DocStructureVannaNative(DocStructureVectorDB, OpenAI_Chat):
         except Exception as e:
             logger.error(f"❌ Ошибка подключения к PostgreSQL: {e}")
             raise
+    
+    def run_sql(self, sql: str) -> pd.DataFrame:
+        """
+        Выполнение SQL запроса и возврат результата как DataFrame
+        
+        Args:
+            sql: SQL запрос для выполнения
+            
+        Returns:
+            pd.DataFrame: Результат запроса
+        """
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(sql)
+                results = cur.fetchall()
+                
+                # Получаем названия колонок
+                columns = [desc[0] for desc in cur.description] if cur.description else []
+                
+                # Создаем DataFrame
+                df = pd.DataFrame(results, columns=columns)
+                
+                logger.info(f"✅ SQL выполнен успешно, получено {len(df)} строк")
+                return df
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка выполнения SQL: {e}")
+            return pd.DataFrame()
+    
+    def get_training_plan_generic(self, df: pd.DataFrame) -> list:
+        """
+        Создание плана обучения на основе DataFrame со схемой
+        
+        Args:
+            df: DataFrame со схемой базы данных
+            
+        Returns:
+            list: План обучения
+        """
+        try:
+            if df.empty:
+                return []
+            
+            plan = []
+            
+            # Группируем по таблицам
+            tables = df.groupby('table_name')
+            
+            for table_name, table_data in tables:
+                # Создаем описание таблицы
+                table_description = f"Таблица {table_name}:\n"
+                table_description += f"Колонки: {', '.join(table_data['column_name'].tolist())}\n"
+                
+                # Добавляем типы данных
+                for _, row in table_data.iterrows():
+                    table_description += f"- {row['column_name']}: {row['data_type']}"
+                    if row['is_nullable'] == 'NO':
+                        table_description += " (NOT NULL)"
+                    table_description += "\n"
+                
+                plan.append({
+                    'type': 'documentation',
+                    'content': table_description
+                })
+            
+            logger.info(f"✅ Создан план обучения с {len(plan)} элементами")
+            return plan
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка создания плана обучения: {e}")
+            return []
 
 def create_native_vanna_client(use_proxyapi: bool = True) -> DocStructureVannaNative:
     """

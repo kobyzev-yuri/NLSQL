@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Скрипт обучения Vanna AI агента
+Улучшенный скрипт обучения Vanna AI агента с автоматическим обучением на схеме БД
 """
 
 import os
@@ -11,7 +11,7 @@ from typing import Dict, List, Any
 import json
 
 # Добавляем путь к проекту
-sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent))
 
 from src.vanna.vanna_pgvector_native import DocStructureVannaNative
 
@@ -22,8 +22,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class VannaTrainer:
-    """Класс для обучения Vanna AI агента"""
+class EnhancedVannaTrainer:
+    """Улучшенный класс для обучения Vanna AI агента"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -107,7 +107,6 @@ class VannaTrainer:
                 metadata = json.load(f)
                 
             # Обучаем на метаданных
-            # Создаем общее описание базы данных
             db_description = f"База данных: {metadata.get('database', 'Unknown')}\n"
             db_description += f"Всего таблиц: {metadata.get('total_tables', 0)}\n"
             db_description += f"Основные таблицы: {', '.join(metadata.get('main_tables', []))}\n"
@@ -220,7 +219,7 @@ def main():
         }
     
     # Создаем тренер
-    trainer = VannaTrainer(config)
+    trainer = EnhancedVannaTrainer(config)
     
     # Запускаем обучение
     success = trainer.train_full()
