@@ -116,3 +116,13 @@ chroma_db/
 training_examples/
 *.sql
 *.csv
+
+# Temporary and old files
+*_REPORT.md
+TODO_*.md
+EXPLAIN_*.md
+PLAN_*.md
+QUERY_*.md
+DATA_FLOW_*.md
+ARCHITECTURE_DISCUSSION.md
+config.yaml
