@@ -1,0 +1,26 @@
+{
+  "Покажи всех пользователей": {
+    "sql": "I'm sorry, but the provided context does not include any specific question to generate a SQL query for. Please provide a specific question or request related to the tables and data described in the context.",
+    "status": "success"
+  },
+  "Список отделов": {
+    "sql": "The provided context does not include a specific question to generate a SQL query for. Please provide a specific question or request for a SQL query based on the given tables and context.",
+    "status": "success"
+  },
+  "Все клиенты": {
+    "sql": "The provided context is insufficient to generate a SQL query because there is no specific question or requirement provided. Please provide a clear question or requirement related to the tables and columns mentioned in the context.",
+    "status": "success"
+  },
+  "Пользователи по отделам": {
+    "sql": "The provided context is insufficient to generate a SQL query because there is no specific question or requirement provided. Please provide a specific question or requirement related to the tables and columns mentioned in the context.",
+    "status": "success"
+  },
+  "Поручения с клиентами": {
+    "sql": "The provided context is insufficient to generate a SQL query because there is no specific question or requirement mentioned that needs to be addressed using the given tables and columns. Please provide a specific question or requirement to generate the appropriate SQL query.",
+    "status": "success"
+  },
+  "Платежи по клиентам": {
+    "sql": "The provided context does not include the question that needs to be answered. Therefore, it is not possible to generate a SQL query without knowing the specific question or requirement. Please provide the question or the specific information you need from the database tables.",
+    "status": "success"
+  }
+}

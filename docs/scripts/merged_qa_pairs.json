@@ -1,0 +1,218 @@
+[
+  {
+    "question": "Покажи всех пользователей",
+    "sql": "SELECT id, login, email, surname, firstname, department FROM equsers WHERE deleted = false",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 1
+  },
+  {
+    "question": "Список отделов",
+    "sql": "SELECT id, departmentname, parentid, description FROM eq_departments WHERE deleted = false",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 2
+  },
+  {
+    "question": "Все клиенты",
+    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 3
+  },
+  {
+    "question": "Пользователи по отделам",
+    "sql": "\n                SELECT u.login, u.email, u.surname, u.firstname, d.departmentname \n                FROM equsers u \n                LEFT JOIN eq_departments d ON u.department = d.id \n                WHERE u.deleted = false\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 4
+  },
+  {
+    "question": "Поручения с клиентами",
+    "sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, \n                       bu.business_unit_name, bu.inn\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.deleted = false\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 5
+  },
+  {
+    "question": "Платежи по клиентам",
+    "sql": "\n                SELECT bu.business_unit_name, SUM(ip.amount) as total_payments\n                FROM tbl_incoming_payments ip\n                JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id\n                WHERE ip.deleted = false\n                GROUP BY bu.id, bu.business_unit_name\n                ORDER BY total_payments DESC\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 6
+  },
+  {
+    "question": "Пользователи с ролями",
+    "sql": "\n                SELECT u.login, u.email, r.rolename, r.description\n                FROM equsers u\n                JOIN user_roles ur ON u.id = ur.user_id\n                JOIN eqroles r ON ur.role_id = r.id\n                WHERE u.deleted = false\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 7
+  },
+  {
+    "question": "Количество пользователей по отделам",
+    "sql": "\n                SELECT d.departmentname, COUNT(u.id) as user_count\n                FROM eq_departments d\n                LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false\n                WHERE d.deleted = false\n                GROUP BY d.id, d.departmentname\n                ORDER BY user_count DESC\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 8
+  },
+  {
+    "question": "Поручения за последний месяц",
+    "sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.assignment_date >= CURRENT_DATE - INTERVAL '1 month'\n                AND pa.deleted = false\n                ORDER BY pa.assignment_date DESC\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 9
+  },
+  {
+    "question": "Сумма платежей по месяцам",
+    "sql": "\n                SELECT DATE_TRUNC('month', payment_date) as month, \n                       SUM(amount) as total_amount\n                FROM tbl_incoming_payments\n                WHERE deleted = false\n                GROUP BY DATE_TRUNC('month', payment_date)\n                ORDER BY month DESC\n                ",
+    "source": "existing_examples",
+    "category": "Общие",
+    "complexity": 2,
+    "description": "Существующий пример",
+    "id": 10
+  },
+  {
+    "question": "Покажи всех пользователей системы",
+    "sql": "SELECT id, login, email, surname, firstname, department, accessgranted FROM equsers WHERE deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 11
+  },
+  {
+    "question": "Пользователи с истекшим сроком действия",
+    "sql": "SELECT login, email, validity FROM equsers WHERE validity < CURRENT_DATE AND deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 12
+  },
+  {
+    "question": "Активные пользователи",
+    "sql": "SELECT login, email, surname, firstname FROM equsers WHERE accessgranted = true AND deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 13
+  },
+  {
+    "question": "Пользователи с встроенными аккаунтами",
+    "sql": "SELECT login, email, build_in_account FROM equsers WHERE build_in_account = true AND deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 14
+  },
+  {
+    "question": "Все учетные записи",
+    "sql": "SELECT id, account_number, business_unit_id FROM tbl_accounts_document WHERE deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 15
+  },
+  {
+    "question": "Все входящие платежи",
+    "sql": "SELECT id, payment_date, amount, business_unit_id FROM tbl_incoming_payments WHERE deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 16
+  },
+  {
+    "question": "Платежи по клиентам",
+    "sql": "SELECT bu.business_unit_name, SUM(ip.amount) as total_payments FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE ip.deleted = false GROUP BY bu.id, bu.business_unit_name ORDER BY total_payments DESC",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 17
+  },
+  {
+    "question": "Сумма платежей по месяцам",
+    "sql": "SELECT DATE_TRUNC('month', payment_date) as month, SUM(amount) as total_amount FROM tbl_incoming_payments WHERE deleted = false GROUP BY DATE_TRUNC('month', payment_date) ORDER BY month DESC",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 18
+  },
+  {
+    "question": "Все клиенты системы",
+    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 19
+  },
+  {
+    "question": "Клиенты с определенным ИНН",
+    "sql": "SELECT business_unit_name, inn, phone FROM tbl_business_unit WHERE inn = ? AND deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 20
+  },
+  {
+    "question": "Клиенты с указанным телефоном",
+    "sql": "SELECT business_unit_name, inn, phone FROM tbl_business_unit WHERE phone = ? AND deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 21
+  },
+  {
+    "question": "Все поручения",
+    "sql": "SELECT assignment_number, assignment_date, amount, business_unit_id FROM tbl_principal_assignment WHERE deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 22
+  },
+  {
+    "question": "Поручения за последний месяц",
+    "sql": "SELECT assignment_number, assignment_date, amount, business_unit_id FROM tbl_principal_assignment WHERE assignment_date >= CURRENT_DATE - INTERVAL '1 month' AND deleted = false ORDER BY assignment_date DESC",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 23
+  },
+  {
+    "question": "Поручения с клиентами",
+    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.deleted = false",
+    "source": "generated_from_schema",
+    "category": "Сгенерированные",
+    "complexity": 2,
+    "description": "Сгенерировано из схемы",
+    "id": 24
+  }
+]

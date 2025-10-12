@@ -1,0 +1,58 @@
+[
+  {
+    "question": "Покажи всех пользователей системы",
+    "sql": "SELECT id, login, email, surname, firstname, department, accessgranted FROM equsers WHERE deleted = false"
+  },
+  {
+    "question": "Пользователи с истекшим сроком действия",
+    "sql": "SELECT login, email, validity FROM equsers WHERE validity < CURRENT_DATE AND deleted = false"
+  },
+  {
+    "question": "Активные пользователи",
+    "sql": "SELECT login, email, surname, firstname FROM equsers WHERE accessgranted = true AND deleted = false"
+  },
+  {
+    "question": "Пользователи с встроенными аккаунтами",
+    "sql": "SELECT login, email, build_in_account FROM equsers WHERE build_in_account = true AND deleted = false"
+  },
+  {
+    "question": "Все учетные записи",
+    "sql": "SELECT id, account_number, business_unit_id FROM tbl_accounts_document WHERE deleted = false"
+  },
+  {
+    "question": "Все входящие платежи",
+    "sql": "SELECT id, payment_date, amount, business_unit_id FROM tbl_incoming_payments WHERE deleted = false"
+  },
+  {
+    "question": "Платежи по клиентам",
+    "sql": "SELECT bu.business_unit_name, SUM(ip.amount) as total_payments FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE ip.deleted = false GROUP BY bu.id, bu.business_unit_name ORDER BY total_payments DESC"
+  },
+  {
+    "question": "Сумма платежей по месяцам",
+    "sql": "SELECT DATE_TRUNC('month', payment_date) as month, SUM(amount) as total_amount FROM tbl_incoming_payments WHERE deleted = false GROUP BY DATE_TRUNC('month', payment_date) ORDER BY month DESC"
+  },
+  {
+    "question": "Все клиенты системы",
+    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false"
+  },
+  {
+    "question": "Клиенты с определенным ИНН",
+    "sql": "SELECT business_unit_name, inn, phone FROM tbl_business_unit WHERE inn = ? AND deleted = false"
+  },
+  {
+    "question": "Клиенты с указанным телефоном",
+    "sql": "SELECT business_unit_name, inn, phone FROM tbl_business_unit WHERE phone = ? AND deleted = false"
+  },
+  {
+    "question": "Все поручения",
+    "sql": "SELECT assignment_number, assignment_date, amount, business_unit_id FROM tbl_principal_assignment WHERE deleted = false"
+  },
+  {
+    "question": "Поручения за последний месяц",
+    "sql": "SELECT assignment_number, assignment_date, amount, business_unit_id FROM tbl_principal_assignment WHERE assignment_date >= CURRENT_DATE - INTERVAL '1 month' AND deleted = false ORDER BY assignment_date DESC"
+  },
+  {
+    "question": "Поручения с клиентами",
+    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.deleted = false"
+  }
+]

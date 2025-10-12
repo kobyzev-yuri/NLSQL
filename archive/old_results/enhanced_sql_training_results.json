@@ -1,0 +1,62 @@
+{
+  "Покажи всех пользователей": {
+    "sql": "The provided context is insufficient to generate the SQL query because there is no information about a table that contains user data.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Список отделов": {
+    "sql": "The provided context is insufficient to generate a SQL query for the question \"Список отделов\" (List of departments) because there is no information about a table that contains department data.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Все клиенты": {
+    "sql": "The provided context is insufficient to generate a SQL query for the question \"Все клиенты\" (All clients) because there is no information or table related to clients in the given context.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Пользователи по отделам": {
+    "sql": "К сожалению, предоставленный контекст не содержит информации о таблицах, связанных с пользователями или отделами. Поэтому я не могу сгенерировать SQL-запрос для получения пользователей по отделам.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Поручения с клиентами": {
+    "sql": "К сожалению, предоставленный контекст не содержит информации о таблицах, связанных с поручениями и клиентами. Поэтому я не могу сгенерировать SQL-запрос для этого вопроса.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Платежи по клиентам": {
+    "sql": "The provided context is insufficient to generate a SQL query for \"Платежи по клиентам\" (Payments by clients) because there is no information about tables related to payments or clients.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Сколько клиентов в каждом регионе?": {
+    "sql": "The provided context is insufficient to generate the SQL query because there is no information about a table that contains client or region data.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Поручения за последний месяц": {
+    "sql": "К сожалению, предоставленный контекст не содержит информации о таблице, которая хранит данные о поручениях, и нет данных о временных метках, которые можно использовать для фильтрации поручений за последний месяц. Поэтому я не могу сгенерировать SQL-запрос для вашего вопроса.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Топ-10 клиентов по сумме поручений": {
+    "sql": "The provided context is insufficient to generate the SQL query because there is no information about tables related to clients or orders.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Пользователи отдела Продажи": {
+    "sql": "The provided context is insufficient to generate a SQL query for the question \"Пользователи отдела Продажи\" (Users of the Sales department). There is no information about users, departments, or any related data in the given tables.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Платежи больше 1 млн рублей": {
+    "sql": "The provided context is insufficient to generate the SQL query because there is no information about a table that stores payment data or any relevant columns related to payment amounts.",
+    "quality_score": 0.3,
+    "status": "success"
+  },
+  "Поручения старше 3 дней от клиентов категории А больше 1 млн рублей": {
+    "sql": "The provided context is insufficient to generate the SQL query because there is no information about tables related to \"поручения\" (orders or tasks), \"клиенты\" (clients), their categories, or any financial data like amounts in rubles.",
+    "quality_score": 0.3,
+    "status": "success"
+  }
+}

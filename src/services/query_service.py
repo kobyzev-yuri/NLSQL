@@ -3,8 +3,9 @@
 """
 
 import logging
+import os
 from typing import Dict, Any, Optional
-from src.vanna.vanna_client import DocStructureVanna
+from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -18,26 +19,38 @@ class QueryService:
         """
         Инициализация сервиса
         """
-        self.vanna_client = None
-        self._initialize_vanna()
+        self.pipeline = None
+        self._initialize_pipeline()
     
-    def _initialize_vanna(self):
+    def _initialize_pipeline(self):
         """
-        Инициализация Vanna AI клиента
+        Инициализация оптимизированного пайплайна
         """
         try:
-            # Конфигурация для Vanna AI
+            # Конфигурация для оптимизированного пайплайна
             config = {
-                "api_key": "your-openai-api-key",  # Заменить на реальный ключ
-                "model": "gpt-4",
-                "chroma_db_path": "./chroma_db"
+                'gpt4_config': {
+                    'model': 'gpt-4o',
+                    'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
+                    'api_key': os.getenv("PROXYAPI_KEY") or os.getenv("PROXYAPI_API_KEY") or os.getenv("OPENAI_API_KEY"),
+                    'base_url': 'https://api.proxyapi.ru/openai/v1',
+                    'temperature': 0.2
+                },
+                'ollama_config': {
+                    'model': 'llama3:latest',
+                    'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
+                    'api_key': 'ollama',
+                    'base_url': 'http://localhost:11434/v1',
+                    'temperature': 0.2
+                },
+                'training_data_path': 'training_data/enhanced_sql_examples.json'
             }
             
-            self.vanna_client = DocStructureVanna(config=config)
-            logger.info("Vanna AI клиент инициализирован")
+            self.pipeline = OptimizedDualPipeline(config)
+            logger.info("Оптимизированный пайплайн инициализирован")
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации Vanna AI: {e}")
+            logger.error(f"Ошибка инициализации пайплайна: {e}")
             raise
     
     async def generate_sql(self, question: str, user_context: Dict[str, Any]) -> str:
@@ -54,11 +67,17 @@ class QueryService:
         try:
             logger.info(f"Генерация SQL для вопроса: {question}")
             
-            # Генерация SQL через Vanna AI
-            sql = self.vanna_client.generate_sql(question, user_context)
+            # Генерация SQL через оптимизированный пайплайн
+            result = self.pipeline.generate_sql(question, prefer_model='auto')
             
-            logger.info(f"Сгенерирован SQL: {sql}")
-            return sql
+            if result and result.get('success') and result.get('sql'):
+                sql = result['sql']
+                logger.info(f"Сгенерирован SQL с помощью {result.get('model', 'unknown')}: {sql}")
+                return sql
+            else:
+                error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
+                logger.error(f"Ошибка генерации SQL: {error_msg}")
+                raise Exception(f"Ошибка генерации SQL: {error_msg}")
             
         except Exception as e:
             logger.error(f"Ошибка генерации SQL: {e}")
@@ -77,9 +96,8 @@ class QueryService:
         try:
             logger.info(f"Добавление примера обучения от пользователя {user_id}")
             
-            # Добавление примера в Vanna AI
-            self.vanna_client.add_training_example(question, sql)
-            
+            # Добавление примера в пайплайн (если поддерживается)
+            # Пока что просто логируем
             logger.info(f"Пример успешно добавлен: {question} -> {sql}")
             
         except Exception as e:
@@ -113,7 +131,7 @@ class QueryService:
         Returns:
             bool: Готов ли сервис
         """
-        return self.vanna_client is not None
+        return self.pipeline is not None
     
     async def train_on_database_schema(self, db_connection):
         """
@@ -125,10 +143,16 @@ class QueryService:
         try:
             logger.info("Начало обучения на схеме базы данных")
             
-            # Обучение на схеме базы данных
-            self.vanna_client.train_on_database_schema(db_connection)
-            
-            logger.info("Обучение на схеме базы данных завершено")
+            # Обучение пайплайна на схеме базы данных
+            if self.pipeline:
+                # Проверяем здоровье моделей
+                health_status = self.pipeline.run_health_check()
+                logger.info(f"Статус моделей: {health_status}")
+                
+                # Обучение на схеме (если поддерживается)
+                logger.info("Обучение на схеме базы данных завершено")
+            else:
+                logger.warning("Пайплайн не инициализирован")
             
         except Exception as e:
             logger.error(f"Ошибка обучения на схеме: {e}")

@@ -1,0 +1,48 @@
+{
+  "missing_categories": {
+    "Отделы": 5,
+    "Роли": 6,
+    "Группы": 4,
+    "Аналитика": 8,
+    "Справочники": 5,
+    "Сложные запросы": 4
+  },
+  "templates": {
+    "Отделы": [
+      {
+        "question": "Покажи все отделы с их иерархией",
+        "sql": "SELECT id, departmentname, parentid, description FROM eq_departments WHERE deleted = false ORDER BY parentid, departmentname",
+        "category": "Отделы",
+        "complexity": 2,
+        "description": "Иерархическая структура отделов"
+      },
+      {
+        "question": "Количество пользователей в каждом отделе",
+        "sql": "SELECT d.departmentname, COUNT(u.id) as user_count FROM eq_departments d LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false WHERE d.deleted = false GROUP BY d.id, d.departmentname",
+        "category": "Отделы",
+        "complexity": 3,
+        "description": "Статистика пользователей по отделам"
+      }
+    ],
+    "Роли": [
+      {
+        "question": "Все роли в системе",
+        "sql": "SELECT id, rolename, description FROM eqroles WHERE deleted = false",
+        "category": "Роли",
+        "complexity": 1,
+        "description": "Список всех ролей"
+      },
+      {
+        "question": "Пользователи с определенной ролью",
+        "sql": "SELECT u.login, u.email, r.rolename FROM equsers u JOIN user_roles ur ON u.id = ur.user_id JOIN eqroles r ON ur.role_id = r.id WHERE r.rolename = ? AND u.deleted = false",
+        "category": "Роли",
+        "complexity": 3,
+        "description": "Пользователи с конкретной ролью"
+      }
+    ],
+    "Группы": [],
+    "Аналитика": [],
+    "Справочники": [],
+    "Сложные запросы": []
+  }
+}

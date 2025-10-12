@@ -1,0 +1,101 @@
+{
+  "timestamp": "1760268384.8935437",
+  "analysis": {
+    "total_questions": 15,
+    "successful": 15,
+    "failed": 0,
+    "success_rate": 100.0,
+    "simple_questions": {
+      "total": 3,
+      "successful": 3,
+      "success_rate": 100.0
+    },
+    "complex_questions": {
+      "total": 3,
+      "successful": 3,
+      "success_rate": 100.0
+    },
+    "schema_questions": {
+      "total": 3,
+      "successful": 3,
+      "success_rate": 100.0
+    }
+  },
+  "detailed_results": {
+    "Покажи всех пользователей": {
+      "sql": "К сожалению, предоставленный контекст не содержит таблицы, которая явно хранит информацию о пользователях. Поэтому я не могу сгенерировать SQL-запрос для получения списка всех пользователей.",
+      "success": true,
+      "error": null
+    },
+    "Список отделов": {
+      "sql": "The provided context is insufficient to generate a SQL query for the question \"Список отделов\" (List of departments) because there is no table or column related to departments in the given schema.",
+      "success": true,
+      "error": null
+    },
+    "Все клиенты": {
+      "sql": "К сожалению, предоставленный контекст не содержит информации о таблице, в которой хранятся данные о клиентах. Поэтому я не могу сгенерировать SQL-запрос для получения всех клиентов.",
+      "success": true,
+      "error": null
+    },
+    "Пользователи по отделам": {
+      "sql": "The provided context is insufficient to generate the SQL query because there is no information about tables or columns related to users or departments.",
+      "success": true,
+      "error": null
+    },
+    "Поручения с клиентами": {
+      "sql": "К сожалению, предоставленный контекст недостаточен для генерации SQL-запроса для получения поручений с клиентами. В контексте отсутствуют таблицы или колонки, которые могли бы содержать информацию о поручениях и клиентах.",
+      "success": true,
+      "error": null
+    },
+    "Платежи по клиентам": {
+      "sql": "The provided context does not contain any information about tables related to payments or clients. Therefore, it is not possible to generate a SQL query to answer the question about \"Платежи по клиентам\" (Payments by clients).",
+      "success": true,
+      "error": null
+    },
+    "Количество пользователей по отделам": {
+      "sql": "К сожалению, предоставленный контекст не содержит информации о таблицах, которые могли бы содержать данные о пользователях и отделах. Поэтому я не могу сгенерировать SQL-запрос для получения количества пользователей по отделам.",
+      "success": true,
+      "error": null
+    },
+    "Поручения за последний месяц": {
+      "sql": "The provided context is insufficient to generate the SQL query because there is no specific table or column mentioned that stores \"поручения\" (assignments or tasks) and their dates. Please provide more details about which table contains this information and the relevant columns.",
+      "success": true,
+      "error": null
+    },
+    "Сумма платежей по месяцам": {
+      "sql": "The provided context does not contain any tables or columns related to payments or dates that could be used to calculate the sum of payments by month. Therefore, it is not possible to generate a SQL query to answer the question based on the given context.",
+      "success": true,
+      "error": null
+    },
+    "Покажи таблицы в базе данных": {
+      "sql": "SELECT table_name \nFROM information_schema.tables \nWHERE table_schema = 'public';",
+      "success": true,
+      "error": null
+    },
+    "Какие поля есть в таблице equsers?": {
+      "sql": "К сожалению, в предоставленном контексте нет информации о таблице equsers. Поэтому я не могу сгенерировать SQL-запрос для получения полей этой таблицы.",
+      "success": true,
+      "error": null
+    },
+    "Связи между таблицами": {
+      "sql": "К сожалению, в предоставленном контексте нет информации о связях между таблицами.",
+      "success": true,
+      "error": null
+    },
+    "Статистика по пользователям": {
+      "sql": "The provided context does not contain sufficient information to generate a SQL query for user statistics. There is no table related to users or any columns that suggest user-related data. Please provide more context or details about the tables and columns involved in user statistics.",
+      "success": true,
+      "error": null
+    },
+    "Активные пользователи": {
+      "sql": "К сожалению, предоставленный контекст недостаточен для генерации SQL-запроса для поиска активных пользователей, так как нет информации о таблице, содержащей данные о пользователях и их активности.",
+      "success": true,
+      "error": null
+    },
+    "Недавние поручения": {
+      "sql": "SELECT * \nFROM temp_tbl_principal_assignment \nORDER BY creationdatetime DESC;",
+      "success": true,
+      "error": null
+    }
+  }
+}

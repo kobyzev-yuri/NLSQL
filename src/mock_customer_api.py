@@ -71,17 +71,24 @@ MOCK_USERS = {
 
 MOCK_DATA = {
     "equsers": [
-        {"id": "1", "login": "admin", "email": "admin@company.com", "department": "IT"},
-        {"id": "2", "login": "manager1", "email": "manager1@company.com", "department": "Sales"},
-        {"id": "3", "login": "user1", "email": "user1@company.com", "department": "Support"},
+        {"id": "1", "login": "admin", "email": "admin@company.com", "department": "IT", "firstname": "Админ", "surname": "Админов"},
+        {"id": "2", "login": "manager", "email": "manager@company.com", "department": "IT", "firstname": "Менеджер", "surname": "IT"},
+        {"id": "3", "login": "user", "email": "user@company.com", "department": "IT", "firstname": "Пользователь", "surname": "IT"},
+        {"id": "4", "login": "sales_manager", "email": "sales@company.com", "department": "Sales", "firstname": "Менеджер", "surname": "Продаж"},
+        {"id": "5", "login": "support_user", "email": "support@company.com", "department": "Support", "firstname": "Пользователь", "surname": "Поддержки"},
+    ],
+    "eq_departments": [
+        {"id": "1", "name": "IT", "code": "IT"},
+        {"id": "2", "name": "Sales", "code": "SALES"},
+        {"id": "3", "name": "Support", "code": "SUPPORT"},
     ],
     "tbl_business_unit": [
         {"id": "1", "business_unit_name": "ООО Ромашка", "inn": "1234567890", "phone": "+7-495-123-45-67"},
         {"id": "2", "business_unit_name": "ИП Иванов", "inn": "0987654321", "phone": "+7-495-765-43-21"},
     ],
     "tbl_principal_assignment": [
-        {"id": "1", "assignment_number": "A001", "amount": 100000, "business_unit_id": "1"},
-        {"id": "2", "assignment_number": "A002", "amount": 50000, "business_unit_id": "2"},
+        {"id": "1", "assignment_number": "A001", "amount": 100000, "business_unit_id": "1", "user_id": "1"},
+        {"id": "2", "assignment_number": "A002", "amount": 50000, "business_unit_id": "2", "user_id": "2"},
     ]
 }
 
@@ -217,58 +224,112 @@ async def get_user_permissions(user_id: str):
 def apply_role_restrictions(sql: str, user_id: str, role: str, department: str) -> str:
     """
     Применение ролевых ограничений к SQL запросу
+    Согласно FINAL_ROLE_LOGIC.md
     """
-    logger.info(f"Применение ограничений для роли: {role}")
+    logger.info(f"Применение ограничений для роли: {role}, user_id: {user_id}")
     
-    # Базовые ограничения по ролям
+    sql_lower = sql.lower()
+    
+    # Проверяем основную таблицу в FROM, а не JOIN
     if role == "user":
         # Пользователи видят только свои данные
-        if "equsers" in sql.lower():
-            sql += f" AND id = '{user_id}'"
-        elif "tbl_business_unit" in sql.lower():
-            sql += f" AND created_by = '{user_id}'"
+        if "from equsers" in sql_lower:
+            # Добавляем ограничение по login
+            if "where" in sql_lower:
+                sql += f" AND login = '{user_id}'"
+            else:
+                sql += f" WHERE login = '{user_id}'"
+        elif "from tbl_principal_assignment" in sql_lower:
+            if "where" in sql_lower:
+                sql += f" AND user_id = (SELECT id FROM equsers WHERE login = '{user_id}')"
+            else:
+                sql += f" WHERE user_id = (SELECT id FROM equsers WHERE login = '{user_id}')"
     
     elif role == "manager":
-        # Менеджеры видят данные своего отдела
-        if "equsers" in sql.lower():
-            sql += f" AND department = '{department}'"
-        elif "tbl_principal_assignment" in sql.lower():
-            sql += f" AND manager_id = '{user_id}'"
+        # Менеджеры видят данные только отдела IT
+        if "from equsers" in sql_lower:
+            if "where" in sql_lower:
+                sql += f" AND department = (SELECT id FROM eq_departments WHERE name = 'IT')"
+            else:
+                sql += f" WHERE department = (SELECT id FROM eq_departments WHERE name = 'IT')"
+        elif "from eq_departments" in sql_lower:
+            if "where" in sql_lower:
+                sql += f" AND name = 'IT'"
+            else:
+                sql += f" WHERE name = 'IT'"
+        elif "from tbl_principal_assignment" in sql_lower:
+            if "where" in sql_lower:
+                sql += f" AND department_id = (SELECT id FROM eq_departments WHERE name = 'IT')"
+            else:
+                sql += f" WHERE department_id = (SELECT id FROM eq_departments WHERE name = 'IT')"
     
     elif role == "admin":
         # Админы видят все данные (без дополнительных ограничений)
         pass
     
+    logger.info(f"SQL после применения ограничений: {sql}")
     return sql
 
 async def simulate_sql_execution(sql: str, user_id: str, role: str) -> Dict[str, Any]:
     """
-    Имитация выполнения SQL запроса
+    Имитация выполнения SQL запроса с правильными ролевыми ограничениями
     """
-    logger.info(f"Имитация выполнения SQL для роли: {role}")
+    logger.info(f"Имитация выполнения SQL для роли: {role}, user_id: {user_id}")
     
     # Простая логика определения таблицы и возврата данных
     sql_lower = sql.lower()
     
     if "equsers" in sql_lower:
-        data = MOCK_DATA["equsers"]
-        columns = ["id", "login", "email", "department"]
+        data = MOCK_DATA["equsers"].copy()
+        columns = ["id", "login", "email", "department", "firstname", "surname"]
+        
+        # Применение ролевых ограничений
+        if role == "user":
+            # Пользователи видят только свои данные
+            data = [row for row in data if row.get("login") == user_id]
+        elif role == "manager":
+            # Менеджеры видят только IT отдел
+            data = [row for row in data if row.get("department") == "IT"]
+        # admin видит все данные без ограничений
+        
+    elif "eq_departments" in sql_lower:
+        data = MOCK_DATA["eq_departments"].copy()
+        columns = ["id", "name", "code"]
+        
+        # Применение ролевых ограничений
+        if role == "manager":
+            # Менеджеры видят только IT отдел
+            data = [row for row in data if row.get("name") == "IT"]
+        # admin и user видят все отделы
+        
     elif "tbl_business_unit" in sql_lower:
-        data = MOCK_DATA["tbl_business_unit"]
+        data = MOCK_DATA["tbl_business_unit"].copy()
         columns = ["id", "business_unit_name", "inn", "phone"]
+        
+        # Применение ролевых ограничений
+        if role == "user":
+            # Пользователи видят только свои данные
+            data = [row for row in data if row.get("created_by") == user_id]
+        # admin и manager видят все данные
+        
     elif "tbl_principal_assignment" in sql_lower:
-        data = MOCK_DATA["tbl_principal_assignment"]
-        columns = ["id", "assignment_number", "amount", "business_unit_id"]
+        data = MOCK_DATA["tbl_principal_assignment"].copy()
+        columns = ["id", "assignment_number", "amount", "business_unit_id", "user_id"]
+        
+        # Применение ролевых ограничений
+        if role == "user":
+            # Пользователи видят только свои поручения
+            data = [row for row in data if row.get("user_id") == user_id]
+        elif role == "manager":
+            # Менеджеры видят только IT отдел
+            data = [row for row in data if row.get("department_id") == "1"]  # IT отдел
+        # admin видит все данные
+        
     else:
         data = []
         columns = []
     
-    # Применение ограничений по роли
-    if role == "user":
-        data = [row for row in data if row.get("id") == user_id]
-    elif role == "manager":
-        data = data[:2]  # Менеджеры видят ограниченный набор
-    
+    logger.info(f"Результат для роли {role}: {len(data)} строк")
     return {
         "data": data,
         "columns": columns,

@@ -163,7 +163,7 @@ class DocStructureVectorDB(VannaBase):
     
     def get_related_ddl(self, question: str, **kwargs) -> list:
         """
-        Получение релевантных DDL операторов
+        Получение релевантных DDL операторов для бизнес-таблиц
         
         Args:
             question: Вопрос
@@ -173,16 +173,66 @@ class DocStructureVectorDB(VannaBase):
             list: Список релевантных DDL
         """
         try:
-            with self.conn.cursor() as cur:
-                cur.execute("""
-                    SELECT content FROM vanna_vectors 
-                    WHERE content_type = 'ddl'
-                    ORDER BY id DESC
-                    LIMIT 5
-                """)
-                
-                results = cur.fetchall()
-                return [row[0] for row in results]
+            # Приоритетные бизнес-таблицы
+            priority_tables = [
+                "equsers",                    # Пользователи
+                "eq_departments",             # Отделы
+                "eqgroups",                   # Группы
+                "eqroles",                    # Роли
+                "tbl_business_unit",          # Клиенты
+                "tbl_principal_assignment",  # Поручения
+                "tbl_incoming_payments",      # Платежи
+                "tbl_accounts_document",      # Учетные записи
+                "tbl_personal_account"         # Личные кабинеты
+            ]
+            
+            ddl_list = []
+            
+            for table in priority_tables:
+                try:
+                    # Получаем DDL для таблицы
+                    ddl_query = f"""
+                    SELECT 
+                        table_name,
+                        column_name,
+                        data_type,
+                        is_nullable,
+                        column_default,
+                        character_maximum_length
+                    FROM information_schema.columns 
+                    WHERE table_name = '{table}'
+                    AND table_schema = 'public'
+                    ORDER BY ordinal_position
+                    """
+                    
+                    with self.conn.cursor() as cur:
+                        cur.execute(ddl_query)
+                        results = cur.fetchall()
+                        
+                        if results:
+                            # Формируем DDL для таблицы
+                            table_ddl = f"Таблица {table}:\n"
+                            
+                            # Добавляем имена колонок
+                            column_names = [row[1] for row in results]
+                            table_ddl += f"Колонки: {', '.join(column_names)}\n"
+                            
+                            for row in results:
+                                col_info = f"- {row[1]}: {row[2]}"
+                                if row[3] == 'NO':
+                                    col_info += " (NOT NULL)"
+                                if row[5]:
+                                    col_info += f"({row[5]})"
+                                table_ddl += col_info + "\n"
+                            
+                            ddl_list.append(table_ddl)
+                            
+                except Exception as e:
+                    logger.warning(f"⚠️ Не удалось получить DDL для {table}: {e}")
+                    continue
+            
+            logger.info(f"✅ Получено {len(ddl_list)} DDL элементов для бизнес-таблиц")
+            return ddl_list
                 
         except Exception as e:
             logger.error(f"❌ Ошибка получения DDL: {e}")
@@ -346,13 +396,13 @@ class DocStructureVannaNative(DocStructureVectorDB, OpenAI_Chat):
         if config is None:
             config = {}
             
-        # Настройки по умолчанию для ProxyAPI
+        # Настройки по умолчанию для Ollama
         default_config = {
             "database_url": "postgresql://postgres:1234@localhost:5432/test_docstructure",
             "vector_table": "vanna_vectors",
-            "api_key": os.getenv("PROXYAPI_KEY") or os.getenv("PROXYAPI_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            "model": "gpt-4o",
-            "base_url": "https://api.proxyapi.ru/openai/v1",  # ProxyAPI
+            "api_key": "ollama",
+            "model": "llama3.1:8b",
+            "base_url": "http://localhost:11434/v1",  # Ollama API
             "temperature": 0.2
         }
         
@@ -493,6 +543,43 @@ class DocStructureVannaNative(DocStructureVectorDB, OpenAI_Chat):
         except Exception as e:
             logger.error(f"❌ Ошибка создания плана обучения: {e}")
             return []
+    
+    def train(self, **kwargs):
+        """
+        Обучение на данных с поддержкой плана обучения
+        
+        Args:
+            **kwargs: Параметры обучения (ddl, documentation, question, sql, plan)
+        """
+        try:
+            # Если передан план обучения
+            if 'plan' in kwargs:
+                plan = kwargs['plan']
+                if isinstance(plan, list):
+                    # Обучаем на каждом элементе плана
+                    for item in plan:
+                        if item.get('type') == 'documentation':
+                            self.add_documentation(item['content'])
+                        elif item.get('type') == 'ddl':
+                            self.add_ddl(item['content'])
+                        elif item.get('type') == 'question_sql':
+                            self.add_question_sql(item['question'], item['sql'])
+                    logger.info(f"✅ Обучение на плане завершено ({len(plan)} элементов)")
+                else:
+                    logger.warning("⚠️ План обучения должен быть списком")
+                return
+            
+            # Стандартное обучение
+            if 'ddl' in kwargs:
+                self.add_ddl(kwargs['ddl'])
+            if 'documentation' in kwargs:
+                self.add_documentation(kwargs['documentation'])
+            if 'question' in kwargs and 'sql' in kwargs:
+                self.add_question_sql(kwargs['question'], kwargs['sql'])
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка обучения: {e}")
+            raise
 
 def create_native_vanna_client(use_proxyapi: bool = True) -> DocStructureVannaNative:
     """

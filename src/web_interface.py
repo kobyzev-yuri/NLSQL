@@ -27,7 +27,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Конфигурация
 NL_SQL_API_URL = "http://localhost:8000"
-MOCK_CUSTOMER_API_URL = "http://localhost:8081"
+MOCK_CUSTOMER_API_URL = "http://localhost:8080"
 
 # Инициализация обученного Vanna AI агента
 def get_vanna_agent():

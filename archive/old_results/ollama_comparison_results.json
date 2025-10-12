@@ -1,0 +1,38 @@
+{
+  "gpt4o": {
+    "Покажи всех пользователей": {
+      "sql": "SELECT * FROM equsers;",
+      "status": "success"
+    },
+    "Список отделов": {
+      "sql": "SELECT id, name FROM eq_departments WHERE deleted = false;",
+      "status": "success"
+    },
+    "Все клиенты": {
+      "sql": "The provided context is insufficient to generate a SQL query for the question \"Все клиенты\" (All clients) because there is no specific table or column in the given schema that clearly represents \"clients\". Additional information about which table or columns represent clients is needed.",
+      "status": "success"
+    },
+    "Пользователи по отделам": {
+      "sql": "SELECT \n    eqd.name AS department_name, \n    COUNT(equ.id) AS user_count\nFROM \n    equsers equ\nJOIN \n    eq_departments eqd ON equ.department = eqd.id\nWHERE \n    equ.deleted = FALSE\nGROUP BY \n    eqd.name;",
+      "status": "success"
+    }
+  },
+  "ollama": {
+    "Покажи всех пользователей": {
+      "sql": "SELECT * FROM equsers;",
+      "status": "success"
+    },
+    "Список отделов": {
+      "sql": "SELECT name FROM eq_departments WHERE deleted = FALSE;",
+      "status": "success"
+    },
+    "Все клиенты": {
+      "sql": "SELECT * FROM equsers;",
+      "status": "success"
+    },
+    "Пользователи по отделам": {
+      "sql": "SELECT e.id, e.login, ed.name AS department_name\nFROM equsers e\nJOIN eq_departments ed ON e.department = ed.id;",
+      "status": "success"
+    }
+  }
+}

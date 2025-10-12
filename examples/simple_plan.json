@@ -1,0 +1,26 @@
+{
+  "question": "Покажи всех клиентов из Москвы",
+  "plan": {
+    "tables": [
+      "tbl_business_unit"
+    ],
+    "fields": [
+      "business_unit_name",
+      "inn",
+      "region"
+    ],
+    "conditions": [
+      {
+        "field": "region",
+        "operator": "=",
+        "value": "Москва"
+      }
+    ],
+    "order_by": [
+      "business_unit_name"
+    ]
+  },
+  "category": "Клиенты",
+  "complexity": 2,
+  "description": "Поиск клиентов по региону"
+}
