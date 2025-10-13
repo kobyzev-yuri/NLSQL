@@ -4,7 +4,8 @@
 
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+import json
 from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,10 @@ class QueryService:
         Инициализация сервиса
         """
         self.pipeline = None
+        self.entities: Dict[str, Any] = {}
+        self.payments_hint: Optional[str] = None
         self._initialize_pipeline()
+        self._load_entities_and_build_hints()
     
     def _initialize_pipeline(self):
         """
@@ -52,6 +56,41 @@ class QueryService:
         except Exception as e:
             logger.error(f"Ошибка инициализации пайплайна: {e}")
             raise
+
+    def _load_entities_and_build_hints(self) -> None:
+        """Загружает entities.json и подготавливает подсказки по платежным таблицам/полям."""
+        try:
+            with open('data/entities.json', 'r', encoding='utf-8') as f:
+                self.entities = json.load(f)
+            payments = None
+            for ent in self.entities.get('entities', []):
+                if ent.get('code') == 'payments':
+                    payments = ent
+                    break
+            if payments and payments.get('tables'):
+                table_names: List[str] = []
+                sample_columns: List[str] = []
+                for t in payments['tables']:
+                    name = t.get('name')
+                    if name:
+                        table_names.append(name)
+                    cols = t.get('columns', [])
+                    for c in cols[:3]:
+                        cn = c.get('name')
+                        if cn and cn not in sample_columns:
+                            sample_columns.append(cn)
+                    if len(table_names) >= 3:
+                        break
+                tables_str = ', '.join(table_names[:3])
+                cols_str = ', '.join(sample_columns[:8])
+                self.payments_hint = (
+                    f"Используй платежные таблицы: {tables_str}. "
+                    f"Типичные поля: {cols_str}. "
+                    f"Фильтры по дате: payment_date, по статусу: payment_status, суммы: amount_payment_rubles."
+                )
+                logger.info("Подсказка для платежей подготовлена")
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить entities.json или построить подсказки: {e}")
     
     async def generate_sql(self, question: str, user_context: Dict[str, Any]) -> str:
         """
@@ -67,8 +106,14 @@ class QueryService:
         try:
             logger.info(f"Генерация SQL для вопроса: {question}")
             
+            # Гибридная подсказка: если вопрос про платежи — добавим контекст из entities/kb_v2
+            augmented_question = question
+            lower_q = (question or '').lower()
+            if any(k in lower_q for k in ['платеж', 'платёж', 'payment', 'платежи', 'платежей']):
+                if self.payments_hint:
+                    augmented_question = f"{question}\n\nКонтекст БД: {self.payments_hint}"
             # Генерация SQL через оптимизированный пайплайн
-            result = self.pipeline.generate_sql(question, prefer_model='auto')
+            result = self.pipeline.generate_sql(augmented_question, prefer_model='auto')
             
             if result and result.get('success') and result.get('sql'):
                 sql = result['sql']
