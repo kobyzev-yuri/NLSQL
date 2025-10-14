@@ -153,8 +153,8 @@ system_tables = [
 ```python
 gpt4_config = {
     'model': 'gpt-4o',
-    'api_key': 'sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV',
-    'base_url': 'https://api.proxyapi.ru/openai/v1',
+    'api_key': '<ENV:PROXYAPI_KEY|OPENAI_API_KEY>',
+    'base_url': '<ENV:OPENAI_BASE_URL|https://api.proxyapi.ru/openai/v1>',
     'temperature': 0.2
 }
 ```
@@ -168,6 +168,9 @@ ollama_config = {
     'temperature': 0.2
 }
 ```
+
+### Security note
+- Никогда не хардкодьте ключи API в коде/документации. Используйте переменные окружения (`PROXYAPI_KEY`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`).
 
 ## 📁 Файлы
 
