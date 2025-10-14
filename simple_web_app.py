@@ -38,7 +38,7 @@ def get_optimized_pipeline():
             gpt4_config = {
                 "database_url": "postgresql://postgres:1234@localhost:5432/test_docstructure",
                 "vector_table": "vanna_vectors",
-                "api_key": os.getenv("PROXYAPI_KEY") or "sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV",
+                "api_key": os.getenv("PROXYAPI_KEY"),
                 "model": "gpt-4o",
                 "base_url": "https://api.proxyapi.ru/openai/v1",
                 "temperature": 0.2

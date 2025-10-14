@@ -98,12 +98,14 @@ class PlanToSQLConverter:
             
             # GROUP BY clause
             if group_by:
-                group_clause = ", ".join(group_by)
+                group_clean = [g.rstrip(';').strip() for g in group_by]
+                group_clause = ", ".join(group_clean)
                 sql_parts.append(f"GROUP BY {group_clause}")
             
             # ORDER BY clause
             if order_by:
-                order_clause = ", ".join(order_by)
+                order_clean = [o.rstrip(';').strip() for o in order_by]
+                order_clause = ", ".join(order_clean)
                 sql_parts.append(f"ORDER BY {order_clause}")
             
             # LIMIT clause
@@ -159,7 +161,13 @@ class PlanToSQLConverter:
             if isinstance(value, str) and operator in ['LIKE', 'ILIKE']:
                 where_parts.append(f"{field} {operator} '{value}'")
             elif isinstance(value, str):
-                where_parts.append(f"{field} {operator} '{value}'")
+                # if value looks like a SQL function/expression (e.g., DATE_TRUNC('year', CURRENT_DATE))
+                is_expression = bool(re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*\(", value)) or '::' in value
+                cleaned = value.strip().rstrip(';')
+                if is_expression:
+                    where_parts.append(f"{field} {operator} {cleaned}")
+                else:
+                    where_parts.append(f"{field} {operator} '{cleaned}'")
             else:
                 where_parts.append(f"{field} {operator} {value}")
         
@@ -187,7 +195,7 @@ class SQLToPlanConverter:
             
             # Извлекаем компоненты
             select_match = re.search(r'SELECT\s+(.*?)\s+FROM', sql_clean, re.IGNORECASE)
-            from_match = re.search(r'FROM\s+(\w+)', sql_clean, re.IGNORECASE)
+            from_match = re.search(r'FROM\s+([\w\.]+)', sql_clean, re.IGNORECASE)
             where_match = re.search(r'WHERE\s+(.*?)(?:\s+GROUP\s+BY|\s+ORDER\s+BY|\s+LIMIT|$)', sql_clean, re.IGNORECASE)
             group_by_match = re.search(r'GROUP\s+BY\s+(.*?)(?:\s+ORDER\s+BY|\s+LIMIT|$)', sql_clean, re.IGNORECASE)
             order_by_match = re.search(r'ORDER\s+BY\s+(.*?)(?:\s+LIMIT|$)', sql_clean, re.IGNORECASE)
@@ -235,29 +243,19 @@ class SQLToPlanConverter:
         
         # Простая логика разбора условий
         # В реальной реализации нужен более сложный парсер
-        parts = conditions_str.split(' AND ')
+        parts = re.split(r'\s+AND\s+', conditions_str, flags=re.IGNORECASE)
         
         for part in parts:
             part = part.strip()
-            if '=' in part:
-                field, value = part.split('=', 1)
+            if not part:
+                continue
+            # поддержка операторов: >=, <=, <>, !=, =, >, < (двухсимвольные первыми)
+            m = re.match(r'([\w\.\(\)]+)\s*(<>|!=|>=|<=|=|>|<)\s*(.+)', part)
+            if m:
+                field, op, value = m.group(1), m.group(2), m.group(3)
                 conditions.append({
                     'field': field.strip(),
-                    'operator': '=',
-                    'value': value.strip().strip("'\"")
-                })
-            elif '>' in part:
-                field, value = part.split('>', 1)
-                conditions.append({
-                    'field': field.strip(),
-                    'operator': '>',
-                    'value': value.strip().strip("'\"")
-                })
-            elif '<' in part:
-                field, value = part.split('<', 1)
-                conditions.append({
-                    'field': field.strip(),
-                    'operator': '<',
+                    'operator': op,
                     'value': value.strip().strip("'\"")
                 })
         

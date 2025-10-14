@@ -15,11 +15,17 @@ def run_command(command, name, port):
     """Запуск команды в фоновом режиме"""
     try:
         print(f"🚀 Запуск {name} на порту {port}...")
+        logs_dir = Path("/mnt/ai/cnn/sql4A/logs")
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        stdout_path = logs_dir / f"{name.replace(' ', '_').lower()}_{port}.out"
+        stderr_path = logs_dir / f"{name.replace(' ', '_').lower()}_{port}.err"
+        stdout_file = open(stdout_path, "ab", buffering=0)
+        stderr_file = open(stderr_path, "ab", buffering=0)
         process = subprocess.Popen(
             command,
             shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout_file,
+            stderr=stderr_file,
             preexec_fn=os.setsid if os.name != 'nt' else None
         )
         return process
@@ -43,23 +49,23 @@ def main():
     print("🏗️ Запуск полной архитектуры NL→SQL системы...")
     print("=" * 60)
     
-    # Список сервисов для запуска
+    # Список сервисов для запуска (uvicorn)
     services = [
         {
             "name": "Mock Customer API",
-            "command": "cd /mnt/ai/cnn/sql4A && python src/mock_customer_api.py",
+            "command": "cd /mnt/ai/cnn/sql4A && uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8080",
             "port": 8080,
             "url": "http://localhost:8080"
         },
         {
             "name": "FastAPI NL→SQL Service", 
-            "command": "cd /mnt/ai/cnn/sql4A && python src/api/main.py",
+            "command": "cd /mnt/ai/cnn/sql4A && uvicorn src.api.main:app --host 0.0.0.0 --port 8000",
             "port": 8000,
             "url": "http://localhost:8000"
         },
         {
             "name": "Web Interface",
-            "command": "cd /mnt/ai/cnn/sql4A && python src/web_interface.py", 
+            "command": "cd /mnt/ai/cnn/sql4A && uvicorn src.web_interface:web_app --host 0.0.0.0 --port 3000", 
             "port": 3000,
             "url": "http://localhost:3000"
         }

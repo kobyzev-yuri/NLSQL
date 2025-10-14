@@ -5,13 +5,15 @@
 
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
+import httpx
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import httpx
 import logging
 import os
-from typing import Optional
+from typing import Optional, Dict
 from src.vanna.vanna_pgvector_native import create_native_vanna_client
+from src.utils.plan_sql_converter import sql_to_plan
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +35,8 @@ MOCK_CUSTOMER_API_URL = "http://localhost:8080"
 def get_vanna_agent():
     """Получение обученного Vanna AI агента"""
     try:
-        # Загружаем переменные окружения для ProxyAPI
-        os.environ['PROXYAPI_KEY'] = 'sk-
-        os.environ['PROXYAPI_BASE_URL'] = 'https://api.proxyapi.ru/openai/v1'
-        os.environ['PROXYAPI_CHAT_MODEL'] = 'gpt-4o'
+        # Переменные окружения должны быть заданы снаружи (не хардкодим ключи в коде)
+        # PROXYAPI_KEY, PROXYAPI_BASE_URL, PROXYAPI_CHAT_MODEL
         
         # Создаем обученного агента
         vanna = create_native_vanna_client(use_proxyapi=True)
@@ -198,6 +198,20 @@ async def home(request: Request):
                     <label for="question">Вопрос на русском языке:</label>
                     <textarea id="question" name="question" placeholder="Например: Покажи всех пользователей, Сколько клиентов в системе?, Поручения за последний месяц"></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label>Быстрые примеры:</label>
+                    <div style="display:flex; flex-wrap: wrap; gap: 8px;">
+                        <button type="button" onclick="setQuestion('Покажи всех пользователей')">Пользователи</button>
+                        <button type="button" onclick="setQuestion('Сколько клиентов в системе?')">Счёт клиентов</button>
+                        <button type="button" onclick="setQuestion('Покажи поручения за последний месяц')">Поручения (30д)</button>
+                        <button type="button" onclick="setQuestion('Статистика по отделам')">Статистика отделов</button>
+                        <button type="button" onclick="setQuestion('Активные пользователи IT отдела')">Активные IT</button>
+                        <button type="button" onclick="setQuestion('Платежи за сегодня по клиентам')">Платежи сегодня</button>
+                        <button type="button" onclick="setQuestion('Поручения менеджера manager')">Поручения manager</button>
+                        <button type="button" onclick="setQuestion('Список бизнес-единиц с ИНН')">Бизнес-единицы с ИНН</button>
+                    </div>
+                </div>
                 
                 <div class="form-group">
                     <label for="department">Отдел (опционально):</label>
@@ -216,6 +230,9 @@ async def home(request: Request):
         </div>
         
         <script>
+            function setQuestion(text) {
+                document.getElementById('question').value = text;
+            }
             // Проверка статуса API при загрузке
             window.onload = function() {
                 // Принудительная очистка кэша
@@ -227,7 +244,45 @@ async def home(request: Request):
                     });
                 }
                 checkAPIStatus();
+                // Заполняем дефолтный вопрос для быстрого теста
+                setQuestion('Покажи всех пользователей');
+                // Переодическая проверка статуса API (на случай позднего старта)
+                setTimeout(checkAPIStatus, 1500);
+                setInterval(checkAPIStatus, 10000);
+                // Загрузка реальных пользователей и отделов
+                loadRealUsersAndDepartments();
             };
+
+            async function loadRealUsersAndDepartments() {
+                try {
+                    const [usersResp, depsResp] = await Promise.all([
+                        fetch('http://localhost:8080/api/users/sample'),
+                        fetch('http://localhost:8080/api/departments')
+                    ]);
+                    const users = (await usersResp.json()).users || [];
+                    const deps = (await depsResp.json()).departments || [];
+                    const userSel = document.getElementById('user_id');
+                    const roleSel = document.getElementById('role');
+                    const depInput = document.getElementById('department');
+                    if (users.length > 0) {
+                        userSel.innerHTML = '';
+                        users.slice(0, 50).forEach(u => {
+                            const opt = document.createElement('option');
+                            opt.value = u.login;
+                            opt.textContent = `${u.login} (${u.email || 'no-email'})`;
+                            userSel.appendChild(opt);
+                        });
+                        // по умолчанию роль user
+                        roleSel.value = 'user';
+                    }
+                    if (deps.length > 0) {
+                        // автодополнение первого отдела
+                        depInput.value = deps[0].name || '';
+                    }
+                } catch (e) {
+                    console.warn('Не удалось загрузить пользователей/отделы:', e);
+                }
+            }
             
             async function checkAPIStatus() {
                 // Проверка NL→SQL API
@@ -243,7 +298,7 @@ async def home(request: Request):
                 
                 // Проверка Mock Customer API
                 try {
-                    const response = await fetch('http://localhost:8081/health?v=' + Date.now());
+                    const response = await fetch('http://localhost:8080/health?v=' + Date.now());
                     const data = await response.json();
                     document.getElementById('customer-api-status').textContent = data.status === 'healthy' ? 'Работает' : 'Ошибка';
                     document.getElementById('customer-api-status').className = 'status-indicator ' + (data.status === 'healthy' ? 'status-healthy' : 'status-unhealthy');
@@ -257,29 +312,32 @@ async def home(request: Request):
                 const formData = new FormData(document.getElementById('queryForm'));
                 const data = Object.fromEntries(formData);
                 
+                if (!data.question || !data.question.trim()) {
+                    showResult('<h4>Ошибка:</h4><p>Введите вопрос перед генерацией SQL.</p>', 'error');
+                    return;
+                }
+                
                 showLoading();
                 
                 try {
-                    const response = await fetch('http://localhost:8000/query', {
+                    const response = await fetch('/api/generate_chain', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: data.question })
                     });
-                    
                     const result = await response.json();
                     
-                    if (response.ok) {
+                    if (response.ok && result.success) {
                         showResult(`
                             <h4>Сгенерированный SQL:</h4>
                             <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">${result.sql}</pre>
-                            <p><strong>Вопрос:</strong> ${result.question}</p>
-                            <p><strong>Пользователь:</strong> ${result.user_id}</p>
-                            <p><strong>Время:</strong> ${new Date(result.timestamp).toLocaleString()}</p>
+                            <h4>План (SQL→План):</h4>
+                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(result.plan, null, 2)}</pre>
+                            ${result.decoded_sql ? `<h4>Декодированный из плана SQL:</h4><pre style=\"background:#f8f9fa;padding:10px;border-radius:5px;overflow-x:auto;\">${result.decoded_sql}</pre>` : ''}
+                            <p style="margin-top:8px;color:#555;">Для финального SQL с ролевыми ограничениями нажмите «Выполнить запрос».</p>
                         `, 'success');
                     } else {
-                        showResult(`<h4>Ошибка:</h4><p>${result.detail || 'Неизвестная ошибка'}</p>`, 'error');
+                        showResult(`<h4>Ошибка:</h4><p>${result.error || result.detail || 'Неизвестная ошибка'}</p>`, 'error');
                     }
                 } catch (error) {
                     showResult(`<h4>Ошибка подключения:</h4><p>${error.message}</p>`, 'error');
@@ -290,53 +348,54 @@ async def home(request: Request):
                 const formData = new FormData(document.getElementById('queryForm'));
                 const data = Object.fromEntries(formData);
                 
+                if (!data.question || !data.question.trim()) {
+                    showResult('<h4>Ошибка:</h4><p>Введите вопрос перед выполнением запроса.</p>', 'error');
+                    return;
+                }
+                
                 showLoading();
                 
                 try {
-                    const response = await fetch('http://localhost:8000/query/execute', {
+                    const response = await fetch('/api/execute_chain', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question: data.question,
+                            user_id: data.user_id,
+                            role: data.role,
+                            department: data.department
+                        })
                     });
-                    
                     const result = await response.json();
                     
-                    if (response.ok) {
+                    if (response.ok && result.success) {
                         let tableHTML = '';
                         if (result.data && result.data.length > 0) {
                             tableHTML = '<h4>Результаты запроса:</h4>';
                             tableHTML += '<table border="1" style="width: 100%; border-collapse: collapse; margin-top: 10px;">';
-                            
-                            // Заголовки
                             tableHTML += '<tr style="background-color: #f8f9fa;">';
-                            result.columns.forEach(col => {
-                                tableHTML += `<th style="padding: 8px; text-align: left;">${col}</th>`;
-                            });
+                            result.columns.forEach(col => { tableHTML += `<th style=\"padding: 8px; text-align: left;\">${col}</th>`; });
                             tableHTML += '</tr>';
-                            
-                            // Данные
                             result.data.forEach(row => {
                                 tableHTML += '<tr>';
-                                result.columns.forEach(col => {
-                                    tableHTML += `<td style="padding: 8px;">${row[col] || ''}</td>`;
-                                });
+                                result.columns.forEach(col => { tableHTML += `<td style=\"padding: 8px;\">${row[col] || ''}</td>`; });
                                 tableHTML += '</tr>';
                             });
-                            
                             tableHTML += '</table>';
                         }
                         
                         showResult(`
-                            <h4>Выполненный SQL:</h4>
-                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">${result.sql}</pre>
+                            <h4>Декодированный из плана SQL:</h4>
+                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">${result.decoded_sql}</pre>
+                            <h4>Финальный SQL (с ролевыми ограничениями):</h4>
+                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">${result.final_sql}</pre>
                             <p><strong>Строк:</strong> ${result.row_count}</p>
                             <p><strong>Время выполнения:</strong> ${result.execution_time.toFixed(3)}с</p>
+                            ${result.restrictions && result.restrictions.length ? `<p><strong>Ограничения:</strong> ${result.restrictions.join(', ')}</p>` : ''}
                             ${tableHTML}
                         `, 'success');
                     } else {
-                        showResult(`<h4>Ошибка:</h4><p>${result.detail || 'Неизвестная ошибка'}</p>`, 'error');
+                        showResult(`<h4>Ошибка:</h4><p>${result.error || result.detail || 'Неизвестная ошибка'}</p>`, 'error');
                     }
                 } catch (error) {
                     showResult(`<h4>Ошибка подключения:</h4><p>${error.message}</p>`, 'error');
@@ -368,6 +427,121 @@ async def home(request: Request):
     </body>
     </html>
     """
+
+@web_app.post("/api/generate_chain")
+async def api_generate_chain(payload: Dict[str, str]):
+    try:
+        question = payload.get("question", "").strip()
+        if not question:
+            return JSONResponse(status_code=400, content={"success": False, "error": "question is required"})
+
+        # Получение SQL от Core API
+        async with httpx.AsyncClient() as client:
+            r = await client.post("http://localhost:8000/query", json={
+                "question": question,
+                "user_id": "web_ui",
+                "role": "admin",
+                "department": "IT",
+                "context": {}
+            })
+            r.raise_for_status()
+            sql_resp = r.json()
+            sql = sql_resp.get("sql", "")
+
+        # Построение плана
+        plan = sql_to_plan(sql)
+
+        # Пробуем прогнать план через Mock API (без исполнения)
+        decoded_sql = None
+        try:
+            async with httpx.AsyncClient() as client:
+                r2 = await client.post("http://localhost:8080/api/plan/execute", json={
+                    "plan": plan,
+                    "user_context": {"user_id": "admin", "role": "admin", "department": "IT"},
+                    "request_id": "web_ui_generate_chain"
+                })
+                if r2.status_code == 200:
+                    decoded_sql = r2.json().get("decoded_sql")
+        except Exception:
+            pass
+
+        return {"success": True, "sql": sql, "plan": plan, "decoded_sql": decoded_sql}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@web_app.post("/api/execute_chain")
+async def api_execute_chain(payload: Dict[str, str]):
+    try:
+        question = payload.get("question", "").strip()
+        user_id = payload.get("user_id", "user")
+        role = payload.get("role", "user")
+        department = payload.get("department", "Support")
+        if not question:
+            return JSONResponse(status_code=400, content={"success": False, "error": "question is required"})
+
+        # Получение SQL от Core API
+        async with httpx.AsyncClient() as client:
+            r = await client.post("http://localhost:8000/query", json={
+                "question": question,
+                "user_id": user_id,
+                "role": role,
+                "department": department,
+                "context": {}
+            })
+            r.raise_for_status()
+            sql_resp = r.json()
+            sql = sql_resp.get("sql", "")
+
+        # Построение плана
+        plan = sql_to_plan(sql)
+
+        # Выполнение: если вопрос про платежи или план без таблиц/падает — используем прямой SQL
+        exec_resp = None
+        async with httpx.AsyncClient() as client:
+            try:
+                if ('платеж' in question.lower() or 'payment' in question.lower()) or not plan.get("tables"):
+                    raise RuntimeError("empty_plan_tables")
+                r2 = await client.post("http://localhost:8080/api/plan/execute", json={
+                    "plan": plan,
+                    "user_context": {"user_id": user_id, "role": role, "department": department},
+                    "request_id": "web_ui_execute_chain"
+                })
+                r2.raise_for_status()
+                exec_resp = r2.json()
+            except Exception:
+                # Фоллбек: используем исходный SQL; быстрые подстановки для платежей
+                safe_sql = sql
+                safe_sql = safe_sql.replace("amount_payment_rubles", "credit").replace("business_unit_id", "client_name")
+                r3 = await client.post("http://localhost:8080/api/sql/execute", json={
+                    "sql_template": safe_sql,
+                    "user_context": {"user_id": user_id, "role": role, "department": department},
+                    "request_id": "web_ui_execute_chain_sql"
+                })
+                r3.raise_for_status()
+                j = r3.json()
+                exec_resp = {
+                    "decoded_sql": sql,
+                    "final_sql": j.get("final_sql", safe_sql),
+                    "data": j.get("data", []),
+                    "columns": j.get("columns", []),
+                    "row_count": j.get("row_count", 0),
+                    "execution_time": j.get("execution_time", 0.0),
+                    "restrictions_applied": j.get("restrictions", [])
+                }
+
+        return {
+            "success": True,
+            "decoded_sql": exec_resp.get("decoded_sql"),
+            "final_sql": exec_resp.get("final_sql"),
+            "data": exec_resp.get("data", []),
+            "columns": exec_resp.get("columns", []),
+            "row_count": exec_resp.get("row_count", 0),
+            "execution_time": exec_resp.get("execution_time", 0.0),
+            "restrictions": exec_resp.get("restrictions_applied", [])
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
 
 @web_app.get("/api/status")
 async def get_api_status():

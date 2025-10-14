@@ -41,18 +41,18 @@ class OptimizedDualPipeline:
         self.gpt4_config = {
             'model': 'gpt-4o',
             'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
-            'api_key': 'sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV',
-            'base_url': 'https://api.proxyapi.ru/openai/v1',
-            'temperature': 0.2
+            'api_key': os.getenv('PROXYAPI_KEY') or os.getenv('PROXYAPI_API_KEY') or os.getenv('OPENAI_API_KEY'),
+            'base_url': os.getenv('OPENAI_BASE_URL', 'https://api.proxyapi.ru/openai/v1'),
+            'temperature': float(os.getenv('LLM_TEMPERATURE', '0.2'))
         }
         
         # Конфигурация для Ollama Llama 3 (резервная модель)
         self.ollama_config = {
-            'model': 'llama3:latest',
+            'model': os.getenv('OLLAMA_MODEL', 'llama3:latest'),
             'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
             'api_key': 'ollama',
-            'base_url': 'http://localhost:11434/v1',
-            'temperature': 0.2
+            'base_url': os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1'),
+            'temperature': float(os.getenv('LLM_TEMPERATURE', '0.2'))
         }
         
         # Объединяем с переданной конфигурацией

@@ -9,7 +9,7 @@
   },
   {
     "question": "Какие отделы есть в компании?",
-    "sql": "SELECT id, departmentname, parentid, description FROM eq_departments WHERE deleted = false",
+    "sql": "SELECT id, name, parent_id, code FROM eq_departments WHERE deleted = false",
     "context": "Организационная структура компании",
     "business_entity": "departments",
     "complexity": 1,
@@ -17,7 +17,7 @@
   },
   {
     "question": "Покажи всех клиентов с их контактами",
-    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email, region FROM tbl_business_unit WHERE deleted = false",
+    "sql": "SELECT id, name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false",
     "context": "Управление клиентской базой",
     "business_entity": "clients",
     "complexity": 1,
@@ -25,7 +25,7 @@
   },
   {
     "question": "Пользователи с их отделами",
-    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.departmentname FROM equsers u LEFT JOIN eq_departments d ON u.department = d.id WHERE u.deleted = false",
+    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.name AS department_name FROM equsers u LEFT JOIN eq_departments d ON u.department = d.id WHERE u.deleted = false",
     "context": "Организационная структура пользователей",
     "business_entity": "users",
     "complexity": 2,
@@ -33,7 +33,7 @@
   },
   {
     "question": "Поручения с информацией о клиентах",
-    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, pa.status, bu.business_unit_name, bu.inn FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.deleted = false",
+    "sql": "SELECT pa.contract_number, pa.contract_date, pa.agent_revenue, pa.client_name, pa.client_inn FROM tbl_principal_assignment pa WHERE pa.deleted = false",
     "context": "Управление поручениями клиентам",
     "business_entity": "assignments",
     "complexity": 2,
@@ -41,23 +41,16 @@
   },
   {
     "question": "Платежи от клиентов с суммами",
-    "sql": "SELECT ip.payment_number, ip.payment_date, ip.amount, bu.business_unit_name, bu.inn FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE ip.deleted = false",
+    "sql": "SELECT ip.id, ip.payment_date, ip.credit, ip.client_name, ip.client_inn FROM tbl_incoming_payments ip WHERE ip.deleted = false",
     "context": "Учет входящих платежей",
     "business_entity": "payments",
     "complexity": 2,
     "category": "Платежи"
   },
-  {
-    "question": "Пользователи с их ролями в системе",
-    "sql": "SELECT u.login, u.email, r.rolename, r.description FROM equsers u JOIN user_roles ur ON u.id = ur.user_id JOIN eqroles r ON ur.role_id = r.id WHERE u.deleted = false",
-    "context": "Управление правами доступа",
-    "business_entity": "users",
-    "complexity": 3,
-    "category": "Пользователи"
-  },
+  
   {
     "question": "Сколько пользователей в каждом отделе?",
-    "sql": "SELECT d.departmentname, COUNT(u.id) as user_count FROM eq_departments d LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false WHERE d.deleted = false GROUP BY d.id, d.departmentname ORDER BY user_count DESC",
+    "sql": "SELECT d.name AS department_name, COUNT(u.id) as user_count FROM eq_departments d LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false WHERE d.deleted = false GROUP BY d.id, d.name ORDER BY user_count DESC",
     "context": "Аналитика по организационной структуре",
     "business_entity": "departments",
     "complexity": 3,
@@ -65,7 +58,7 @@
   },
   {
     "question": "Поручения за последний месяц",
-    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.assignment_date >= CURRENT_DATE - INTERVAL '1 month' AND pa.deleted = false ORDER BY pa.assignment_date DESC",
+    "sql": "SELECT pa.contract_number, pa.contract_date, pa.agent_revenue, pa.principal_name FROM tbl_principal_assignment pa WHERE pa.contract_date >= CURRENT_DATE - INTERVAL '1 month' AND pa.deleted = false ORDER BY pa.contract_date DESC",
     "context": "Отчетность по поручениям за период",
     "business_entity": "assignments",
     "complexity": 2,
@@ -73,7 +66,7 @@
   },
   {
     "question": "Сумма платежей по месяцам",
-    "sql": "SELECT DATE_TRUNC('month', payment_date) as month, SUM(amount) as total_amount FROM tbl_incoming_payments WHERE deleted = false GROUP BY DATE_TRUNC('month', payment_date) ORDER BY month DESC",
+    "sql": "SELECT DATE_TRUNC('month', payment_date) as month, SUM(credit) as total_amount FROM tbl_incoming_payments WHERE deleted = false GROUP BY DATE_TRUNC('month', payment_date) ORDER BY month DESC",
     "context": "Финансовая аналитика по периодам",
     "business_entity": "payments",
     "complexity": 3,
@@ -81,7 +74,7 @@
   },
   {
     "question": "Покажи поручения старше 3 дней от клиентов категории А больше 1 млн рублей",
-    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name, bu.category FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.assignment_date < CURRENT_DATE - INTERVAL '3 days' AND bu.category = 'A' AND pa.amount > 1000000 AND pa.deleted = false ORDER BY pa.amount DESC",
+    "sql": "SELECT pa.contract_number, pa.contract_date, pa.agent_revenue, pa.principal_name FROM tbl_principal_assignment pa WHERE pa.contract_date < CURRENT_DATE - INTERVAL '3 days' AND pa.agent_revenue > 1000000 AND pa.deleted = false ORDER BY pa.agent_revenue DESC",
     "context": "Сложный аналитический запрос с множественными условиями",
     "business_entity": "assignments",
     "complexity": 4,
@@ -89,7 +82,7 @@
   },
   {
     "question": "Какие документы у клиента #876?",
-    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, pa.status FROM tbl_principal_assignment pa WHERE pa.business_unit_id = 876 AND pa.deleted = false ORDER BY pa.assignment_date DESC",
+    "sql": "SELECT pa.contract_number, pa.contract_date, pa.agent_revenue, pa.status_id FROM tbl_principal_assignment pa WHERE pa.id = '876' AND pa.deleted = false ORDER BY pa.contract_date DESC",
     "context": "Поиск документов конкретного клиента",
     "business_entity": "assignments",
     "complexity": 2,
@@ -97,23 +90,16 @@
   },
   {
     "question": "Когда последний платеж от клиента ООО Ромашка?",
-    "sql": "SELECT ip.payment_date, ip.amount, bu.business_unit_name FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE bu.business_unit_name ILIKE '%ООО Ромашка%' AND ip.deleted = false ORDER BY ip.payment_date DESC LIMIT 1",
+    "sql": "SELECT ip.payment_date, ip.credit, ip.client_name FROM tbl_incoming_payments ip WHERE ip.client_name ILIKE '%ООО Ромашка%' AND ip.deleted = false ORDER BY ip.payment_date DESC LIMIT 1",
     "context": "Поиск последнего платежа конкретного клиента",
     "business_entity": "payments",
     "complexity": 2,
     "category": "Временные запросы"
   },
-  {
-    "question": "Сколько клиентов в каждом регионе?",
-    "sql": "SELECT region, COUNT(*) as client_count FROM tbl_business_unit WHERE deleted = false GROUP BY region ORDER BY client_count DESC",
-    "context": "Географическая аналитика клиентов",
-    "business_entity": "clients",
-    "complexity": 2,
-    "category": "Аналитика"
-  },
+  
   {
     "question": "Топ-10 клиентов по сумме поручений",
-    "sql": "SELECT bu.business_unit_name, bu.inn, SUM(pa.amount) as total_assignments FROM tbl_business_unit bu JOIN tbl_principal_assignment pa ON bu.id = pa.business_unit_id WHERE bu.deleted = false AND pa.deleted = false GROUP BY bu.id, bu.business_unit_name, bu.inn ORDER BY total_assignments DESC LIMIT 10",
+    "sql": "SELECT pa.principal_name, pa.principal_inn, SUM(pa.agent_revenue) as total_assignments FROM tbl_principal_assignment pa WHERE pa.deleted = false GROUP BY pa.principal_name, pa.principal_inn ORDER BY total_assignments DESC LIMIT 10",
     "context": "Аналитика по клиентам и их активности",
     "business_entity": "clients",
     "complexity": 3,
@@ -121,7 +107,7 @@
   },
   {
     "question": "Пользователи отдела Продажи за последний месяц",
-    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.departmentname FROM equsers u JOIN eq_departments d ON u.department = d.id WHERE d.departmentname ILIKE '%Продажи%' AND u.creationdatetime >= CURRENT_DATE - INTERVAL '1 month' AND u.deleted = false",
+    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.name AS department_name FROM equsers u JOIN eq_departments d ON u.department = d.id WHERE d.name ILIKE '%Продажи%' AND u.creationdatetime >= CURRENT_DATE - INTERVAL '1 month' AND u.deleted = false",
     "context": "Аналитика пользователей по отделам за период",
     "business_entity": "users",
     "complexity": 3,
@@ -129,7 +115,7 @@
   },
   {
     "question": "Платежи за последний месяц от клиентов с ИНН больше 1 млн рублей",
-    "sql": "SELECT ip.payment_date, ip.amount, bu.business_unit_name, bu.inn FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE ip.payment_date >= CURRENT_DATE - INTERVAL '1 month' AND ip.amount > 1000000 AND ip.deleted = false ORDER BY ip.amount DESC",
+    "sql": "SELECT ip.payment_date, ip.credit, ip.client_name, ip.client_inn FROM tbl_incoming_payments ip WHERE ip.payment_date >= CURRENT_DATE - INTERVAL '1 month' AND ip.credit > 1000000 AND ip.deleted = false ORDER BY ip.credit DESC",
     "context": "Фильтрация платежей по сумме и периоду",
     "business_entity": "payments",
     "complexity": 3,
@@ -137,7 +123,7 @@
   },
   {
     "question": "Средняя сумма поручения по месяцам",
-    "sql": "SELECT DATE_TRUNC('month', assignment_date) as month, AVG(amount) as avg_amount, COUNT(*) as assignment_count FROM tbl_principal_assignment WHERE deleted = false GROUP BY DATE_TRUNC('month', assignment_date) ORDER BY month DESC",
+    "sql": "SELECT DATE_TRUNC('month', contract_date) as month, AVG(agent_revenue) as avg_amount, COUNT(*) as assignment_count FROM tbl_principal_assignment WHERE deleted = false GROUP BY DATE_TRUNC('month', contract_date) ORDER BY month DESC",
     "context": "Аналитика эффективности поручений",
     "business_entity": "assignments",
     "complexity": 3,
@@ -145,7 +131,7 @@
   },
   {
     "question": "Поручения в статусе 'В работе'",
-    "sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name FROM tbl_principal_assignment pa JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id WHERE pa.status = 'В работе' AND pa.deleted = false ORDER BY pa.assignment_date DESC",
+    "sql": "SELECT pa.contract_number, pa.contract_date, pa.agent_revenue, pa.principal_name FROM tbl_principal_assignment pa WHERE pa.status_id IS NOT NULL AND pa.deleted = false ORDER BY pa.contract_date DESC",
     "context": "Мониторинг активных поручений",
     "business_entity": "assignments",
     "complexity": 2,
@@ -153,7 +139,7 @@
   },
   {
     "question": "Количество новых клиентов по месяцам",
-    "sql": "SELECT DATE_TRUNC('month', creationdatetime) as month, COUNT(*) as new_clients FROM tbl_business_unit WHERE deleted = false GROUP BY DATE_TRUNC('month', creationdatetime) ORDER BY month DESC",
+    "sql": "SELECT DATE_TRUNC('month', creationdatetime) as month, COUNT(*) as new_assignments FROM tbl_principal_assignment WHERE deleted = false GROUP BY DATE_TRUNC('month', creationdatetime) ORDER BY month DESC",
     "context": "Аналитика роста клиентской базы",
     "business_entity": "clients",
     "complexity": 3,
@@ -161,7 +147,7 @@
   },
   {
     "question": "Пользователь с логином admin",
-    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.departmentname FROM equsers u LEFT JOIN eq_departments d ON u.department = d.id WHERE u.login = 'admin' AND u.deleted = false",
+    "sql": "SELECT u.login, u.email, u.surname, u.firstname, d.name AS department_name FROM equsers u LEFT JOIN eq_departments d ON u.department = d.id WHERE u.login = 'admin' AND u.deleted = false",
     "context": "Поиск конкретного пользователя",
     "business_entity": "users",
     "complexity": 2,
@@ -169,7 +155,7 @@
   },
   {
     "question": "Платежи на завтра",
-    "sql": "SELECT ip.payment_date, ip.amount, bu.business_unit_name FROM tbl_incoming_payments ip JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id WHERE ip.payment_date = CURRENT_DATE + INTERVAL '1 day' AND ip.deleted = false ORDER BY ip.amount DESC",
+    "sql": "SELECT ip.payment_date, ip.credit, ip.client_name FROM tbl_incoming_payments ip WHERE ip.payment_date = CURRENT_DATE + INTERVAL '1 day' AND ip.deleted = false ORDER BY ip.credit DESC",
     "context": "Планирование платежей",
     "business_entity": "payments",
     "complexity": 2,
@@ -177,7 +163,7 @@
   },
   {
     "question": "Сравни платежи за январь и февраль 2024 года",
-    "sql": "SELECT CASE WHEN EXTRACT(MONTH FROM payment_date) = 1 THEN 'Январь' ELSE 'Февраль' END as month, COUNT(*) as payment_count, SUM(amount) as total_amount FROM tbl_incoming_payments WHERE EXTRACT(YEAR FROM payment_date) = 2024 AND EXTRACT(MONTH FROM payment_date) IN (1, 2) AND deleted = false GROUP BY EXTRACT(MONTH FROM payment_date) ORDER BY month",
+    "sql": "SELECT CASE WHEN EXTRACT(MONTH FROM payment_date) = 1 THEN 'Январь' ELSE 'Февраль' END as month, COUNT(*) as payment_count, SUM(credit) as total_amount FROM tbl_incoming_payments WHERE EXTRACT(YEAR FROM payment_date) = 2024 AND EXTRACT(MONTH FROM payment_date) IN (1, 2) AND deleted = false GROUP BY EXTRACT(MONTH FROM payment_date) ORDER BY month",
     "context": "Сравнительный анализ по месяцам",
     "business_entity": "payments",
     "complexity": 4,
@@ -185,24 +171,73 @@
   },
   {
     "question": "Поручения по клиентам с ИНН",
-    "sql": "SELECT bu.business_unit_name, bu.inn, COUNT(pa.id) as assignment_count, SUM(pa.amount) as total_amount FROM tbl_business_unit bu LEFT JOIN tbl_principal_assignment pa ON bu.id = pa.business_unit_id AND pa.deleted = false WHERE bu.deleted = false GROUP BY bu.id, bu.business_unit_name, bu.inn ORDER BY total_amount DESC",
+    "sql": "SELECT pa.principal_name, pa.principal_inn, COUNT(pa.id) as assignment_count, SUM(pa.agent_revenue) as total_amount FROM tbl_principal_assignment pa WHERE pa.deleted = false GROUP BY pa.principal_name, pa.principal_inn ORDER BY total_amount DESC",
     "context": "Аналитика поручений по клиентам",
     "business_entity": "assignments",
     "complexity": 3,
     "category": "Аналитика"
   },
+  
   {
-    "question": "Активные пользователи за последние 30 дней",
-    "sql": "SELECT u.login, u.email, u.last_login FROM equsers u WHERE u.last_login >= CURRENT_DATE - INTERVAL '30 days' AND u.deleted = false ORDER BY u.last_login DESC",
-    "context": "Мониторинг активности пользователей",
-    "business_entity": "users",
+    "question": "Платежи по статусам за 30 дней",
+    "sql": "SELECT status_id, COUNT(*) as payment_count, SUM(credit) as total_amount FROM tbl_incoming_payments WHERE payment_date >= CURRENT_DATE - INTERVAL '30 days' AND deleted = false GROUP BY status_id ORDER BY total_amount DESC",
+    "context": "Аналитика платежей по статусам",
+    "business_entity": "payments",
     "complexity": 2,
-    "category": "Пользователи"
+    "category": "Аналитика"
   },
   {
-    "question": "Платежи по валютам",
-    "sql": "SELECT currency, COUNT(*) as payment_count, SUM(amount) as total_amount FROM tbl_incoming_payments WHERE deleted = false GROUP BY currency ORDER BY total_amount DESC",
-    "context": "Аналитика платежей по валютам",
+    "question": "Платежи за сегодня по клиентам",
+    "sql": "SELECT client_name, SUM(credit) AS total FROM tbl_incoming_payments WHERE payment_date >= date_trunc('day', CURRENT_DATE) AND deleted = false GROUP BY client_name ORDER BY total DESC",
+    "context": "Сумма платежей за текущий день по клиентам (credit)",
+    "business_entity": "payments",
+    "complexity": 2,
+    "category": "Аналитика"
+  },
+  {
+    "question": "Сумма платежей за месяц по статусам",
+    "sql": "SELECT payment_status, SUM(credit) AS total FROM tbl_incoming_payments WHERE payment_date >= date_trunc('month', CURRENT_DATE) AND deleted = false GROUP BY payment_status ORDER BY total DESC",
+    "context": "Сумма платежей по статусам за текущий месяц (credit)",
+    "business_entity": "payments",
+    "complexity": 2,
+    "category": "Аналитика"
+  },
+  {
+    "question": "Платежи за последние 7 дней (id, сумма, дата)",
+    "sql": "SELECT id, credit, payment_date FROM tbl_incoming_payments WHERE payment_date >= CURRENT_DATE - INTERVAL '7 days' AND deleted = false ORDER BY payment_date DESC LIMIT 200",
+    "context": "Выборка последних платежей за 7 дней (credit)",
+    "business_entity": "payments",
+    "complexity": 1,
+    "category": "Платежи"
+  },
+  {
+    "question": "ТОП-10 клиентов по сумме платежей за квартал",
+    "sql": "SELECT p.client_name, p.client_inn, SUM(p.credit) AS total_amount FROM tbl_incoming_payments p WHERE p.deleted = false AND p.payment_date >= date_trunc('quarter', CURRENT_DATE) GROUP BY p.client_name, p.client_inn ORDER BY total_amount DESC LIMIT 10",
+    "context": "Агрегация платежей по клиентам за квартал",
+    "business_entity": "payments",
+    "complexity": 3,
+    "category": "Аналитика"
+  },
+  {
+    "question": "Платежи больше 1 млн рублей",
+    "sql": "SELECT id, credit, payment_date FROM tbl_incoming_payments WHERE deleted = false AND credit > 1000000 ORDER BY credit DESC LIMIT 200",
+    "context": "Фильтрация крупных платежей",
+    "business_entity": "payments",
+    "complexity": 2,
+    "category": "Платежи"
+  },
+  {
+    "question": "Платежи за год по клиентам (по названию)",
+    "sql": "SELECT client_name, SUM(credit) AS total FROM tbl_incoming_payments WHERE payment_date >= date_trunc('year', CURRENT_DATE) GROUP BY client_name ORDER BY total DESC",
+    "context": "Агрегация платежей по названию клиента (credit)",
+    "business_entity": "payments",
+    "complexity": 2,
+    "category": "Аналитика"
+  },
+  {
+    "question": "Платежи за год по клиентам (по ИНН)",
+    "sql": "SELECT client_inn, SUM(credit) AS total FROM tbl_incoming_payments WHERE payment_date >= date_trunc('year', CURRENT_DATE) GROUP BY client_inn ORDER BY total DESC",
+    "context": "Агрегация платежей по ИНН клиента (credit)",
     "business_entity": "payments",
     "complexity": 2,
     "category": "Аналитика"

@@ -2,16 +2,20 @@
 Основной FastAPI сервер для NL→SQL системы
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
 from typing import Dict, Any
 
-from src.models.requests import QueryRequest, TrainingExampleRequest, HealthCheckRequest
-from src.models.responses import SQLResponse, QueryResultResponse, ErrorResponse, HealthCheckResponse, TrainingResponse
-from src.services.query_service import QueryService
-from src.services.customer_api_service import CustomerAPIService
+from models.requests import QueryRequest, TrainingExampleRequest, HealthCheckRequest
+from models.responses import SQLResponse, QueryResultResponse, ErrorResponse, HealthCheckResponse, TrainingResponse
+from services.query_service import QueryService
+from services.customer_api_service import CustomerAPIService
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

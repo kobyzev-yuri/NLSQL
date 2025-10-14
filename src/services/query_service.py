@@ -2,10 +2,12 @@
 Сервис для работы с запросами и Vanna AI
 """
 
-import logging
+import sys
 import os
-from typing import Dict, Any, Optional, List
-import json
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+import logging
+from typing import Dict, Any, Optional
 from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 
 logger = logging.getLogger(__name__)
@@ -21,26 +23,23 @@ class QueryService:
         Инициализация сервиса
         """
         self.pipeline = None
-        self.entities: Dict[str, Any] = {}
-        self.payments_hint: Optional[str] = None
         self._initialize_pipeline()
-        self._load_entities_and_build_hints()
     
     def _initialize_pipeline(self):
         """
         Инициализация оптимизированного пайплайна
         """
         try:
-            # Конфигурация для оптимизированного пайплайна
+            # Конфигурация для оптимизированного пайплайна (ключи соответствуют OptimizedDualPipeline)
             config = {
-                'gpt4_config': {
+                'gpt4': {
                     'model': 'gpt-4o',
                     'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
                     'api_key': os.getenv("PROXYAPI_KEY") or os.getenv("PROXYAPI_API_KEY") or os.getenv("OPENAI_API_KEY"),
                     'base_url': 'https://api.proxyapi.ru/openai/v1',
                     'temperature': 0.2
                 },
-                'ollama_config': {
+                'ollama': {
                     'model': 'llama3:latest',
                     'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
                     'api_key': 'ollama',
@@ -51,46 +50,13 @@ class QueryService:
             }
             
             self.pipeline = OptimizedDualPipeline(config)
+            # Флаг доступности внешнего API для выбора модели по умолчанию
+            self._has_gpt4_key = bool(config['gpt4']['api_key'])
             logger.info("Оптимизированный пайплайн инициализирован")
             
         except Exception as e:
             logger.error(f"Ошибка инициализации пайплайна: {e}")
             raise
-
-    def _load_entities_and_build_hints(self) -> None:
-        """Загружает entities.json и подготавливает подсказки по платежным таблицам/полям."""
-        try:
-            with open('data/entities.json', 'r', encoding='utf-8') as f:
-                self.entities = json.load(f)
-            payments = None
-            for ent in self.entities.get('entities', []):
-                if ent.get('code') == 'payments':
-                    payments = ent
-                    break
-            if payments and payments.get('tables'):
-                table_names: List[str] = []
-                sample_columns: List[str] = []
-                for t in payments['tables']:
-                    name = t.get('name')
-                    if name:
-                        table_names.append(name)
-                    cols = t.get('columns', [])
-                    for c in cols[:3]:
-                        cn = c.get('name')
-                        if cn and cn not in sample_columns:
-                            sample_columns.append(cn)
-                    if len(table_names) >= 3:
-                        break
-                tables_str = ', '.join(table_names[:3])
-                cols_str = ', '.join(sample_columns[:8])
-                self.payments_hint = (
-                    f"Используй платежные таблицы: {tables_str}. "
-                    f"Типичные поля: {cols_str}. "
-                    f"Фильтры по дате: payment_date, по статусу: payment_status, суммы: amount_payment_rubles."
-                )
-                logger.info("Подсказка для платежей подготовлена")
-        except Exception as e:
-            logger.warning(f"Не удалось загрузить entities.json или построить подсказки: {e}")
     
     async def generate_sql(self, question: str, user_context: Dict[str, Any]) -> str:
         """
@@ -105,28 +71,48 @@ class QueryService:
         """
         try:
             logger.info(f"Генерация SQL для вопроса: {question}")
-            
-            # Гибридная подсказка: если вопрос про платежи — добавим контекст из entities/kb_v2
-            augmented_question = question
-            lower_q = (question or '').lower()
-            if any(k in lower_q for k in ['платеж', 'платёж', 'payment', 'платежи', 'платежей']):
-                if self.payments_hint:
-                    augmented_question = f"{question}\n\nКонтекст БД: {self.payments_hint}"
-            # Генерация SQL через оптимизированный пайплайн
-            result = self.pipeline.generate_sql(augmented_question, prefer_model='auto')
-            
+
+            # Попытка 1: GPT-4 (если есть ключ)
+            prefer_primary = 'gpt4' if getattr(self, '_has_gpt4_key', False) else 'ollama'
+            result = self.pipeline.generate_sql(question, prefer_model=prefer_primary)
+
+            # Если неуспех из-за ключа/401 — фоллбэк на ollama
+            def need_fallback(res, err: Optional[Exception] = None) -> bool:
+                text = ''
+                if isinstance(res, dict):
+                    text = f"{res.get('error', '')} {res.get('message', '')}"
+                if err:
+                    text += f" {str(err)}"
+                text = text.lower()
+                return '401' in text or 'invalid api key' in text or 'unauthorized' in text
+
+            if not (result and result.get('success') and result.get('sql')) and (prefer_primary != 'ollama') and need_fallback(result):
+                logger.warning("Генерация через GPT-4 не удалась (ключ/401). Переход на ollama.")
+                result = self.pipeline.generate_sql(question, prefer_model='ollama')
+
             if result and result.get('success') and result.get('sql'):
                 sql = result['sql']
                 logger.info(f"Сгенерирован SQL с помощью {result.get('model', 'unknown')}: {sql}")
                 return sql
-            else:
-                error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
-                logger.error(f"Ошибка генерации SQL: {error_msg}")
-                raise Exception(f"Ошибка генерации SQL: {error_msg}")
-            
+
+            error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
+            logger.error(f"Ошибка генерации SQL: {error_msg}")
+            raise Exception(f"Ошибка генерации SQL: {error_msg}")
+
         except Exception as e:
-            logger.error(f"Ошибка генерации SQL: {e}")
-            raise
+            # Финальный фоллбэк: пробуем ollama один раз, если ранее не пробовали
+            try:
+                logger.warning(f"Повторная попытка генерации через ollama из-за ошибки: {e}")
+                result = self.pipeline.generate_sql(question, prefer_model='ollama')
+                if result and result.get('success') and result.get('sql'):
+                    sql = result['sql']
+                    logger.info(f"Сгенерирован SQL фоллбэком ollama: {sql}")
+                    return sql
+                error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
+                raise Exception(error_msg)
+            except Exception as e2:
+                logger.error(f"Ошибка генерации SQL после фоллбэка: {e2}")
+                raise
     
     async def add_training_example(self, question: str, sql: str, user_id: str, verified: bool = False):
         """
