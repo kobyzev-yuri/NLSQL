@@ -1,0 +1,296 @@
+{
+  "mistral:7b": {
+    "model": "mistral:7b",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 246.77801752090454,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.id, e.login, ed.name AS department_name\nFROM equsers e\nJOIN eq_departments ed ON e.department = ed.id;",
+        "duration": 43.81170964241028,
+        "quality_score": 6,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT *\nFROM eqorders\nWHERE creationdatetime >= NOW() - INTERVAL '1 month'\nAND deleted = FALSE;",
+        "duration": 47.731403827667236,
+        "quality_score": 5,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, d.name AS department_name\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id;",
+        "duration": 15.088287353515625,
+        "quality_score": 6,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT \n    d.name, \n    COUNT(u.id) AS num_users, \n    COUNT(DISTINCT u.department) AS unique_departments,\n    AVG(CASE WHEN u.deleted THEN 0 ELSE 1 END) AS avg_user_status\nFROM \n    equsers u\nJOIN \n    eq_departments d ON u.department = d.id\nWHERE \n    u.deleted IS FALSE\nGROUP BY \n    d.name, d.code\nORDER BY \n    num_users DESC;",
+        "duration": 91.63048315048218,
+        "quality_score": 9,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 89.00798029899597,
+      "average_quality": 5.8,
+      "total_duration": 445.03990149497986
+    }
+  },
+  "sqlcoder:latest": {
+    "model": "sqlcoder:latest",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 6.184534072875977,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.department, array_to_string(array_agg(e.login), ', ') AS users\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id\nWHERE e.deleted = FALSE\nGROUP BY e.department;",
+        "duration": 56.6224946975708,
+        "quality_score": 8,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT e.id, e.login, e.department, e.creationdatetime\nFROM equsers e\nWHERE e.deleted = FALSE AND e.creationdatetime >= NOW() - INTERVAL '1 month';",
+        "duration": 19.770464420318604,
+        "quality_score": 6,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, SUM(p.amount) AS total_payments\nFROM equsers e\nJOIN eqgroups g ON e.subdivisionid = g.id\nJOIN eqroles r ON g.id = r.id\nJOIN payments p ON e.id = p.user_id\nWHERE e.deleted = FALSE AND g.deleted = FALSE AND r.deleted = FALSE\nGROUP BY e.login;",
+        "duration": 65.38855123519897,
+        "quality_score": 9,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT d.name, COUNT(u.id) AS user_count\nFROM equsers u\nJOIN eq_departments d ON u.department = d.id\nWHERE u.deleted = FALSE AND d.deleted = FALSE\nGROUP BY d.name;",
+        "duration": 20.803001403808594,
+        "quality_score": 9,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 33.75380916595459,
+      "average_quality": 7.0,
+      "total_duration": 168.76904582977295
+    }
+  },
+  "phi3:latest": {
+    "model": "phi3:latest",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 5.973638296127319,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.id, e.login, e.department, d.name AS department_name\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id;",
+        "duration": 14.770627975463867,
+        "quality_score": 6,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT *\nFROM eqorders\nWHERE creationdatetime >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month';",
+        "duration": 40.038198471069336,
+        "quality_score": 5,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, SUM(p.amount) AS total_payments\nFROM equsers e\nJOIN payments p ON e.id = p.user_id\nGROUP BY e.login;",
+        "duration": 18.080224990844727,
+        "quality_score": 8,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT d.name, COUNT(u.id) AS user_count\nFROM equsers u\nJOIN eq_departments d ON u.department = d.id\nWHERE u.deleted = FALSE AND d.deleted = FALSE\nGROUP BY d.name;",
+        "duration": 18.869152545928955,
+        "quality_score": 9,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 19.546368455886842,
+      "average_quality": 6.2,
+      "total_duration": 97.7318422794342
+    }
+  },
+  "llama3:latest": {
+    "model": "llama3:latest",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 20.287172317504883,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.department, array_to_string(array_agg(e.login), ', ') AS users\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id\nWHERE e.deleted IS FALSE\nGROUP BY e.department;",
+        "duration": 39.239975929260254,
+        "quality_score": 8,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT e.id, e.login, e.department, e.creationdatetime\nFROM equsers e\nWHERE e.deleted = FALSE AND e.creationdatetime >= NOW() - INTERVAL '1 month';",
+        "duration": 13.769338846206665,
+        "quality_score": 6,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, SUM(p.amount) AS total_payments\nFROM equsers e\nJOIN eqroles r ON e.usertype = r.role_code\nJOIN payments p ON r.id = p.role_id\nWHERE e.deleted = FALSE AND r.deleted = FALSE\nGROUP BY e.login;",
+        "duration": 18.16262459754944,
+        "quality_score": 9,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT \n    d.name,\n    COUNT(e.id) AS num_users,\n    AVG(CASE WHEN e.accessgranted THEN 1 ELSE 0 END) AS avg_access_granted,\n    AVG(CASE WHEN e.is_personal_data_accepted THEN 1 ELSE 0 END) AS avg_personal_data_accepted,\n    AVG(CASE WHEN e.is_marketing_consent_given THEN 1 ELSE 0 END) AS avg_marketing_consent_given\nFROM \n    eq_departments d\nLEFT JOIN \n    equsers e ON d.id = e.department\nGROUP BY \n    d.name;",
+        "duration": 63.49122476577759,
+        "quality_score": 8,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 30.990067291259766,
+      "average_quality": 6.8,
+      "total_duration": 154.95033645629883
+    }
+  },
+  "qwen2.5-coder:1.5b": {
+    "model": "qwen2.5-coder:1.5b",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 3.9950311183929443,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.id, e.login, e.department, d.name\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id;",
+        "duration": 11.158360242843628,
+        "quality_score": 6,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT e.id, e.login, e.department, e.creationdatetime\nFROM equsers e\nWHERE e.deleted = FALSE\nAND e.creationdatetime >= NOW() - INTERVAL '1 month'\nORDER BY e.creationdatetime DESC;",
+        "duration": 16.148351907730103,
+        "quality_score": 6,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT equsers.login, SUM(CASE WHEN eqroles.rolename = 'Клиент' THEN 1 ELSE 0 END) AS payments\nFROM equsers\nJOIN eqroles ON equsers.id = eqroles.ownerid AND eqroles.rolename = 'Клиент'\nWHERE equsers.deleted IS FALSE\nGROUP BY equsers.login;",
+        "duration": 23.131121158599854,
+        "quality_score": 9,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT d.name, COUNT(u.id) AS user_count\nFROM equsers u\nJOIN eq_departments d ON u.department = d.id AND u.deleted = FALSE AND d.deleted = FALSE\nGROUP BY d.name;",
+        "duration": 15.046783208847046,
+        "quality_score": 8,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 13.895929527282714,
+      "average_quality": 6.4,
+      "total_duration": 69.47964763641357
+    }
+  },
+  "qwen2.5:1.5b": {
+    "model": "qwen2.5:1.5b",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 4.106022596359253,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.department, array_to_string(array_agg(e.displayname), ', ') AS users\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id\nWHERE e.deleted IS FALSE\nGROUP BY e.department;",
+        "duration": 35.971447229385376,
+        "quality_score": 8,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT *\nFROM equsers\nWHERE creationdatetime >= NOW() - INTERVAL '1 month'\nAND deleted = FALSE;",
+        "duration": 10.786196231842041,
+        "quality_score": 6,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, SUM(p.amount) AS total_payments\nFROM equsers e\nJOIN eqpayments p ON e.id = p.user_id\nGROUP BY e.login;",
+        "duration": 29.98530387878418,
+        "quality_score": 7,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT \n    d.name AS department_name,\n    COUNT(e.id) AS user_count,\n    SUM(CASE WHEN e.accessgranted THEN 1 ELSE 0 END) AS authorized_user_count,\n    AVG(CASE WHEN e.is_personal_data_accepted THEN 1 ELSE 0 END) AS personal_data_acceptance_rate\nFROM \n    eq_departments d\nLEFT JOIN \n    equsers e ON d.id = e.department\nGROUP BY \n    d.name, d.code\nORDER BY \n    user_count DESC;",
+        "duration": 74.3941900730133,
+        "quality_score": 8,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 31.048632001876832,
+      "average_quality": 6.4,
+      "total_duration": 155.24316000938416
+    }
+  },
+  "qwen3:8b": {
+    "model": "qwen3:8b",
+    "questions": {
+      "Покажи всех пользователей": {
+        "sql": "SELECT * FROM equsers;",
+        "duration": 4.033337593078613,
+        "quality_score": 3,
+        "success": true
+      },
+      "Список пользователей по отделам": {
+        "sql": "SELECT e.department, array_to_string(array_agg(e.login), ', ') AS users\nFROM equsers e\nJOIN eq_departments d ON e.department = d.id\nWHERE e.deleted IS FALSE\nGROUP BY e.department;",
+        "duration": 32.606826066970825,
+        "quality_score": 8,
+        "success": true
+      },
+      "Покажи поручения за последний месяц": {
+        "sql": "SELECT *\nFROM eqorders\nWHERE creationdatetime >= NOW() - INTERVAL '1 month'\nAND deleted = FALSE;",
+        "duration": 36.375792026519775,
+        "quality_score": 5,
+        "success": true
+      },
+      "Платежи по клиентам": {
+        "sql": "SELECT e.login, SUM(p.amount) AS total_payments\nFROM equsers e\nJOIN eqgroups g ON e.subdivisionid = g.id\nJOIN eqroles r ON g.id = r.id\nJOIN payments p ON e.id = p.user_id\nWHERE e.deleted = FALSE AND g.deleted = FALSE AND r.deleted = FALSE\nGROUP BY e.login;",
+        "duration": 67.11274313926697,
+        "quality_score": 9,
+        "success": true
+      },
+      "Статистика по отделам": {
+        "sql": "SELECT \n    d.name,\n    COUNT(e.id) AS total_users\nFROM \n    eq_departments d\nJOIN \n    equsers e ON e.department = d.id AND NOT e.deleted\nGROUP BY \n    d.name, d.code\nORDER BY \n    total_users DESC;",
+        "duration": 27.74222445487976,
+        "quality_score": 8,
+        "success": true
+      }
+    },
+    "summary": {
+      "total_questions": 5,
+      "successful_questions": 5,
+      "average_duration": 33.57418465614319,
+      "average_quality": 6.6,
+      "total_duration": 167.87092328071594
+    }
+  }
+}
