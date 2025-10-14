@@ -72,7 +72,7 @@ def get_query_service():
         # Создаем QueryService (он загружает KB и правильные данные)
         query_service = QueryService()
         logger.info("✅ QueryService с KB инициализирован")
-        return query_service
+        return query_service 
     except Exception as e:
         logger.error(f"❌ Ошибка инициализации QueryService: {e}")
         return None
