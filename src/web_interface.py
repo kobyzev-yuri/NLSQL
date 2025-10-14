@@ -34,7 +34,7 @@ def get_vanna_agent():
     """Получение обученного Vanna AI агента"""
     try:
         # Загружаем переменные окружения для ProxyAPI
-        os.environ['PROXYAPI_KEY'] = 'sk-xF20r7G4tq9ezBMNKIjCPvva2io4S8FV'
+        os.environ['PROXYAPI_KEY'] = 'sk-
         os.environ['PROXYAPI_BASE_URL'] = 'https://api.proxyapi.ru/openai/v1'
         os.environ['PROXYAPI_CHAT_MODEL'] = 'gpt-4o'
         
