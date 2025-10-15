@@ -46,9 +46,18 @@ class OptimizedDualPipeline:
             'temperature': float(os.getenv('LLM_TEMPERATURE', '0.2'))
         }
         
-        # Конфигурация для Ollama Llama 3 (резервная модель)
+        # Конфигурация для Ollama (резервная модель)
         self.ollama_config = {
             'model': os.getenv('OLLAMA_MODEL', 'llama3:latest'),
+            'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
+            'api_key': 'ollama',
+            'base_url': os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1'),
+            'temperature': float(os.getenv('LLM_TEMPERATURE', '0.2'))
+        }
+        
+        # Конфигурация для SQLCoder (специализированная SQL модель)
+        self.sqlcoder_config = {
+            'model': 'sqlcoder:latest',
             'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
             'api_key': 'ollama',
             'base_url': os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434/v1'),
@@ -58,10 +67,12 @@ class OptimizedDualPipeline:
         # Объединяем с переданной конфигурацией
         self.gpt4_config.update(config.get('gpt4', {}))
         self.ollama_config.update(config.get('ollama', {}))
+        self.sqlcoder_config.update(config.get('sqlcoder', {}))
         
         # Инициализируем агентов
         self.gpt4_agent = None
         self.ollama_agent = None
+        self.sqlcoder_agent = None
         self.current_model = None
         
         # Приоритетные бизнес-таблицы
@@ -86,7 +97,8 @@ class OptimizedDualPipeline:
         # Статистика использования
         self.usage_stats = {
             'gpt4': {'calls': 0, 'success': 0, 'errors': 0, 'total_time': 0},
-            'ollama': {'calls': 0, 'success': 0, 'errors': 0, 'total_time': 0}
+            'ollama': {'calls': 0, 'success': 0, 'errors': 0, 'total_time': 0},
+            'sqlcoder': {'calls': 0, 'success': 0, 'errors': 0, 'total_time': 0}
         }
         
         logger.info("✅ OptimizedDualPipeline инициализирован")
@@ -111,6 +123,17 @@ class OptimizedDualPipeline:
             return True
         except Exception as e:
             logger.error(f"❌ Ошибка инициализации Ollama: {e}")
+            return False
+    
+    def _init_sqlcoder_agent(self) -> bool:
+        """Инициализация SQLCoder агента"""
+        try:
+            if self.sqlcoder_agent is None:
+                self.sqlcoder_agent = DocStructureVannaNative(self.sqlcoder_config)
+                logger.info("✅ SQLCoder агент инициализирован")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Ошибка инициализации SQLCoder: {e}")
             return False
     
     def _get_optimized_context(self, question: str, agent: DocStructureVannaNative) -> str:
@@ -221,11 +244,13 @@ class OptimizedDualPipeline:
         
         # Определяем порядок моделей
         if prefer_model == 'gpt4':
-            models_order = ['gpt4', 'ollama']
+            models_order = ['gpt4', 'sqlcoder', 'ollama']
         elif prefer_model == 'ollama':
-            models_order = ['ollama', 'gpt4']
+            models_order = ['ollama', 'sqlcoder', 'gpt4']
+        elif prefer_model == 'sqlcoder':
+            models_order = ['sqlcoder', 'gpt4', 'ollama']
         else:  # auto
-            models_order = ['gpt4', 'ollama']  # GPT-4o по умолчанию
+            models_order = ['gpt4', 'sqlcoder', 'ollama']  # GPT-4o по умолчанию
         
         for model_name in models_order:
             try:
@@ -235,7 +260,11 @@ class OptimizedDualPipeline:
                     if not self._init_gpt4_agent():
                         continue
                     agent = self.gpt4_agent
-                else:
+                elif model_name == 'sqlcoder':
+                    if not self._init_sqlcoder_agent():
+                        continue
+                    agent = self.sqlcoder_agent
+                else:  # ollama
                     if not self._init_ollama_agent():
                         continue
                     agent = self.ollama_agent
@@ -310,6 +339,19 @@ class OptimizedDualPipeline:
             except Exception as e:
                 logger.error(f"❌ Ошибка обучения Ollama: {e}")
         
+        # Обучаем SQLCoder
+        if self._init_sqlcoder_agent():
+            try:
+                logger.info("📚 Обучение SQLCoder на схеме БД...")
+                schema_query = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS"
+                df_schema = self.sqlcoder_agent.run_sql(schema_query)
+                plan = self.sqlcoder_agent.get_training_plan_generic(df_schema)
+                self.sqlcoder_agent.train(plan=plan)
+                logger.info("✅ SQLCoder обучен на схеме")
+                success_count += 1
+            except Exception as e:
+                logger.error(f"❌ Ошибка обучения SQLCoder: {e}")
+        
         return success_count > 0
     
     def train_on_examples(self, examples: List[Dict[str, str]]) -> bool:
@@ -336,6 +378,13 @@ class OptimizedDualPipeline:
                     self.ollama_agent.train(question=question, sql=sql)
                 except Exception as e:
                     logger.warning(f"⚠️ Ошибка обучения Ollama на примере: {e}")
+            
+            # Обучаем SQLCoder
+            if self._init_sqlcoder_agent():
+                try:
+                    self.sqlcoder_agent.train(question=question, sql=sql)
+                except Exception as e:
+                    logger.warning(f"⚠️ Ошибка обучения SQLCoder на примере: {e}")
         
         logger.info(f"✅ Обучение на {len(examples)} примерах завершено")
         return True
@@ -389,6 +438,18 @@ class OptimizedDualPipeline:
         except Exception as e:
             logger.warning(f"⚠️ Ollama недоступен: {e}")
             health['ollama'] = False
+        
+        # Проверяем SQLCoder
+        try:
+            if self._init_sqlcoder_agent():
+                # Простой тест
+                test_result = self.sqlcoder_agent.generate_sql("SELECT 1")
+                health['sqlcoder'] = True
+            else:
+                health['sqlcoder'] = False
+        except Exception as e:
+            logger.warning(f"⚠️ SQLCoder недоступен: {e}")
+            health['sqlcoder'] = False
         
         return health
 

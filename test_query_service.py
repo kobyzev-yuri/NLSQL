@@ -47,3 +47,4 @@ async def test_query_service():
 
 if __name__ == "__main__":
     asyncio.run(test_query_service())
+

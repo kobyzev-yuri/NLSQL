@@ -290,3 +290,7 @@ python3 debug_semantic_search.py
 - RAG logs: `logs/rag_*.log`
 - SQL generation: `logs/sql_generation.log`
 - Performance: `logs/performance.log`
+
+
+
+

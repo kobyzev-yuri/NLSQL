@@ -134,3 +134,4 @@ async def test_semantic_search():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(test_semantic_search())
+
