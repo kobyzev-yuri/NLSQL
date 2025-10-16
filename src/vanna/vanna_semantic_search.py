@@ -64,11 +64,9 @@ class SemanticRAG:
     async def _generate_embedding(self, text: str) -> List[float]:
         """Генерация эмбеддинга для текста"""
         try:
-            response = self.client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=text
-            )
-            return response.data[0].embedding
+            from sentence_transformers import SentenceTransformer
+            model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            return model.encode(text, convert_to_tensor=True).tolist()
         except Exception as e:
             logger.error(f"❌ Ошибка генерации эмбеддинга: {e}")
             return []

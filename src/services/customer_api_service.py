@@ -15,7 +15,7 @@ class CustomerAPIService:
     Сервис для взаимодействия с API заказчика
     """
     
-    def __init__(self, customer_api_url: str = "http://localhost:8080"):
+    def __init__(self, customer_api_url: str = "http://localhost:8081"):
         """
         Инициализация сервиса
         

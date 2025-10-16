@@ -79,7 +79,7 @@ class VectorDBConfigs:
         """
         return {
             "vector_db": "weaviate",
-            "url": "http://localhost:8080",
+            "url": "http://localhost:8081",
             "api_key": os.getenv("WEAVIATE_API_KEY"),
             "class_name": "DocStructureSchema",
             "vector_dimension": 1536,

@@ -372,13 +372,13 @@ class DocStructureVectorDB(VannaBase):
             list: Вектор эмбеддинга
         """
         try:
-            # Простая реализация - возвращаем случайный вектор
-            # В реальной реализации здесь должен быть вызов OpenAI API
-            import random
-            return [random.random() for _ in range(1536)]
+            # Используем HF модель для генерации эмбеддингов (384 размерность)
+            from sentence_transformers import SentenceTransformer
+            model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            return model.encode(text, convert_to_tensor=True).tolist()
         except Exception as e:
             logger.error(f"❌ Ошибка генерации эмбеддинга: {e}")
-            return [0.0] * 1536
+            return [0.0] * 384
 
 class DocStructureVannaNative(DocStructureVectorDB, OpenAI_Chat):
     """
@@ -580,6 +580,53 @@ class DocStructureVannaNative(DocStructureVectorDB, OpenAI_Chat):
         except Exception as e:
             logger.error(f"❌ Ошибка обучения: {e}")
             raise
+    
+    def generate_sql(self, question: str) -> str:
+        """
+        Генерация SQL с использованием Vanna AI и пост-обработкой для PostgreSQL
+        
+        Args:
+            question: Вопрос на естественном языке
+            
+        Returns:
+            str: Сгенерированный SQL запрос
+        """
+        try:
+            # Используем стандартный метод Vanna AI
+            sql = super().generate_sql(question)
+            
+            # Post-process SQL to fix PostgreSQL dialect issues
+            sql = self._clean_sql(sql)
+            
+            return sql
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка генерации SQL: {e}")
+            raise
+    
+    def _clean_sql(self, sql: str) -> str:
+        """
+        Очистка SQL от проблем с диалектом PostgreSQL
+        
+        Args:
+            sql: Исходный SQL
+            
+        Returns:
+            str: Очищенный SQL
+        """
+        import re
+        
+        # Убираем ненужные префиксы схемы
+        sql = re.sub(r'public\.', '', sql)
+        
+        # Убираем лишние пробелы и переносы строк
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        
+        # Убираем точку с запятой в конце если есть
+        if sql.endswith(';'):
+            sql = sql[:-1]
+            
+        return sql
 
 def create_native_vanna_client(use_proxyapi: bool = True) -> DocStructureVannaNative:
     """

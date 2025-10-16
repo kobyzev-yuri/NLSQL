@@ -561,7 +561,7 @@ async def generate_sql(
             async with httpx.AsyncClient(timeout=3.0) as client:
                 # Сначала пробуем новую цепочку: отправляем ПЛАН в Mock API
                 resp = await client.post(
-                    "http://localhost:8080/api/plan/execute",
+                    "http://localhost:8081/api/plan/execute",
                     json={
                         "plan": plan,
                         "user_context": {
@@ -580,7 +580,7 @@ async def generate_sql(
                 else:
                     # Фоллбэк: старый путь SQL→Mock API
                     resp2 = await client.post(
-                        "http://localhost:8080/api/sql/execute",
+                        "http://localhost:8081/api/sql/execute",
                         json={
                             "sql_template": sql_template,
                             "user_context": {
@@ -705,7 +705,7 @@ async def execute_sql(
             logger.info(f"Отправка SQL в Mock API: {sql}")
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
-                    "http://localhost:8080/api/sql/execute",
+                    "http://localhost:8081/api/sql/execute",
                     json={
                         "sql_template": sql,  # Передаем исправленный SQL
                         "user_context": {

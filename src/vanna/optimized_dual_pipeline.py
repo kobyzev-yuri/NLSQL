@@ -222,11 +222,39 @@ class OptimizedDualPipeline:
         try:
             # Используем стандартный метод Vanna AI (контекст уже оптимизирован в get_related_ddl)
             response = agent.generate_sql(question)
+            
+            # Post-process SQL to fix PostgreSQL dialect issues
+            response = self._clean_sql(response)
+            
             return response
             
         except Exception as e:
             logger.error(f"❌ Ошибка генерации SQL с оптимизированным контекстом: {e}")
             return f"Ошибка генерации SQL: {e}"
+    
+    def _clean_sql(self, sql: str) -> str:
+        """
+        Очистка SQL от проблем с диалектом PostgreSQL
+        
+        Args:
+            sql: Исходный SQL
+            
+        Returns:
+            str: Очищенный SQL
+        """
+        import re
+        
+        # Убираем ненужные префиксы схемы
+        sql = re.sub(r'public\.', '', sql)
+        
+        # Убираем лишние пробелы и переносы строк
+        sql = re.sub(r'\s+', ' ', sql.strip())
+        
+        # Убираем точку с запятой в конце если есть
+        if sql.endswith(';'):
+            sql = sql[:-1]
+            
+        return sql
     
     def generate_sql(self, question: str, prefer_model: str = 'auto', timeout: int = 30) -> Dict[str, Any]:
         """

@@ -87,7 +87,7 @@ class QueryService:
                 'tables': ['equsers', 'eq_departments', 'eqroles', 'eqgroups']
             },
             'assignments': {
-                'keywords': ['поручение', 'assignment', 'задание', 'документ', 'договор', 'контракт'],
+                'keywords': ['поручение', 'поручения', 'assignment', 'assignments', 'задание', 'задания', 'документ', 'документы', 'договор', 'контракт', 'task', 'tasks'],
                 'tables': ['tbl_principal_assignment', 'tbl_business_unit', 'equsers']
             },
             'reports': {
@@ -148,14 +148,14 @@ class QueryService:
             # Семантический поиск с доменными фильтрами
             if self.semantic_vanna:
                 # Увеличиваем top_k для лучшего покрытия
-                results = self.semantic_vanna.get_similar_question_sql(question, top_k=10)
-                # Метод может быть корутиной в зависимости от реализации — корректно ждем
-                if hasattr(results, "__await__"):
-                    results = await results
+                results = await self.semantic_vanna.get_similar_question_sql(question, top_k=10)
                 if results:
                     context_parts = []
                     for result in results[:5]:  # Берем топ-5
-                        if hasattr(result, 'question') and hasattr(result, 'sql'):
+                        # Результат может быть строкой в формате "Q: ... A: ..."
+                        if isinstance(result, str):
+                            context_parts.append(result)
+                        elif hasattr(result, 'question') and hasattr(result, 'sql'):
                             context_parts.append(f"Q: {result.question}\nSQL: {result.sql}")
                     return "\n\n".join(context_parts)
             return ""
@@ -230,17 +230,10 @@ class QueryService:
                 LIMIT 10
             """)
             
-            # Семантический поиск с увеличенным top_k
-            client = OpenAI(
-                api_key=os.getenv("PROXYAPI_KEY"),
-                base_url="https://api.proxyapi.ru/openai/v1"
-            )
-            
-            response = client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=question
-            )
-            question_embedding = response.data[0].embedding
+            # Семантический поиск с HF моделью (384 размерность)
+            from sentence_transformers import SentenceTransformer
+            model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            question_embedding = model.encode(question, convert_to_tensor=True).tolist()
             embedding_str = '[' + ','.join(map(str, question_embedding)) + ']'
             
             semantic_results = await conn.fetch("""

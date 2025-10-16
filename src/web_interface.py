@@ -29,7 +29,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Конфигурация
 NL_SQL_API_URL = "http://localhost:8000"
-MOCK_CUSTOMER_API_URL = "http://localhost:8080"
+MOCK_CUSTOMER_API_URL = "http://localhost:8081"
 
 # Инициализация обученного Vanna AI агента
 def get_vanna_agent():
@@ -256,8 +256,8 @@ async def home(request: Request):
             async function loadRealUsersAndDepartments() {
                 try {
                     const [usersResp, depsResp] = await Promise.all([
-                        fetch('http://localhost:8080/api/users/sample'),
-                        fetch('http://localhost:8080/api/departments')
+                        fetch('http://localhost:8081/api/users/sample'),
+                        fetch('http://localhost:8081/api/departments')
                     ]);
                     const users = (await usersResp.json()).users || [];
                     const deps = (await depsResp.json()).departments || [];
@@ -298,7 +298,7 @@ async def home(request: Request):
                 
                 // Проверка Mock Customer API
                 try {
-                    const response = await fetch('http://localhost:8080/health?v=' + Date.now());
+                    const response = await fetch('http://localhost:8081/health?v=' + Date.now());
                     const data = await response.json();
                     document.getElementById('customer-api-status').textContent = data.status === 'healthy' ? 'Работает' : 'Ошибка';
                     document.getElementById('customer-api-status').className = 'status-indicator ' + (data.status === 'healthy' ? 'status-healthy' : 'status-unhealthy');
@@ -455,7 +455,7 @@ async def api_generate_chain(payload: Dict[str, str]):
         decoded_sql = None
         try:
             async with httpx.AsyncClient() as client:
-                r2 = await client.post("http://localhost:8080/api/plan/execute", json={
+                r2 = await client.post("http://localhost:8081/api/plan/execute", json={
                     "plan": plan,
                     "user_context": {"user_id": "admin", "role": "admin", "department": "IT"},
                     "request_id": "web_ui_generate_chain"
@@ -502,7 +502,7 @@ async def api_execute_chain(payload: Dict[str, str]):
             try:
                 if ('платеж' in question.lower() or 'payment' in question.lower()) or not plan.get("tables"):
                     raise RuntimeError("empty_plan_tables")
-                r2 = await client.post("http://localhost:8080/api/plan/execute", json={
+                r2 = await client.post("http://localhost:8081/api/plan/execute", json={
                     "plan": plan,
                     "user_context": {"user_id": user_id, "role": role, "department": department},
                     "request_id": "web_ui_execute_chain"
@@ -513,7 +513,7 @@ async def api_execute_chain(payload: Dict[str, str]):
                 # Фоллбек: используем исходный SQL; быстрые подстановки для платежей
                 safe_sql = sql
                 safe_sql = safe_sql.replace("amount_payment_rubles", "credit").replace("business_unit_id", "client_name")
-                r3 = await client.post("http://localhost:8080/api/sql/execute", json={
+                r3 = await client.post("http://localhost:8081/api/sql/execute", json={
                     "sql_template": safe_sql,
                     "user_context": {"user_id": user_id, "role": role, "department": department},
                     "request_id": "web_ui_execute_chain_sql"
