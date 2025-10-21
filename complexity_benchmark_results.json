@@ -1,0 +1,104 @@
+{
+  "complexity_groups": {
+    "Простые": {
+      "group": "Простые",
+      "count": 3,
+      "precision": 0.25,
+      "recall": 0.25,
+      "details": [
+        {
+          "question": "Покажи всех пользователей",
+          "reference_sql": "SELECT id, login, email, surname, firstname, department FROM equsers WHERE deleted = false",
+          "generated_sql": "SELECT *FROM equsers",
+          "precision": 0.25,
+          "recall": 0.25
+        },
+        {
+          "question": "Список отделов",
+          "reference_sql": "SELECT id, departmentname, parentid, description FROM eq_departments WHERE deleted = false",
+          "generated_sql": "SELECT *FROM eq_departments",
+          "precision": 0.25,
+          "recall": 0.25
+        },
+        {
+          "question": "Все клиенты",
+          "reference_sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = false",
+          "generated_sql": "SELECT *FROM tbl_business_unit",
+          "precision": 0.25,
+          "recall": 0.25
+        }
+      ]
+    },
+    "Средние": {
+      "group": "Средние",
+      "count": 4,
+      "precision": 0.47500000000000003,
+      "recall": 0.47500000000000003,
+      "details": [
+        {
+          "question": "Пользователи по отделам",
+          "reference_sql": "\n                SELECT u.login, u.email, u.surname, u.firstname, d.departmentname \n                FROM equsers u \n                LEFT JOIN eq_departments d ON u.department = d.id \n                WHERE u.deleted = false\n                ",
+          "generated_sql": "SELECT u.login, u.email, u.surname, u.firstname, d.departmentname \n                FROM equsers u \n                JOIN eq_departments d ON u.department = d.id",
+          "precision": 0.45,
+          "recall": 0.45
+        },
+        {
+          "question": "Поручения с клиентами",
+          "reference_sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, \n                       bu.business_unit_name, bu.inn\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.deleted = false\n                ",
+          "generated_sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, \n                       bu.business_unit_name, bu.inn\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.deleted = false",
+          "precision": 0.45,
+          "recall": 0.45
+        },
+        {
+          "question": "Пользователи с ролями",
+          "reference_sql": "\n                SELECT u.login, u.email, r.rolename, r.description\n                FROM equsers u\n                JOIN user_roles ur ON u.id = ur.user_id\n                JOIN eqroles r ON ur.role_id = r.id\n                WHERE u.deleted = false\n                ",
+          "generated_sql": "SELECT u.login, u.email, r.rolename, r.description\n                FROM equsers u\n                JOIN user_roles ur ON u.id = ur.user_id\n                JOIN eqroles r ON ur.role_id = r.id",
+          "precision": 0.45,
+          "recall": 0.45
+        },
+        {
+          "question": "Поручения за последний месяц",
+          "reference_sql": "\n                SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.assignment_date >= CURRENT_DATE - INTERVAL '1 month'\n                AND pa.deleted = false\n                ORDER BY pa.assignment_date DESC\n                ",
+          "generated_sql": "SELECT pa.assignment_number, pa.assignment_date, pa.amount, bu.business_unit_name\n                FROM tbl_principal_assignment pa\n                JOIN tbl_business_unit bu ON pa.business_unit_id = bu.id\n                WHERE pa.assignment_date >= CURRENT_DATE - INTERVAL '1 month'\n                AND pa.deleted = false\n                ORDER BY pa.assignment_date DESC",
+          "precision": 0.55,
+          "recall": 0.55
+        }
+      ]
+    },
+    "Сложные": {
+      "group": "Сложные",
+      "count": 3,
+      "precision": 0.5166666666666667,
+      "recall": 0.5166666666666667,
+      "details": [
+        {
+          "question": "Платежи по клиентам",
+          "reference_sql": "\n                SELECT bu.business_unit_name, SUM(ip.amount) as total_payments\n                FROM tbl_incoming_payments ip\n                JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id\n                WHERE ip.deleted = false\n                GROUP BY bu.id, bu.business_unit_name\n                ORDER BY total_payments DESC\n                ",
+          "generated_sql": "SELECT bu.business_unit_name, ip.amount as total_payments\n                FROM tbl_incoming_payments ip\n                JOIN tbl_business_unit bu ON ip.business_unit_id = bu.id\n                WHERE ip.deleted = false",
+          "precision": 0.55,
+          "recall": 0.55
+        },
+        {
+          "question": "Количество пользователей по отделам",
+          "reference_sql": "\n                SELECT d.departmentname, COUNT(u.id) as user_count\n                FROM eq_departments d\n                LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false\n                WHERE d.deleted = false\n                GROUP BY d.id, d.departmentname\n                ORDER BY user_count DESC\n                ",
+          "generated_sql": "SELECT d.departmentname, u.id as user_count\n                FROM eq_departments d\n                LEFT JOIN equsers u ON d.id = u.department AND u.deleted = false\n                WHERE d.deleted = false",
+          "precision": 0.55,
+          "recall": 0.55
+        },
+        {
+          "question": "Сумма платежей по месяцам",
+          "reference_sql": "\n                SELECT DATE_TRUNC('month', payment_date) as month, \n                       SUM(amount) as total_amount\n                FROM tbl_incoming_payments\n                WHERE deleted = false\n                GROUP BY DATE_TRUNC('month', payment_date)\n                ORDER BY month DESC\n                ",
+          "generated_sql": "SELECT DATE_TRUNC('month', payment_date) as month, \n                       SUM(amount) as total_amount\n                FROM tbl_incoming_payments\n                WHERE deleted = false",
+          "precision": 0.45,
+          "recall": 0.45
+        }
+      ]
+    }
+  },
+  "total_qa_pairs": 3,
+  "summary": {
+    "simple_count": 3,
+    "medium_count": 4,
+    "complex_count": 3
+  }
+}
