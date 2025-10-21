@@ -648,11 +648,11 @@ with st.sidebar:
     st.markdown("""
     **📚 Документация проекта:**
     
-    - [Training Guide](docs/VANNA_TRAINING_GUIDE.md) - руководство по обучению
-    - [QA Expansion](docs/customer_requests/CUSTOMER_QA_EXPANSION_REQUEST.md) - план расширения Q/A
-    - [RAG Checklist](RAG_IMPROVEMENT_CHECKLIST.md) - чеклист улучшений RAG
-    - [Vector KB Plan](VECTOR_KB_IMPROVEMENT_PLAN.md) - план улучшения векторки
-    - [Services Guide](docs/SERVICES_STARTUP_GUIDE.md) - руководство по сервисам
+    - [Training Guide](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/VANNA_TRAINING_GUIDE.md) - руководство по обучению
+    - [QA Expansion](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/customer_requests/CUSTOMER_QA_EXPANSION_REQUEST.md) - план расширения Q/A
+    - [RAG Checklist](https://github.com/kobyzev-yuri/NLSQL/blob/main/RAG_IMPROVEMENT_CHECKLIST.md) - чеклист улучшений RAG
+    - [Vector KB Plan](https://github.com/kobyzev-yuri/NLSQL/blob/main/VECTOR_KB_IMPROVEMENT_PLAN.md) - план улучшения векторки
+    - [Services Guide](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/SERVICES_STARTUP_GUIDE.md) - руководство по сервисам
     
     **💡 Подсказка:** Документы находятся в корне проекта. 
     
@@ -666,6 +666,10 @@ with st.sidebar:
     cat docs/VANNA_TRAINING_GUIDE.md
     less VECTOR_KB_IMPROVEMENT_PLAN.md
     ```
+    
+    **🌐 GitHub репозиторий:**
+    - [kobyzev-yuri/NLSQL](https://github.com/kobyzev-yuri/NLSQL) - основной репозиторий
+    - Или используйте локальные ссылки выше
     """)
 
 # Футер
