@@ -102,7 +102,7 @@ with tab1:
                 try:
                     vanna = get_vanna_client()
                     if vanna:
-                        # Выполняем поиск в зависимости от типа
+                        # Выполняем поиск в зависимости от типа (синхронно)
                         if search_type == "semantic":
                             results = vanna.get_related_ddl(query)
                         elif search_type == "ddl":
@@ -111,6 +111,10 @@ with tab1:
                             results = vanna.get_related_documentation(query)
                         elif search_type == "examples":
                             results = vanna.get_related_question_sql(query)
+                        
+                        # Если результат - корутина, ждем его
+                        if hasattr(results, '__await__'):
+                            results = asyncio.run(results)
                         
                         st.success(f"Найдено {len(results)} результатов")
                         
@@ -133,7 +137,7 @@ with tab2:
         st.subheader("Ручное добавление")
         
         question = st.text_area("Вопрос:", height=100)
-        sql = st.text_area("SQL запрос:", height=200, language="sql")
+        sql = st.text_area("SQL запрос:", height=200)
         
         if st.button("➕ Добавить Q/A пару"):
             if question and sql:
@@ -187,7 +191,6 @@ with tab3:
         ddl_text = st.text_area(
             "DDL скрипты:",
             height=200,
-            language="sql",
             help="Вставьте CREATE TABLE, ALTER TABLE и другие DDL команды"
         )
         
