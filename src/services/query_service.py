@@ -7,7 +7,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 from src.vanna.vanna_semantic_fixed import create_semantic_vanna_client
 
@@ -410,6 +410,54 @@ class QueryService:
             logger.error(f"Ошибка получения статуса обучения: {e}")
             raise
     
+    async def test_vector_search(self, question: str, search_type: str = "semantic", limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        Тестирование семантического поиска в векторной базе данных
+        
+        Args:
+            question: Вопрос для поиска
+            search_type: Тип поиска (semantic, ddl, documentation, examples)
+            limit: Максимальное количество результатов
+            
+        Returns:
+            List[Dict[str, Any]]: Результаты поиска
+        """
+        try:
+            logger.info(f"Тестирование поиска: {question} (тип: {search_type})")
+            
+            if not self.semantic_vanna:
+                logger.error("Семантический RAG не инициализирован")
+                return []
+            
+            # Выполняем поиск в зависимости от типа
+            if search_type == "semantic":
+                results = await self.semantic_vanna.get_related_ddl(question)
+            elif search_type == "ddl":
+                results = await self.semantic_vanna.get_related_ddl(question)
+            elif search_type == "documentation":
+                results = await self.semantic_vanna.get_related_documentation(question)
+            elif search_type == "examples":
+                results = await self.semantic_vanna.get_related_question_sql(question)
+            else:
+                # По умолчанию используем семантический поиск
+                results = await self.semantic_vanna.get_related_ddl(question)
+            
+            # Форматируем результаты
+            formatted_results = []
+            for i, result in enumerate(results[:limit]):
+                formatted_results.append({
+                    "content": result,
+                    "type": search_type,
+                    "rank": i + 1
+                })
+            
+            logger.info(f"Найдено {len(formatted_results)} результатов для типа {search_type}")
+            return formatted_results
+            
+        except Exception as e:
+            logger.error(f"Ошибка тестирования поиска: {e}")
+            return []
+
     def is_ready(self) -> bool:
         """
         Проверка готовности сервиса

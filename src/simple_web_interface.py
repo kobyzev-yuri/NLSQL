@@ -65,6 +65,17 @@ app = FastAPI(
     version="2.0.0"
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Инициализация QueryService при старте FastAPI"""
+    global query_service
+    logger.info("🚀 Инициализация QueryService...")
+    query_service = get_query_service()
+    if query_service:
+        logger.info("✅ QueryService готов к работе!")
+    else:
+        logger.error("❌ Ошибка инициализации QueryService")
+
 # Инициализация QueryService с KB
 def get_query_service():
     """Получение QueryService с загруженным KB"""
@@ -760,10 +771,79 @@ async def execute_sql(
             content={"success": False, "error": f"Ошибка выполнения SQL: {str(e)}"}
         )
 
+
 @app.get("/health")
 async def health():
     """Проверка состояния системы"""
     return {"status": "healthy", "agent": "Vanna AI + ProxyAPI + pgvector"}
+
+@app.get("/status")
+async def status():
+    """Детальный статус готовности системы"""
+    global query_service
+    
+    if query_service is None:
+        return {
+            "ready": False,
+            "status": "initializing",
+            "message": "QueryService инициализируется...",
+            "components": {
+                "fastapi": True,
+                "query_service": False
+            }
+        }
+    else:
+        return {
+            "ready": True,
+            "status": "ready",
+            "message": "Система готова к работе",
+            "components": {
+                "fastapi": True,
+                "query_service": True
+            }
+        }
+
+@app.get("/vector-stats")
+async def get_vector_stats():
+    """Получение статистики векторной базы знаний"""
+    global query_service
+    
+    if query_service is None:
+        return {"error": "QueryService не инициализирован"}
+    
+    try:
+        # Получаем статистику через QueryService
+        stats = await query_service.get_vector_stats()
+        return {
+            "success": True,
+            "stats": stats
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@app.get("/embedding-quality")
+async def analyze_embedding_quality():
+    """Анализ качества эмбеддингов"""
+    global query_service
+    
+    if query_service is None:
+        return {"error": "QueryService не инициализирован"}
+    
+    try:
+        # Анализируем качество эмбеддингов
+        quality = await query_service.analyze_embedding_quality()
+        return {
+            "success": True,
+            "quality": quality
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 if __name__ == "__main__":
     import uvicorn

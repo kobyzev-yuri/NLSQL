@@ -54,48 +54,46 @@ class ComplexityBenchmark:
         
         return complexity_groups
     
-    def simulate_generated_sql(self, reference_sql: str, complexity: str) -> str:
-        """Симулирует сгенерированный SQL с типичными ошибками для каждой сложности"""
-        
-        if complexity == "Простые":
-            # Типичные ошибки простых запросов
-            generated = reference_sql
-            # Убираем WHERE условия
-            if 'WHERE' in generated:
-                generated = generated.split('WHERE')[0].strip()
-            # Упрощаем SELECT
-            if 'SELECT' in generated and '*' not in generated:
-                select_part = generated.split('FROM')[0]
-                if 'SELECT' in select_part:
-                    generated = generated.replace(select_part, 'SELECT *')
-        
-        elif complexity == "Средние":
-            # Типичные ошибки средних запросов
-            generated = reference_sql
-            # Упрощаем JOIN
-            generated = generated.replace('LEFT JOIN', 'JOIN')
-            generated = generated.replace('INNER JOIN', 'JOIN')
-            # Убираем некоторые условия
-            if 'WHERE' in generated:
-                generated = generated.replace('WHERE u.deleted = false', '')
-                generated = generated.replace('WHERE deleted = false', '')
-        
-        elif complexity == "Сложные":
-            # Типичные ошибки сложных запросов
-            generated = reference_sql
-            # Убираем ORDER BY
-            if 'ORDER BY' in generated:
-                generated = generated.split('ORDER BY')[0].strip()
-            # Упрощаем агрегацию
-            if 'SUM(' in generated:
-                generated = generated.replace('SUM(ip.amount)', 'ip.amount')
-            if 'COUNT(' in generated:
-                generated = generated.replace('COUNT(u.id)', 'u.id')
-            # Убираем GROUP BY
-            if 'GROUP BY' in generated:
-                generated = generated.split('GROUP BY')[0].strip()
-        
-        return generated.strip()
+    def generate_sql_with_real_agent(self, question: str) -> str:
+        """Генерирует SQL с помощью работающего агента из FastAPI"""
+        try:
+            import requests
+            
+            # Используем работающий агент из FastAPI на порту 3000
+            response = requests.post(
+                "http://localhost:3000/generate-sql",
+                data={"question": question},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    sql = data.get('sql', '')
+                    if sql:
+                        # Очищаем SQL от лишнего текста
+                        sql = sql.replace('```sql', '').replace('```', '').strip()
+                        # Берем только SQL запрос
+                        lines = sql.split('\n')
+                        sql_lines = []
+                        for line in lines:
+                            if line.strip() and not line.strip().startswith('--'):
+                                sql_lines.append(line.strip())
+                        sql = ' '.join(sql_lines)
+                        return sql
+                else:
+                    print(f"Ошибка API: {data.get('error', 'Unknown error')}")
+                    return None
+            else:
+                print(f"HTTP ошибка: {response.status_code}")
+                return None
+                
+        except requests.exceptions.ConnectionError:
+            print(f"Не удалось подключиться к FastAPI на порту 3000")
+            return None
+        except Exception as e:
+            print(f"Ошибка генерации SQL для '{question}': {e}")
+            return None
     
     def evaluate_complexity_group(self, group_name: str, qa_pairs: List[Dict[str, str]]) -> Dict[str, Any]:
         """Оценивает группу запросов по сложности"""
@@ -119,10 +117,17 @@ class ComplexityBenchmark:
         for i, qa in enumerate(qa_pairs):
             question = qa['question']
             reference_sql = qa['sql']
-            generated_sql = self.simulate_generated_sql(reference_sql, group_name)
             
             print(f"\n  {i+1}. {question}")
             print(f"     Эталонный: {reference_sql[:100]}...")
+            
+            # Генерируем SQL с помощью реального агента
+            generated_sql = self.generate_sql_with_real_agent(question)
+            
+            if not generated_sql:
+                print(f"     ❌ Не удалось сгенерировать SQL")
+                continue
+                
             print(f"     Сгенерированный: {generated_sql[:100]}...")
             
             try:

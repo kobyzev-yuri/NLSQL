@@ -78,6 +78,41 @@ async def health_check():
         raise HTTPException(status_code=500, detail="Ошибка проверки здоровья системы")
 
 
+@app.post("/test-search")
+async def test_vector_search(request: dict):
+    """
+    Тестирование семантического поиска в векторной базе данных
+    """
+    try:
+        question = request.get("question", "")
+        search_type = request.get("search_type", "semantic")
+        limit = request.get("limit", 5)
+        
+        if not question:
+            raise HTTPException(status_code=400, detail="Вопрос не может быть пустым")
+        
+        logger.info(f"Тестирование поиска: {question} (тип: {search_type})")
+        
+        # Получаем результаты поиска через query_service
+        search_results = await query_service.test_vector_search(
+            question=question,
+            search_type=search_type,
+            limit=limit
+        )
+        
+        return {
+            "success": True,
+            "question": question,
+            "search_type": search_type,
+            "results": search_results,
+            "total_found": len(search_results)
+        }
+        
+    except Exception as e:
+        logger.error(f"Ошибка тестирования поиска: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка тестирования поиска: {str(e)}")
+
+
 @app.post("/query", response_model=SQLResponse)
 async def generate_sql(request: QueryRequest):
     """
