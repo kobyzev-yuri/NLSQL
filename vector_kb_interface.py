@@ -241,8 +241,10 @@ with tab2:
                 try:
                     vanna = get_vanna_client()
                     if vanna:
-                        vanna.add_question_sql(question, sql)
-                        st.success("Q/A пара добавлена!")
+                        # Используем правильный метод для добавления Q/A пары
+                        # DocStructureVannaSemantic не имеет add_question_sql, используем альтернативный подход
+                        st.info("⚠️ Добавление Q/A пар через интерфейс пока не поддерживается. Используйте CLI скрипт qa_management_script.py")
+                        st.code(f"python qa_management_script.py --action add --input qa_pairs.json")
                     else:
                         st.error("Vanna AI клиент недоступен")
                 except Exception as e:
@@ -318,8 +320,9 @@ with tab3:
                 try:
                     vanna = get_vanna_client()
                     if vanna:
-                        vanna.add_ddl(ddl_text)
-                        st.success("Обучение на DDL завершено!")
+                        # DocStructureVannaSemantic не имеет add_ddl, используем альтернативный подход
+                        st.info("⚠️ Обучение на DDL через интерфейс пока не поддерживается. Используйте CLI скрипт:")
+                        st.code(f"python qa_management_script.py --action embeddings")
                     else:
                         st.error("Vanna AI клиент недоступен")
                 except Exception as e:
@@ -361,8 +364,9 @@ with tab3:
                 try:
                     vanna = get_vanna_client()
                     if vanna:
-                        vanna.add_documentation(doc_text)
-                        st.success("Обучение на документации завершено!")
+                        # DocStructureVannaSemantic не имеет add_documentation, используем альтернативный подход
+                        st.info("⚠️ Обучение на документации через интерфейс пока не поддерживается. Используйте CLI скрипт:")
+                        st.code(f"python qa_management_script.py --action embeddings")
                     else:
                         st.error("Vanna AI клиент недоступен")
                 except Exception as e:
@@ -370,6 +374,21 @@ with tab3:
     
     # Генерация эмбеддингов
     st.subheader("🔄 Генерация эмбеддингов")
+    
+    st.info("💡 Для работы с векторкой используйте CLI скрипт:")
+    st.code("""
+# Создание шаблона Q/A пар
+python qa_management_script.py --action template --output qa_template.json
+
+# Добавление Q/A пар
+python qa_management_script.py --action add --input qa_pairs.json --validate
+
+# Тестирование качества
+python qa_management_script.py --action test --input qa_pairs.json
+
+# Генерация эмбеддингов
+python qa_management_script.py --action embeddings
+    """)
     
     if st.button("⚡ Сгенерировать эмбеддинги"):
         with st.spinner("Генерирую эмбеддинги..."):
