@@ -536,49 +536,38 @@ with tab5:
         - **0.0 - 0.5**: Плохое качество (0-50%)
         """)
     
-    # Тестовые данные для демонстрации (правильные значения 0-1)
-    test_data = {
-        'query': ['Пользователи', 'Поручения', 'Платежи', 'Клиенты', 'Отделы'],
-        'precision': [0.85, 0.92, 0.78, 0.88, 0.90],
-        'recall': [0.82, 0.89, 0.75, 0.85, 0.87],
-        'f1_score': [0.83, 0.90, 0.76, 0.86, 0.88]
-    }
+    # Реальные метрики из бенчмарка
+    st.subheader("📊 Реальные метрики из бенчмарка")
     
-    # Примеры метрик для разных типов запросов (правильные значения 0-1)
-    metrics_examples = [
-        {"type": "Простые запросы", "precision": 0.92, "recall": 0.89, "f1": 0.90, "examples": ["Покажи всех пользователей", "Список отделов"]},
-        {"type": "Фильтрация", "precision": 0.88, "recall": 0.85, "f1": 0.86, "examples": ["Пользователи за месяц", "Платежи по клиентам"]},
-        {"type": "Агрегация", "precision": 0.78, "recall": 0.75, "f1": 0.76, "examples": ["Статистика по отделам", "Сумма платежей"]},
-        {"type": "JOIN запросы", "precision": 0.85, "recall": 0.82, "f1": 0.83, "examples": ["Пользователи с отделами", "Платежи с клиентами"]},
-        {"type": "Сложные запросы", "precision": 0.80, "recall": 0.78, "f1": 0.79, "examples": ["Аналитика по периодам", "Отчеты с группировкой"]}
-    ]
-    
-    df = pd.DataFrame(test_data)
-    
-    # График метрик
-    fig = px.bar(
-        df, 
-        x='query', 
-        y=['precision', 'recall', 'f1_score'],
-        title="Метрики качества по типам запросов",
-        barmode='group'
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Примеры метрик по типам запросов
-    st.subheader("📊 Детальные метрики по типам запросов")
-    
-    for metric in metrics_examples:
-        with st.expander(f"📈 {metric['type']} (F1: {metric['f1']:.2f})"):
-            col1, col2 = st.columns([1, 2])
+    # Загружаем результаты бенчмарка
+    benchmark_file = "complexity_benchmark_results.json"
+    if os.path.exists(benchmark_file):
+        with open(benchmark_file, 'r', encoding='utf-8') as f:
+            benchmark_data = json.load(f)
+        
+        complexity_groups = benchmark_data.get('complexity_groups', {})
+        
+        for group_name, group_data in complexity_groups.items():
+            st.write(f"**{group_name}** ({group_data['count']} запросов)")
+            
+            col1, col2 = st.columns(2)
             with col1:
-                st.metric("Precision", f"{metric['precision']:.2f}")
-                st.metric("Recall", f"{metric['recall']:.2f}")
-                st.metric("F1-Score", f"{metric['f1']:.2f}")
+                st.metric("Precision", f"{group_data['precision']:.3f}")
             with col2:
-                st.markdown("**Примеры запросов:**")
-                for example in metric['examples']:
-                    st.markdown(f"• {example}")
+                st.metric("Recall", f"{group_data['recall']:.3f}")
+            
+            st.divider()
+    else:
+        st.info("Запустите бенчмарк для получения реальных метрик")
+        if st.button("🚀 Запустить бенчмарк"):
+            with st.spinner("Запускаю бенчмарк..."):
+                import subprocess
+                result = subprocess.run(['python', 'benchmark_by_complexity.py'], 
+                                     capture_output=True, text=True)
+                if result.returncode == 0:
+                    st.success("Бенчмарк завершен! Обновите страницу.")
+                else:
+                    st.error(f"Ошибка бенчмарка: {result.stderr}")
     
     # Статистика векторки
     st.subheader("📊 Статистика векторной базы")
@@ -602,87 +591,18 @@ with tab5:
             # Здесь можно добавить реальный анализ
             st.info("Анализ завершен. Качество эмбеддингов: 87%")
     
-    # Демонстрация правильного расчета метрик
-    st.subheader("🧮 Демонстрация расчета метрик")
+    # Информация о бенчмарке
+    st.subheader("ℹ️ О бенчмарке")
     
-    with st.expander("📊 Пример расчета P, R, F1 для SQL"):
-        st.markdown("""
-        **Пример SQL запросов:**
-        
-        **Эталонный SQL:**
-        ```sql
-        SELECT u.id, u.login, d.name as department_name 
-        FROM equsers u 
-        INNER JOIN eq_departments d ON u.department = d.id 
-        WHERE u.deleted = FALSE 
-        ORDER BY u.login
-        ```
-        
-        **Сгенерированный SQL:**
-        ```sql
-        SELECT u.id, u.login, d.name 
-        FROM equsers u 
-        JOIN eq_departments d ON u.department = d.id 
-        WHERE u.deleted = FALSE
-        ```
-        
-        **Анализ компонентов:**
-        - **Таблицы**: TP=2, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
-        - **Колонки**: TP=3, FP=0, FN=1 → P=1.0, R=0.75, F1=0.86
-        - **Условия**: TP=1, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
-        - **JOIN**: TP=1, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
-        
-        **Итоговые метрики (взвешенное среднее):**
-        - **Precision**: 1.0×0.25 + 1.0×0.20 + 1.0×0.20 + 1.0×0.15 = **0.95**
-        - **Recall**: 1.0×0.25 + 0.75×0.20 + 1.0×0.20 + 1.0×0.15 = **0.90**
-        - **F1-Score**: 2×(0.95×0.90)/(0.95+0.90) = **0.92**
-        
-        **Результат**: Отличное качество (92%)
-        """)
+    st.markdown("""
+    **Бенчмарк SQL по сложности** использует реальные Q/A пары из векторки:
     
-    if st.button("🧮 Рассчитать метрики для примера"):
-        try:
-            from sql_metrics_calculator import SQLMetricsCalculator
-            
-            # Пример SQL запросов
-            reference_sql = """
-            SELECT u.id, u.login, d.name as department_name 
-            FROM equsers u 
-            INNER JOIN eq_departments d ON u.department = d.id 
-            WHERE u.deleted = FALSE 
-            ORDER BY u.login
-            """
-            
-            generated_sql = """
-            SELECT u.id, u.login, d.name 
-            FROM equsers u 
-            JOIN eq_departments d ON u.department = d.id 
-            WHERE u.deleted = FALSE
-            """
-            
-            # Расчет метрик
-            calculator = SQLMetricsCalculator()
-            metrics = calculator.calculate_metrics(reference_sql, generated_sql)
-            
-            # Отображение результатов
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("Precision", f"{metrics['precision']:.3f}", f"{metrics['precision']*100:.1f}%")
-            
-            with col2:
-                st.metric("Recall", f"{metrics['recall']:.3f}", f"{metrics['recall']*100:.1f}%")
-            
-            with col3:
-                st.metric("F1-Score", f"{metrics['f1_score']:.3f}", f"{metrics['f1_score']*100:.1f}%")
-            
-            # Интерпретация
-            st.info(calculator.interpret_metrics(metrics))
-            
-        except ImportError:
-            st.error("❌ Не удалось импортировать SQLMetricsCalculator")
-        except Exception as e:
-            st.error(f"❌ Ошибка расчета метрик: {e}")
+    - **Простые запросы**: SELECT без JOIN (3 запроса)
+    - **Средние запросы**: С JOIN, без агрегации (4 запроса)  
+    - **Сложные запросы**: С агрегацией, GROUP BY (3 запроса)
+    
+    **Метрики**: Precision и Recall по компонентам SQL (таблицы, колонки, условия, JOIN)
+    """)
 
 with tab6:
     st.header("⚙️ Настройки")
