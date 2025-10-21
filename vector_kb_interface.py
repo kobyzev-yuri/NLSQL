@@ -511,7 +511,32 @@ with tab5:
     # Метрики качества
     st.subheader("📈 Метрики качества поиска")
     
-    # Тестовые данные для демонстрации
+    # Объяснение метрик
+    with st.expander("📚 Что означают метрики P, R, F1?"):
+        st.markdown("""
+        **Precision (Точность)**: Доля корректных SQL запросов среди всех сгенерированных
+        - **Формула**: P = TP / (TP + FP)
+        - **Диапазон**: 0.0 - 1.0 (0% - 100%)
+        - **Пример**: Если из 10 запросов 8 корректных, то P = 0.8 (80%)
+        
+        **Recall (Полнота)**: Доля найденных корректных SQL от общего количества возможных
+        - **Формула**: R = TP / (TP + FN)  
+        - **Диапазон**: 0.0 - 1.0 (0% - 100%)
+        - **Пример**: Если из 10 возможных корректных запросов найдено 7, то R = 0.7 (70%)
+        
+        **F1-Score (Гармоническое среднее)**: Балансированная оценка качества
+        - **Формула**: F1 = 2 × (P × R) / (P + R)
+        - **Диапазон**: 0.0 - 1.0 (0% - 100%)
+        - **Пример**: Если P = 0.8 и R = 0.7, то F1 = 2 × (0.8 × 0.7) / (0.8 + 0.7) = 0.75 (75%)
+        
+        **Интерпретация**:
+        - **0.9 - 1.0**: Отличное качество (90-100%)
+        - **0.7 - 0.9**: Хорошее качество (70-90%)
+        - **0.5 - 0.7**: Удовлетворительное качество (50-70%)
+        - **0.0 - 0.5**: Плохое качество (0-50%)
+        """)
+    
+    # Тестовые данные для демонстрации (правильные значения 0-1)
     test_data = {
         'query': ['Пользователи', 'Поручения', 'Платежи', 'Клиенты', 'Отделы'],
         'precision': [0.85, 0.92, 0.78, 0.88, 0.90],
@@ -519,7 +544,7 @@ with tab5:
         'f1_score': [0.83, 0.90, 0.76, 0.86, 0.88]
     }
     
-    # Примеры метрик для разных типов запросов
+    # Примеры метрик для разных типов запросов (правильные значения 0-1)
     metrics_examples = [
         {"type": "Простые запросы", "precision": 0.92, "recall": 0.89, "f1": 0.90, "examples": ["Покажи всех пользователей", "Список отделов"]},
         {"type": "Фильтрация", "precision": 0.88, "recall": 0.85, "f1": 0.86, "examples": ["Пользователи за месяц", "Платежи по клиентам"]},
@@ -576,6 +601,88 @@ with tab5:
         with st.spinner("Анализирую качество эмбеддингов..."):
             # Здесь можно добавить реальный анализ
             st.info("Анализ завершен. Качество эмбеддингов: 87%")
+    
+    # Демонстрация правильного расчета метрик
+    st.subheader("🧮 Демонстрация расчета метрик")
+    
+    with st.expander("📊 Пример расчета P, R, F1 для SQL"):
+        st.markdown("""
+        **Пример SQL запросов:**
+        
+        **Эталонный SQL:**
+        ```sql
+        SELECT u.id, u.login, d.name as department_name 
+        FROM equsers u 
+        INNER JOIN eq_departments d ON u.department = d.id 
+        WHERE u.deleted = FALSE 
+        ORDER BY u.login
+        ```
+        
+        **Сгенерированный SQL:**
+        ```sql
+        SELECT u.id, u.login, d.name 
+        FROM equsers u 
+        JOIN eq_departments d ON u.department = d.id 
+        WHERE u.deleted = FALSE
+        ```
+        
+        **Анализ компонентов:**
+        - **Таблицы**: TP=2, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
+        - **Колонки**: TP=3, FP=0, FN=1 → P=1.0, R=0.75, F1=0.86
+        - **Условия**: TP=1, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
+        - **JOIN**: TP=1, FP=0, FN=0 → P=1.0, R=1.0, F1=1.0
+        
+        **Итоговые метрики (взвешенное среднее):**
+        - **Precision**: 1.0×0.25 + 1.0×0.20 + 1.0×0.20 + 1.0×0.15 = **0.95**
+        - **Recall**: 1.0×0.25 + 0.75×0.20 + 1.0×0.20 + 1.0×0.15 = **0.90**
+        - **F1-Score**: 2×(0.95×0.90)/(0.95+0.90) = **0.92**
+        
+        **Результат**: Отличное качество (92%)
+        """)
+    
+    if st.button("🧮 Рассчитать метрики для примера"):
+        try:
+            from sql_metrics_calculator import SQLMetricsCalculator
+            
+            # Пример SQL запросов
+            reference_sql = """
+            SELECT u.id, u.login, d.name as department_name 
+            FROM equsers u 
+            INNER JOIN eq_departments d ON u.department = d.id 
+            WHERE u.deleted = FALSE 
+            ORDER BY u.login
+            """
+            
+            generated_sql = """
+            SELECT u.id, u.login, d.name 
+            FROM equsers u 
+            JOIN eq_departments d ON u.department = d.id 
+            WHERE u.deleted = FALSE
+            """
+            
+            # Расчет метрик
+            calculator = SQLMetricsCalculator()
+            metrics = calculator.calculate_metrics(reference_sql, generated_sql)
+            
+            # Отображение результатов
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric("Precision", f"{metrics['precision']:.3f}", f"{metrics['precision']*100:.1f}%")
+            
+            with col2:
+                st.metric("Recall", f"{metrics['recall']:.3f}", f"{metrics['recall']*100:.1f}%")
+            
+            with col3:
+                st.metric("F1-Score", f"{metrics['f1_score']:.3f}", f"{metrics['f1_score']*100:.1f}%")
+            
+            # Интерпретация
+            st.info(calculator.interpret_metrics(metrics))
+            
+        except ImportError:
+            st.error("❌ Не удалось импортировать SQLMetricsCalculator")
+        except Exception as e:
+            st.error(f"❌ Ошибка расчета метрик: {e}")
 
 with tab6:
     st.header("⚙️ Настройки")
