@@ -358,9 +358,26 @@ with st.sidebar:
     
     # Ссылки на важные файлы
     st.markdown("""
-    - [Training Guide](docs/VANNA_TRAINING_GUIDE.md)
-    - [QA Expansion](docs/customer_requests/CUSTOMER_QA_EXPANSION_REQUEST.md)
-    - [RAG Checklist](RAG_IMPROVEMENT_CHECKLIST.md)
+    **📚 Документация проекта:**
+    
+    - [Training Guide](docs/VANNA_TRAINING_GUIDE.md) - руководство по обучению
+    - [QA Expansion](docs/customer_requests/CUSTOMER_QA_EXPANSION_REQUEST.md) - план расширения Q/A
+    - [RAG Checklist](RAG_IMPROVEMENT_CHECKLIST.md) - чеклист улучшений RAG
+    - [Vector KB Plan](VECTOR_KB_IMPROVEMENT_PLAN.md) - план улучшения векторки
+    - [Services Guide](docs/SERVICES_STARTUP_GUIDE.md) - руководство по сервисам
+    
+    **💡 Подсказка:** Документы находятся в корне проекта. 
+    
+    **Доступ через терминал:**
+    ```bash
+    # Открыть в редакторе
+    code docs/VANNA_TRAINING_GUIDE.md
+    code VECTOR_KB_IMPROVEMENT_PLAN.md
+    
+    # Просмотр в терминале
+    cat docs/VANNA_TRAINING_GUIDE.md
+    less VECTOR_KB_IMPROVEMENT_PLAN.md
+    ```
     """)
 
 # Футер
