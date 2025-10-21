@@ -86,7 +86,7 @@ PYTHONPATH=$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 300
 cd /mnt/ai/cnn/sql4A
 source /mnt/ai/src/anaconda3/bin/activate py310
 source config.env
-PYTHONPATH=$(pwd) streamlit run src/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+PYTHONPATH=$(pwd) streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0
 ```
 
 ## 🔍 Проверка работоспособности
@@ -144,6 +144,14 @@ pkill -f "streamlit.*8501" # Streamlit
 
 ## 🐛 Устранение проблем
 
+### Streamlit не загружается (белый экран)
+```bash
+# Убедитесь, что используете правильный файл
+streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0
+
+# НЕ используйте src/streamlit_app.py (удален из-за рекурсии)
+```
+
 ### Порт уже занят
 ```bash
 # Найти процесс, занимающий порт
@@ -153,6 +161,13 @@ lsof -i :8081
 # Остановить процесс
 sudo fuser -k 8080/tcp
 sudo fuser -k 8081/tcp
+```
+
+### Неправильные порты в коде
+```bash
+# Убедитесь, что Mock API запущен на порту 8081, а не 8080
+# Simple UI и Streamlit обращаются к Mock API на порту 8081
+# Проверьте в коде: grep -r "8081" src/
 ```
 
 ### Проблемы с виртуальным окружением
