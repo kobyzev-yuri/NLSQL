@@ -9,7 +9,7 @@ import os
 import logging
 import re
 from typing import List, Dict, Any, Tuple
-from openai import OpenAI
+from sentence_transformers import SentenceTransformer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,26 +19,20 @@ class SearchMethodComparator:
     
     def __init__(self):
         self.database_url = "postgresql://postgres:1234@localhost:5432/test_docstructure"
-        self.openai_client = OpenAI(
-            api_key=os.getenv("PROXYAPI_KEY"),
-            base_url="https://api.proxyapi.ru/openai/v1"
-        )
+        self.hf_model_name = os.getenv("HF_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
+        self.embedder = SentenceTransformer(self.hf_model_name)
     
     async def semantic_search(self, question: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Семантический поиск"""
         try:
-            # Генерируем эмбеддинг
-            response = self.openai_client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=question
-            )
-            question_embedding = response.data[0].embedding
+            # Генерируем HF эмбеддинг (384 dim)
+            question_embedding = self.embedder.encode([question], normalize_embeddings=True)[0]
             
             # Подключаемся к БД
             conn = await asyncpg.connect(self.database_url)
             
             # Конвертируем эмбеддинг
-            embedding_str = '[' + ','.join(map(str, question_embedding)) + ']'
+            embedding_str = '[' + ','.join(map(lambda x: f"{float(x)}", question_embedding.tolist())) + ']'
             
             # Семантический поиск
             query = """

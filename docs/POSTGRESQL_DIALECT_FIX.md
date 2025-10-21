@@ -54,3 +54,5 @@ vanna.connect_to_postgres(
 1. **Immediate**: Add SQL post-processing to remove `public.` prefixes
 2. **Short-term**: Clean training data of schema prefixes
 3. **Long-term**: Update prompts with explicit PostgreSQL dialect instructions
+
+
