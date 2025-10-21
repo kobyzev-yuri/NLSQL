@@ -240,7 +240,7 @@ class QAManager:
 async def main():
     """Основная функция"""
     parser = argparse.ArgumentParser(description="Управление Q/A парами и дообучение векторки")
-    parser.add_argument('--action', choices=['add', 'test', 'export', 'template', 'embeddings'], 
+    parser.add_argument('--action', choices=['add', 'test', 'export', 'template', 'embeddings', 'optimize', 'performance'], 
                        required=True, help="Действие для выполнения")
     parser.add_argument('--input', help="Входной файл с Q/A парами")
     parser.add_argument('--output', help="Выходной файл")
@@ -299,6 +299,64 @@ async def main():
         
     elif args.action == 'embeddings':
         await manager.generate_embeddings()
+        
+    elif args.action == 'optimize':
+        if not args.input:
+            logger.error("Не указан входной файл с оптимизированными примерами")
+            return
+        
+        # Загружаем примеры оптимизации
+        from enhanced_qa_training import EnhancedQATrainer
+        trainer = EnhancedQATrainer()
+        await trainer.initialize()
+        
+        examples = trainer.load_optimization_examples(args.input)
+        if not examples:
+            logger.error("Не удалось загрузить примеры оптимизации")
+            return
+        
+        # Обучение на оптимизированных SQL
+        results = await trainer.train_on_optimized_sql(examples)
+        logger.info(f"Результаты обучения на оптимизации: {results}")
+        
+        # Создание отчета по производительности
+        report = await trainer.create_performance_report(examples)
+        
+        if args.output:
+            with open(args.output, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            logger.info(f"Отчет по производительности сохранен: {args.output}")
+        
+    elif args.action == 'performance':
+        if not args.input:
+            logger.error("Не указан входной файл")
+            return
+        
+        # Анализ производительности SQL запросов
+        from enhanced_qa_training import EnhancedQATrainer
+        trainer = EnhancedQATrainer()
+        await trainer.initialize()
+        
+        examples = trainer.load_optimization_examples(args.input)
+        if not examples:
+            logger.error("Не удалось загрузить примеры")
+            return
+        
+        # Создание отчета по производительности
+        report = await trainer.create_performance_report(examples)
+        
+        if args.output:
+            with open(args.output, 'w', encoding='utf-8') as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            logger.info(f"Отчет по производительности сохранен: {args.output}")
+        else:
+            # Выводим краткий отчет в консоль
+            logger.info("📊 Анализ производительности SQL:")
+            for analysis in report['performance_analysis']:
+                logger.info(f"Вопрос: {analysis['question']}")
+                logger.info(f"Оценка производительности: {analysis['analysis'].get('performance_score', 'N/A')}")
+                logger.info(f"Стоимость запроса: {analysis['analysis'].get('estimated_cost', 'N/A')}")
+                logger.info("---")
 
 if __name__ == '__main__':
     import time

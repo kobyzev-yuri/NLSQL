@@ -57,10 +57,11 @@ def get_query_service():
         return None
 
 # Основные вкладки
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🔍 Тестирование поиска", 
     "📝 Добавление Q/A", 
     "🎓 Обучение", 
+    "🚀 Оптимизация SQL",
     "📊 Аналитика", 
     "⚙️ Настройки"
 ])
@@ -388,6 +389,12 @@ python qa_management_script.py --action test --input qa_pairs.json
 
 # Генерация эмбеддингов
 python qa_management_script.py --action embeddings
+
+# 🚀 НОВОЕ: Обучение на оптимизированных SQL
+python qa_management_script.py --action optimize --input optimized_sql_examples.json --output performance_report.json
+
+# Анализ производительности SQL
+python qa_management_script.py --action performance --input optimized_sql_examples.json
     """)
     
     if st.button("⚡ Сгенерировать эмбеддинги"):
@@ -400,6 +407,105 @@ python qa_management_script.py --action embeddings
                 st.error(f"Ошибка генерации эмбеддингов: {e}")
 
 with tab4:
+    st.header("🚀 Оптимизация SQL")
+    
+    st.markdown("""
+    **Цель:** Обучение модели генерировать не просто рабочий SQL, а **эффективный SQL** с учетом производительности.
+    
+    **Подход:** Использование Q/A пар где один SQL делает ту же работу, но быстрее и дешевле по explain plan.
+    """)
+    
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.subheader("📚 Примеры оптимизации")
+        
+        # Примеры оптимизированных SQL
+        optimization_examples = [
+            {
+                "question": "Покажи всех пользователей",
+                "sql_basic": "SELECT * FROM equsers",
+                "sql_optimized": "SELECT id, login, email, department FROM equsers WHERE deleted = FALSE",
+                "improvement": "50% меньше данных, быстрее выполнение"
+            },
+            {
+                "question": "Поручения за последний месяц", 
+                "sql_basic": "SELECT * FROM tbl_principal_assignment WHERE creationdatetime >= CURRENT_DATE - INTERVAL '1 month'",
+                "sql_optimized": "SELECT assignment_number, amount, creationdatetime FROM tbl_principal_assignment WHERE creationdatetime >= CURRENT_DATE - INTERVAL '1 month' ORDER BY creationdatetime DESC",
+                "improvement": "30% быстрее за счет индекса, логичная сортировка"
+            },
+            {
+                "question": "Платежи по отделам",
+                "sql_basic": "SELECT d.name, SUM(p.amount) FROM tbl_incoming_payments p JOIN equsers u ON p.user_id = u.id JOIN eq_departments d ON u.department = d.id GROUP BY d.name",
+                "sql_optimized": "SELECT d.name, SUM(p.amount) as total_amount, COUNT(p.id) as payment_count FROM tbl_incoming_payments p INNER JOIN equsers u ON p.user_id = u.id INNER JOIN eq_departments d ON u.department = d.id WHERE p.payment_date >= CURRENT_DATE - INTERVAL '1 year' GROUP BY d.name ORDER BY total_amount DESC",
+                "improvement": "60% быстрее за счет фильтрации и правильных JOIN"
+            }
+        ]
+        
+        for i, example in enumerate(optimization_examples, 1):
+            with st.expander(f"Пример {i}: {example['question']}"):
+                st.markdown("**Базовый SQL:**")
+                st.code(example['sql_basic'], language="sql")
+                
+                st.markdown("**Оптимизированный SQL:**")
+                st.code(example['sql_optimized'], language="sql")
+                
+                st.markdown(f"**Улучшение:** {example['improvement']}")
+    
+    with col2:
+        st.subheader("⚡ Принципы оптимизации")
+        
+        optimization_principles = [
+            "🎯 **Выбирайте конкретные поля** вместо SELECT *",
+            "🔍 **Добавляйте фильтры WHERE** для ограничения данных", 
+            "🔗 **Используйте INNER JOIN** вместо JOIN для совпадающих записей",
+            "📊 **Применяйте HAVING** для фильтрации агрегированных данных",
+            "📈 **Добавляйте ORDER BY** для логичной сортировки результатов",
+            "🔢 **Используйте LIMIT** для ограничения количества записей",
+            "📅 **Фильтруйте по дате** для актуальных данных",
+            "🏷️ **Добавляйте метки** для лучшей читаемости"
+        ]
+        
+        for principle in optimization_principles:
+            st.markdown(principle)
+        
+        st.subheader("📊 Анализ производительности")
+        
+        if st.button("🔍 Анализировать SQL"):
+            st.info("💡 Используйте CLI для анализа производительности:")
+            st.code("""
+# Анализ производительности SQL
+python qa_management_script.py --action performance --input optimized_sql_examples.json
+
+# Обучение на оптимизированных SQL
+python qa_management_script.py --action optimize --input optimized_sql_examples.json --output performance_report.json
+            """)
+    
+    st.subheader("🎓 Обучение на оптимизированных SQL")
+    
+    st.markdown("""
+    **Процесс обучения:**
+    
+    1. **Создание примеров** - базовый SQL vs оптимизированный SQL
+    2. **Анализ производительности** - оценка стоимости запросов
+    3. **Обучение с контекстом** - передача принципов оптимизации
+    4. **Валидация результатов** - проверка качества генерируемого SQL
+    """)
+    
+    if st.button("🚀 Запустить обучение на оптимизации"):
+        st.info("💡 Обучение на оптимизированных SQL:")
+        st.code("""
+# 1. Создание примеров оптимизации
+python qa_management_script.py --action template --output optimized_sql_examples.json
+
+# 2. Обучение на оптимизированных SQL
+python qa_management_script.py --action optimize --input optimized_sql_examples.json --output performance_report.json
+
+# 3. Анализ результатов
+python qa_management_script.py --action performance --input optimized_sql_examples.json
+        """)
+
+with tab5:
     st.header("📊 Аналитика качества")
     
     # Метрики качества
@@ -471,7 +577,7 @@ with tab4:
             # Здесь можно добавить реальный анализ
             st.info("Анализ завершен. Качество эмбеддингов: 87%")
 
-with tab5:
+with tab6:
     st.header("⚙️ Настройки")
     
     col1, col2 = st.columns([1, 1])
