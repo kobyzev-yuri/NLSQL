@@ -127,3 +127,13 @@ DATA_FLOW_*.md
 ARCHITECTURE_DISCUSSION.md
 config.yaml
 archive/
+
+# Environment variables
+config.env
+.env
+*.env.local
+
+# API keys
+*_key.txt
+*.key
+

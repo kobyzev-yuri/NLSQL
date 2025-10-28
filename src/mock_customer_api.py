@@ -328,8 +328,10 @@ def apply_role_restrictions(sql: str, login: str, role: str, department: str) ->
             # user_id теперь содержит реальный логин из базы данных
             sql = append_condition(sql, f"login = '{login}'")
         elif "from tbl_principal_assignment" in sql_lower:
-            # Для поручений пользователь видит только поручения за последний месяц
-            # Используем поле creationdatetime, которое генерирует Vanna AI
+            # Для поручений пользователь видит только СВОИ поручения за последний месяц
+            # Если есть поле responsible_user_id или created_by - раскомментируйте:
+            # sql = append_condition(sql, f"responsible_user_id = '{login}' OR created_by = '{login}'")
+            # Пока только временное ограничение:
             sql = append_condition(sql, f"creationdatetime >= CURRENT_DATE - INTERVAL '1 month'")
         elif "from tbl_business_unit" in sql_lower:
             # Для клиентов пользователь видит только активных клиентов

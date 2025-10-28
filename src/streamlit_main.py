@@ -64,10 +64,48 @@ with col1:
                         data = response.json()
                         if data.get("success"):
                             st.success("✅ SQL сгенерирован!")
+                            
+                            # Основной SQL
+                            st.markdown("### 📝 Сгенерированный SQL:")
                             st.code(data.get("sql", ""), language="sql")
                             
+                            # План выполнения (всегда показываем как в интерфейсе 3000)
+                            if data.get("plan"):
+                                st.markdown("### 🧭 План запроса:")
+                                st.json(data.get("plan"))
+                            
+                            # Дополнительные детали в expanders
+                            col_details1, col_details2 = st.columns(2)
+                            
+                            with col_details1:
+                                # Отображаем шаблон SQL (промпт)
+                                if data.get("sql_template"):
+                                    with st.expander("📋 SQL Шаблон (исходный)", expanded=False):
+                                        st.code(data.get("sql_template", ""), language="sql")
+                            
+                            with col_details2:
+                                # Финальный SQL с ограничениями
+                                if data.get("final_sql"):
+                                    with st.expander("🔒 Финальный SQL (с ограничениями)", expanded=False):
+                                        st.code(data.get("final_sql", ""), language="sql")
+                                        if data.get("restrictions"):
+                                            st.markdown("**Применённые ограничения:**")
+                                            for r in data.get("restrictions", []):
+                                                st.markdown(f"- {r}")
+                            
+                            # Объяснение и агент
+                            if data.get("explanation") or data.get("agent_type"):
+                                st.markdown("---")
+                                info_col1, info_col2 = st.columns([3, 1])
+                                with info_col1:
+                                    if data.get("explanation"):
+                                        st.info(data.get("explanation"))
+                                with info_col2:
+                                    if data.get("agent_type"):
+                                        st.caption(f"**Агент:** {data.get('agent_type', 'N/A')}")
+                            
                             # Сохраняем SQL в session state для выполнения
-                            st.session_state.generated_sql = data.get("sql", "")
+                            st.session_state.generated_sql = data.get("final_sql") or data.get("sql", "")
                             st.session_state.generated_role = role
                             st.session_state.generated_department = department
                         else:

@@ -273,10 +273,9 @@ async def home():
                 
                 <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
                     <h4>🔐 Текущая роль:</h4>
-                    <p><strong>Пользователь:</strong> <span id="currentUser">admin</span></p>
                     <p><strong>Роль:</strong> <span id="currentRole">admin (Администратор)</span></p>
                     <p><strong>Отдел:</strong> <span id="currentDepartment">IT</span></p>
-                    <p><strong>Доступ:</strong> Полный доступ ко всем данным</p>
+                    <p><strong>Логин:</strong> <span id="currentUser">test_user</span></p>
                     <div class="roles-grid">
                         <div class="role-card" data-role="admin" data-dept="IT">
                             <p class="role-title">👑 admin (Администратор)</p>
@@ -502,9 +501,12 @@ async def home():
             const deptSelect = document.getElementById('department');
             const currentRole = document.getElementById('currentRole');
             const currentDept = document.getElementById('currentDepartment');
+            const currentUser = document.getElementById('currentUser');
             roleSelect.addEventListener('change', () => {
                 const map = { admin: 'admin (Администратор)', manager: 'manager (Менеджер)', user: 'user (Пользователь)' };
                 currentRole.textContent = map[roleSelect.value] || roleSelect.value;
+                // Обновляем логин в зависимости от роли
+                currentUser.textContent = 'test_user';
             });
             deptSelect.addEventListener('change', () => {
                 currentDept.textContent = deptSelect.value;
@@ -576,28 +578,30 @@ async def generate_sql(
                     json={
                         "plan": plan,
                         "user_context": {
-                            "login": "a7a_head_department",
-                            "role": "admin",
-                            "department": "Департамент продаж"
+                            "login": "test_user",
+                            "role": role,  # Используем роль из формы
+                            "department": department  # Используем отдел из формы
                         },
                         "request_id": "simple_ui_demo_plan"
                     }
                 )
                 if resp.status_code == 200:
                     data = resp.json()
+                    # План→SQL может терять WHERE условия, используем оригинал
+                    decoded_sql = data.get("decoded_sql")  
                     final_sql = data.get("final_sql")
-                    decoded_sql = data.get("decoded_sql")
                     restrictions = data.get("restrictions_applied", [])
-                else:
-                    # Фоллбэк: старый путь SQL→Mock API
+                
+                # Всегда пробуем и SQL endpoint для правильных ограничений
+                if not final_sql or final_sql == decoded_sql:
                     resp2 = await client.post(
                         "http://localhost:8081/api/sql/execute",
                         json={
                             "sql_template": sql_template,
                             "user_context": {
-                                "login": "a7a_head_department",
-                                "role": "admin",
-                                "department": "Департамент продаж"
+                                "login": "test_user",
+                                "role": role,  # Используем роль из формы
+                                "department": department  # Используем отдел из формы
                             },
                             "request_id": "simple_ui_demo_sql"
                         }
@@ -615,7 +619,8 @@ async def generate_sql(
             "sql": sql,
             "plan": plan,
             "sql_template": sql_template,
-            "final_sql": final_sql,
+            "sql_with_roles": final_sql,  # Для отображения в JS
+            "final_sql": final_sql,  # Для совместимости
             "restrictions": restrictions,
             "explanation": "SQL сгенерирован QueryService с KB и правильными данными, план построен конвертером SQL→План; при наличии Mock API показан финальный SQL с ролевыми ограничениями",
             "agent_type": "QueryService с KB"

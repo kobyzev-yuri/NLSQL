@@ -10,6 +10,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 from src.vanna.vanna_semantic_fixed import create_semantic_vanna_client
+from src.vanna.simple_openai_sql import create_simple_sql_generator
 
 logger = logging.getLogger(__name__)
 
@@ -30,35 +31,24 @@ class QueryService:
     
     def _initialize_pipeline(self):
         """
-        Инициализация оптимизированного пайплайна
+        Инициализация простого SQL генератора (без Vanna AI)
         """
         try:
-            # Конфигурация для оптимизированного пайплайна (ключи соответствуют OptimizedDualPipeline)
+            # Используем ProxyAPI GPT-4o
             config = {
-                'gpt4': {
-                    'model': 'gpt-4o',
-                    'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
-                    'api_key': os.getenv("PROXYAPI_KEY") or os.getenv("PROXYAPI_API_KEY") or os.getenv("OPENAI_API_KEY"),
-                    'base_url': 'https://api.proxyapi.ru/openai/v1',
-                    'temperature': 0.2
-                },
-                'ollama': {
-                    'model': 'llama3:latest',
-                    'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
-                    'api_key': 'ollama',
-                    'base_url': 'http://localhost:11434/v1',
-                    'temperature': 0.2
-                },
-                'training_data_path': 'training_data/enhanced_sql_examples.json'
+                'model': 'gpt-4o',
+                'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
+                'api_key': os.getenv("OPENAI_API_KEY"),
+                'base_url': os.getenv("OPENAI_BASE_URL", 'https://api.proxyapi.ru/openai/v1'),
+                'temperature': 0.2
             }
             
-            self.pipeline = OptimizedDualPipeline(config)
-            # Флаг доступности внешнего API для выбора модели по умолчанию
-            self._has_gpt4_key = bool(config['gpt4']['api_key'])
-            logger.info("Оптимизированный пайплайн инициализирован")
+            self.pipeline = create_simple_sql_generator(config)
+            self._has_gpt4_key = bool(config['api_key'])
+            logger.info("✅ GPT-4o SQL генератор инициализирован через ProxyAPI")
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации пайплайна: {e}")
+            logger.error(f"❌ Ошибка инициализации генератора: {e}")
             raise
     
     def _initialize_semantic_rag(self):
@@ -326,48 +316,21 @@ class QueryService:
             smart_question = self._build_smart_prompt(question, domain, ddl_tables, rag_context)
             logger.info(f"🧠 Построен умный промпт для домена {domain}")
 
-            # Шаг 5: Генерируем SQL через пайплайн
-            logger.info("🔄 Используем основной пайплайн с GPT-4o...")
-            prefer_primary = 'openai'  # Используем GPT-4o
-            result = self.pipeline.generate_sql(smart_question, prefer_model=prefer_primary)
-
-            # Если неуспех из-за ключа/401 — фоллбэк на ollama
-            def need_fallback(res, err: Optional[Exception] = None) -> bool:
-                text = ''
-                if isinstance(res, dict):
-                    text = f"{res.get('error', '')} {res.get('message', '')}"
-                if err:
-                    text += f" {str(err)}"
-                text = text.lower()
-                return '401' in text or 'invalid api key' in text or 'unauthorized' in text
-
-            if not (result and result.get('success') and result.get('sql')) and (prefer_primary != 'ollama') and need_fallback(result):
-                logger.warning("Генерация через GPT-4 не удалась (ключ/401). Переход на ollama.")
-                result = self.pipeline.generate_sql(question, prefer_model='ollama')
+            # Шаг 5: Генерируем SQL через простой генератор
+            logger.info("🔄 Используем прямой вызов OpenAI GPT-4o...")
+            sql = self.pipeline.generate_sql(smart_question, timeout=60)
+            result = {'success': True, 'sql': sql, 'model': 'gpt-4o-direct'}
 
             if result and result.get('success') and result.get('sql'):
                 sql = result['sql']
-                logger.info(f"Сгенерирован SQL с помощью {result.get('model', 'unknown')}: {sql}")
+                logger.info(f"✅ SQL сгенерирован: {sql}")
                 return sql
-
-            error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
-            logger.error(f"Ошибка генерации SQL: {error_msg}")
-            raise Exception(f"Ошибка генерации SQL: {error_msg}")
+            else:
+                raise Exception("Не удалось сгенерировать SQL")
 
         except Exception as e:
-            # Финальный фоллбэк: пробуем ollama один раз, если ранее не пробовали
-            try:
-                logger.warning(f"Повторная попытка генерации через ollama из-за ошибки: {e}")
-                result = self.pipeline.generate_sql(question, prefer_model='ollama')
-                if result and result.get('success') and result.get('sql'):
-                    sql = result['sql']
-                    logger.info(f"Сгенерирован SQL фоллбэком ollama: {sql}")
-                    return sql
-                error_msg = result.get('error', 'Неизвестная ошибка') if isinstance(result, dict) else str(result)
-                raise Exception(error_msg)
-            except Exception as e2:
-                logger.error(f"Ошибка генерации SQL после фоллбэка: {e2}")
-                raise
+            logger.error(f"❌ Ошибка генерации SQL: {e}")
+            raise
     
     async def add_training_example(self, question: str, sql: str, user_id: str, verified: bool = False):
         """

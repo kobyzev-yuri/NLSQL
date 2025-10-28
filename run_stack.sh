@@ -6,7 +6,7 @@ set -euo pipefail
 #  - Core API           : 8000 (src/api/main.py)
 #  - Mock Customer API  : 8080 (src/mock_customer_api.py)
 #  - Simple Web (UI)    : 3000 (src/simple_web_interface.py)
-#  - Streamlit UI       : 8501 (src/streamlit_app.py)
+#  - Streamlit UI       : 8501 (src/streamlit_main.py)
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_DIR="$REPO_DIR/logs"
@@ -59,21 +59,21 @@ svc_status() {
 
 start_all() {
   svc_start core_api "uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload" 8000
-  svc_start mock_api "uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8080 --reload" 8080
+  svc_start mock_api "uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8081 --reload" 8081
   svc_start simple_ui "uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload" 3000
-  svc_start streamlit "streamlit run src/streamlit_app.py --server.port 8501 --server.address 0.0.0.0" 8501
+  svc_start streamlit "streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0" 8501
 }
 
 stop_all() {
   svc_stop streamlit 8501
   svc_stop simple_ui 3000
-  svc_stop mock_api 8080
+  svc_stop mock_api 8081
   svc_stop core_api 8000
 }
 
 status_all() {
   svc_status core_api 8000
-  svc_status mock_api 8080
+  svc_status mock_api 8081
   svc_status simple_ui 3000
   svc_status streamlit 8501
 }
@@ -96,7 +96,7 @@ case "${1:-}" in
     status_all ;;
   logs)
     logs_tail core_api 8000 200
-    logs_tail mock_api 8080 200
+    logs_tail mock_api 8081 200
     logs_tail simple_ui 3000 200
     logs_tail streamlit 8501 200 ;;
   *)
