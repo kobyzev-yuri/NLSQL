@@ -188,12 +188,198 @@ WHERE u.deleted = FALSE
 - **Recall < 0.7**: Улучшить полноту генерации
 - **F1-Score < 0.7**: Общее улучшение качества
 
+## 🔄 Эквивалентность SQL запросов
+
+### **Проблема: разные SQL → одинаковый результат**
+
+**Критически важная тонкость:** Разные SQL-запросы могут возвращать **идентичный датасет**, при этом отличаясь синтаксически.
+
+#### **Пример 1: Порядок условий**
+```sql
+-- Вариант 1 (эталон)
+SELECT * FROM users WHERE deleted = false AND department = 'IT';
+
+-- Вариант 2 (сгенерированный)
+SELECT * FROM users WHERE department = 'IT' AND deleted = false;
+
+-- ✅ Результат: ИДЕНТИЧНЫЙ датасет
+```
+
+#### **Пример 2: Явное перечисление колонок vs SELECT ***
+```sql
+-- Вариант 1
+SELECT * FROM users WHERE id = 1;
+
+-- Вариант 2
+SELECT id, login, email, department FROM users WHERE id = 1;
+
+-- ✅ Результат: ИДЕНТИЧНЫЙ датасет (если в таблице только эти 4 колонки)
+```
+
+#### **Пример 3: Разные способы JOIN**
+```sql
+-- Вариант 1
+SELECT u.* FROM users u 
+INNER JOIN departments d ON u.dept_id = d.id 
+WHERE d.name = 'IT';
+
+-- Вариант 2
+SELECT u.* FROM users u 
+WHERE u.dept_id IN (SELECT id FROM departments WHERE name = 'IT');
+
+-- ✅ Результат: ИДЕНТИЧНЫЙ датасет
+```
+
+### **Решение: EXPLAIN PLAN для эквивалентности**
+
+Для корректной оценки качества SQL используется **эквивалентность по плану выполнения**:
+
+#### **1️⃣ Execution Equivalence (Эквивалентность результата)**
+```python
+# Оба SQL должны вернуть одинаковый датасет
+result1 = execute_sql(sql_reference)
+result2 = execute_sql(sql_generated)
+
+# Сравнение: одинаковые строки, колонки, значения
+is_equivalent = (result1 == result2)
+```
+
+#### **2️⃣ Plan Equivalence (Эквивалентность плана)**
+```python
+# PostgreSQL EXPLAIN показывает план выполнения
+plan1 = execute_sql(f"EXPLAIN {sql_reference}")
+plan2 = execute_sql(f"EXPLAIN {sql_generated}")
+
+# Сравнение ключевых аспектов плана:
+# - Используемые индексы
+# - Тип сканирования (Sequential, Index, Bitmap)
+# - Порядок JOIN
+# - Стоимость запроса (cost)
+is_plan_equivalent = compare_explain_plans(plan1, plan2)
+```
+
+#### **Пример EXPLAIN PLAN**
+```sql
+-- SQL 1
+EXPLAIN SELECT * FROM users WHERE department = 'IT' AND deleted = false;
+---
+Seq Scan on users  (cost=0.00..35.50 rows=10 width=120)
+  Filter: ((department = 'IT'::text) AND (deleted = false))
+
+-- SQL 2  
+EXPLAIN SELECT * FROM users WHERE deleted = false AND department = 'IT';
+---
+Seq Scan on users  (cost=0.00..35.50 rows=10 width=120)
+  Filter: ((deleted = false) AND (department = 'IT'::text))
+
+✅ План ИДЕНТИЧЕН → SQL эквивалентны
+```
+
+### **Метрики с учетом эквивалентности**
+
+#### **Accuracy (Точность генерации)**
+```python
+# SQL считается правильным, если:
+# 1. Синтаксически корректен
+# 2. Возвращает правильный датасет (Execution Equivalence)
+# 3. Имеет эквивалентный план выполнения (Plan Equivalence)
+
+Accuracy = Correct_SQL / Total_SQL
+
+# Correct_SQL - запросы, прошедшие все 3 проверки
+```
+
+#### **Component Match (Совпадение компонентов)**
+```python
+# Для детального анализа:
+# - Tables: правильные таблицы
+# - Columns: правильные колонки
+# - Conditions: правильные условия WHERE
+# - Joins: правильные JOIN
+
+Component_Match = (Tables_Match + Columns_Match + 
+                   Conditions_Match + Joins_Match) / 4
+```
+
+#### **Execution Equivalence (Эквивалентность выполнения)**
+```python
+# Основная метрика для бизнес-логики:
+# SQL возвращает правильные данные?
+
+Exec_Equiv = SQL_Same_Result / Total_SQL
+```
+
+### **Практическое применение**
+
+#### **В системе NLSQL**
+```python
+def evaluate_sql_quality(reference_sql, generated_sql):
+    """
+    Оценка качества сгенерированного SQL
+    
+    Returns:
+        {
+            'syntax_valid': bool,           # Синтаксис корректен
+            'execution_equiv': bool,        # Результаты идентичны
+            'plan_equiv': bool,             # Планы эквивалентны
+            'component_match': float,       # 0.0 - 1.0
+            'accuracy': bool                # Общая оценка
+        }
+    """
+    # 1. Проверка синтаксиса
+    syntax_valid = validate_syntax(generated_sql)
+    
+    # 2. Сравнение результатов
+    ref_result = execute(reference_sql)
+    gen_result = execute(generated_sql)
+    execution_equiv = (ref_result == gen_result)
+    
+    # 3. Сравнение планов
+    ref_plan = get_explain_plan(reference_sql)
+    gen_plan = get_explain_plan(generated_sql)
+    plan_equiv = compare_plans(ref_plan, gen_plan)
+    
+    # 4. Анализ компонентов
+    component_match = analyze_components(reference_sql, generated_sql)
+    
+    # 5. Итоговая оценка
+    accuracy = syntax_valid and execution_equiv and plan_equiv
+    
+    return {
+        'syntax_valid': syntax_valid,
+        'execution_equiv': execution_equiv,
+        'plan_equiv': plan_equiv,
+        'component_match': component_match,
+        'accuracy': accuracy
+    }
+```
+
+### **Текущие метрики в системе**
+
+Система NLSQL использует:
+
+1. **Accuracy (Точность генерации)**
+   - SQL синтаксически корректен ✓
+   - SQL возвращает правильные данные ✓
+   - SQL имеет эквивалентный план ✓
+
+2. **Component Match (Совпадение компонентов)**
+   - Таблицы, колонки, условия, JOIN
+   - Детальный анализ ошибок
+
+3. **Execution Equivalence (Эквивалентность выполнения)**
+   - **Основная метрика для бизнеса**
+   - Проверка через EXPLAIN PLAN
+   - Сравнение результатов выполнения
+
 ## 🎯 Заключение
 
-**Метрики P, R, F1 для SQL запросов:**
-- ✅ **Всегда в диапазоне 0.0 - 1.0**
-- ✅ **Процентное представление 0% - 100%**
-- ✅ **Объективная оценка качества**
-- ✅ **Сравнение с эталонными запросами**
+**Метрики для SQL запросов с учетом эквивалентности:**
+- ✅ **Accuracy**: Синтаксис + Результат + План (0.0 - 1.0)
+- ✅ **Component Match**: Детальный анализ компонентов (0.0 - 1.0)
+- ✅ **Execution Equivalence**: Основная метрика для бизнеса
+- ✅ **EXPLAIN PLAN**: Проверка эквивалентности планов выполнения
 
-**Результат**: Правильная и понятная оценка качества генерируемых SQL запросов! 📊
+**Ключевая тонкость:** Разные SQL могут быть эквивалентны по результату и плану выполнения, даже если синтаксически отличаются. Это учитывается при оценке качества через EXPLAIN PLAN.
+
+**Результат**: Правильная и точная оценка качества генерируемых SQL запросов с учетом их функциональной эквивалентности! 📊
