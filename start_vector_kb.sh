@@ -28,7 +28,7 @@ mkdir -p logs
 echo "🚀 Запуск Vector KB Interface на порту $PORT..."
 
 # Запускаем Streamlit в фоне
-nohup streamlit run vector_kb_interface.py \
+nohup streamlit run src/vector_kb_interface.py \
     --server.port $PORT \
     --server.address 0.0.0.0 \
     > logs/vector_kb_$PORT.out \
