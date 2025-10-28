@@ -147,3 +147,21 @@ config.env
 *ANALYSIS*.md
 SQL_QUALITY*.txt
 
+
+# Scripts and tools (use tools/ directory instead)
+*.py
+!setup.py
+!vector_kb_interface.py
+
+# Data files in root
+*.json
+*.jsonl
+
+# Documentation in root (use docs/)
+TZ.md
+PROJECT_SUMMARY.md
+*METHODOLOGY*.md
+*ARCHITECTURE*.md
+*IMPROVEMENT*.md
+*QUICKSTART*.md
+
