@@ -137,3 +137,13 @@ config.env
 *_key.txt
 *.key
 
+
+# Temporary work files
+*TOMORROW*.md
+*BENCHMARK*.md
+*QUESTIONS*.md
+*CHECKLIST*.md
+*REPORT*.md
+*ANALYSIS*.md
+SQL_QUALITY*.txt
+
