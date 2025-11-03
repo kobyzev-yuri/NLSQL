@@ -14,10 +14,15 @@ import json
 import time
 import sys
 import os
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+# Load environment variables from config.env
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env")
 
 # Настройка страницы
 st.set_page_config(
@@ -31,54 +36,44 @@ st.title("🧠 Vector Knowledge Base Interface")
 st.markdown("Интерфейс для тестирования и дообучения векторной базы знаний")
 
 # Конфигурация API
-API_BASE_URL = "http://localhost:3000"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")  # Core API port
 
 def test_api_connection():
     """Проверка подключения к FastAPI"""
     try:
-        response = requests.get(f"{API_BASE_URL}/status", timeout=5)
+        response = requests.get(f"{API_BASE_URL}/health", timeout=5)
         if response.status_code == 200:
             data = response.json()
-            return data.get("ready", False)
+            return data.get("status") == "healthy"
         return False
     except:
         return False
 
 def call_api_search(question: str, search_type: str = "semantic", limit: int = 5):
-    """Вызов API для тестирования поиска через generate-sql"""
+    """Вызов API для тестирования поиска через /query"""
     try:
         response = requests.post(
-            f"{API_BASE_URL}/generate-sql",
-            data={
+            f"{API_BASE_URL}/query",
+            json={
                 "question": question,
+                "user_id": "kb_test_user",
                 "role": "admin",
-                "department": "IT"
+                "department": "IT",
+                "context": {}
             },
             timeout=30
         )
         if response.status_code == 200:
             data = response.json()
-            if data.get('success'):
+            # /query возвращает SQLResponse с полями: sql, question, user_id
+            if data.get('sql'):
                 # Форматируем результат как результаты поиска
                 results = []
-                if data.get('sql'):
-                    results.append({
-                        "content": f"Сгенерированный SQL: {data['sql']}",
-                        "type": "sql",
-                        "rank": 1
-                    })
-                if data.get('plan'):
-                    results.append({
-                        "content": f"План запроса: {data['plan']}",
-                        "type": "plan", 
-                        "rank": 2
-                    })
-                if data.get('explanation'):
-                    results.append({
-                        "content": f"Объяснение: {data['explanation']}",
-                        "type": "explanation",
-                        "rank": 3
-                    })
+                results.append({
+                    "content": f"Сгенерированный SQL: {data['sql']}",
+                    "type": "sql",
+                    "rank": 1
+                })
                 
                 return {
                     "success": True,
@@ -98,8 +93,14 @@ def call_api_generate_sql(question: str):
     """Вызов API для генерации SQL"""
     try:
         response = requests.post(
-            f"{API_BASE_URL}/generate-sql",
-            data={"question": question},
+            f"{API_BASE_URL}/query",
+            json={
+                "question": question,
+                "user_id": "kb_test_user",
+                "role": "admin",
+                "department": "IT",
+                "context": {}
+            },
             timeout=30
         )
         if response.status_code == 200:
@@ -205,7 +206,7 @@ with tab1:
         if query:
             # Проверяем подключение к API
             if not test_api_connection():
-                st.error("❌ FastAPI недоступен на порту 3000. Убедитесь, что сервис запущен.")
+                st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                 st.stop()
             
             with st.spinner("Выполняю поиск через FastAPI..."):
@@ -293,7 +294,7 @@ with tab2:
             if question and sql:
                 # Проверяем подключение к API
                 if not test_api_connection():
-                    st.error("❌ FastAPI недоступен на порту 3000. Убедитесь, что сервис запущен.")
+                    st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                     st.stop()
                 
                 try:
@@ -327,7 +328,7 @@ with tab2:
                 if st.button("📥 Импортировать все"):
                     # Проверяем подключение к API
                     if not test_api_connection():
-                        st.error("❌ FastAPI недоступен на порту 3000. Убедитесь, что сервис запущен.")
+                        st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                         st.stop()
                     
                     with st.spinner("Импортирую Q/A пары..."):
@@ -382,7 +383,7 @@ with tab3:
             if ddl_text:
                 # Проверяем подключение к API
                 if not test_api_connection():
-                    st.error("❌ FastAPI недоступен на порту 3000. Убедитесь, что сервис запущен.")
+                    st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                     st.stop()
                 
                 try:
@@ -431,7 +432,7 @@ with tab3:
             if doc_text:
                 # Проверяем подключение к API
                 if not test_api_connection():
-                    st.error("❌ FastAPI недоступен на порту 3000. Убедитесь, что сервис запущен.")
+                    st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                     st.stop()
                 
                 try:
@@ -688,14 +689,21 @@ with tab5:
                     for qa in qa_pairs:
                         # Генерируем SQL через API
                         response = requests.post(
-                            f"{API_BASE_URL}/generate-sql",
-                            data={"question": qa["question"]},
+                            f"{API_BASE_URL}/query",
+                            json={
+                                "question": qa["question"],
+                                "user_id": "kb_test_user",
+                                "role": "admin",
+                                "department": "IT",
+                                "context": {}
+                            },
                             timeout=30
                         )
                         
                         if response.status_code == 200:
                             data = response.json()
-                            if data.get('success'):
+                            # /query возвращает SQLResponse с полем sql
+                            if data.get('sql'):
                                 generated_sql = data.get('sql', '')
                                 
                                 # Вычисляем метрики
@@ -931,10 +939,10 @@ with st.sidebar:
     # Статус API
     st.subheader("📡 Статус API")
     if test_api_connection():
-        st.success("✅ FastAPI (3000) - Работает")
+        st.success(f"✅ Core API ({API_BASE_URL}) - Работает")
     else:
-        st.error("❌ FastAPI (3000) - Недоступен")
-        st.warning("Убедитесь, что сервис запущен: python src/simple_web_interface.py")
+        st.error(f"❌ Core API ({API_BASE_URL}) - Недоступен")
+        st.warning(f"Убедитесь, что сервис запущен: uvicorn src.api.main:app --host 0.0.0.0 --port 8000")
     
     if st.button("🔄 Перезагрузить векторку"):
         st.info("Перезагрузка векторки...")
@@ -946,35 +954,48 @@ with st.sidebar:
     if st.button("📊 Полный анализ"):
         st.info("Запуск полного анализа...")
     
-    st.header("📁 Файлы")
+    st.header("📁 Документация")
     
-    # Ссылки на важные файлы
-    st.markdown("""
+    # GitHub репозиторий (можно настроить через переменную окружения)
+    github_repo = os.getenv("GITHUB_REPO_URL", "https://github.com/kobyzev-yuri/NLSQL")
+    # Если репозиторий переименован, можно использовать формат: owner/repo
+    # или полный URL: https://github.com/owner/repo
+    
+    st.markdown(f"""
     **📚 Документация проекта:**
     
-    - [Training Guide](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/VANNA_TRAINING_GUIDE.md) - руководство по обучению
-    - [QA Expansion](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/customer_requests/CUSTOMER_QA_EXPANSION_REQUEST.md) - план расширения Q/A
-    - [RAG Checklist](https://github.com/kobyzev-yuri/NLSQL/blob/main/RAG_IMPROVEMENT_CHECKLIST.md) - чеклист улучшений RAG
-    - [Vector KB Plan](https://github.com/kobyzev-yuri/NLSQL/blob/main/VECTOR_KB_IMPROVEMENT_PLAN.md) - план улучшения векторки
-    - [Services Guide](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/SERVICES_STARTUP_GUIDE.md) - руководство по сервисам
+    Все ссылки на документацию находятся в основном README проекта:
     
-    **💡 Подсказка:** Документы находятся в корне проекта. 
+    **[📖 README.md на GitHub]({github_repo}/blob/main/README.md)**
     
-    **Доступ через терминал:**
-    ```bash
-    # Открыть в редакторе
-    code docs/VANNA_TRAINING_GUIDE.md
-    code VECTOR_KB_IMPROVEMENT_PLAN.md
+    В README вы найдете ссылки на:
+    - [Vector KB Interface Guide]({github_repo}/blob/main/docs/VECTOR_KB_INTERFACE_GUIDE.md) - руководство по работе с этим интерфейсом
+    - [Vector DB Documentation]({github_repo}/blob/main/docs/VECTOR_DB.md) - структура и обучение векторной БД
+    - [KB Testing Guide]({github_repo}/blob/main/docs/KB_TESTING_GUIDE.md) - методика тестирования базы знаний
+    - [User Guide]({github_repo}/blob/main/docs/USER_GUIDE.md) - руководство для пользователей
+    - [API Reference]({github_repo}/blob/main/docs/API_REFERENCE.md) - документация API для разработчиков
+    - И другие документы в директории `docs/`
     
-    # Просмотр в терминале
-    cat docs/VANNA_TRAINING_GUIDE.md
-    less VECTOR_KB_IMPROVEMENT_PLAN.md
-    ```
-    
-    **🌐 GitHub репозиторий:**
-    - [kobyzev-yuri/NLSQL](https://github.com/kobyzev-yuri/NLSQL) - основной репозиторий
-    - Или используйте локальные ссылки выше
+    **💡 Подсказка:** 
+    - Если репозиторий переименован, установите переменную окружения `GITHUB_REPO_URL` в `config.env`
+    - Все документы также доступны локально в директории `docs/` проекта
     """)
+    
+    # Локальный доступ к файлам
+    with st.expander("📂 Локальный доступ к документам"):
+        st.markdown("""
+        **Доступ через терминал:**
+        ```bash
+        # Открыть в редакторе
+        code docs/USER_GUIDE.md
+        code docs/VECTOR_KB_INTERFACE_GUIDE.md
+        code docs/VECTOR_DB.md
+        
+        # Просмотр в терминале
+        cat docs/VECTOR_KB_INTERFACE_GUIDE.md
+        less docs/VECTOR_DB.md
+        ```
+        """)
 
 # Футер
 st.markdown("---")
