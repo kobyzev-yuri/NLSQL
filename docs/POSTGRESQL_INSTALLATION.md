@@ -1,5 +1,7 @@
 # Установка PostgreSQL и загрузка дампа DocStructureSchema
 
+> Важно: Поставка клиента находится в `data/DocStructureSchema`. Путь можно переопределить переменной окружения `DOCSTRUCTURE_DIR`.
+
 ## 🐧 **Linux (Ubuntu/Debian)**
 
 ### **1. Установка PostgreSQL**

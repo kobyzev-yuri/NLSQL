@@ -1,107 +1,47 @@
-# API Reference - NL→SQL System
+# API Reference (для разработчиков)
 
-## 📋 Обзор API
+## 📋 Обзор
 
-Система NL→SQL предоставляет REST API для генерации и выполнения SQL запросов из естественного языка.
+Система NL→SQL предоставляет REST API (FastAPI) и Python API для генерации и выполнения SQL по текстовому запросу.
 
 ---
 
-## 🌐 Simple Web Interface API
+## 🌐 Core REST API (FastAPI)
 
-**Base URL**: `http://localhost:3000`
+Base URL: `http://localhost:8000`
 
-### Endpoints
+### Эндпоинты
 
 #### `GET /`
-**Описание**: Главная страница с веб-интерфейсом  
-**Response**: HTML страница с интерфейсом
-
-```html
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <title>NL→SQL Простой Интерфейс</title>
-</head>
-<body>
-    <!-- Веб-интерфейс для ввода вопросов -->
-</body>
-</html>
-```
-
-#### `POST /generate-sql`
-**Описание**: Генерация SQL из естественного языка  
-**Content-Type**: `application/x-www-form-urlencoded`
-
-**Parameters**:
-- `question` (string, required) - Вопрос на русском языке
-- `role` (string, optional) - Роль пользователя (admin/manager/user)
-- `department` (string, optional) - Отдел пользователя
-
-**Response**:
-```json
-{
-    "success": true,
-    "sql": "SELECT * FROM equsers WHERE deleted = FALSE",
-    "plan": {
-        "tables": ["equsers"],
-        "columns": ["*"],
-        "conditions": ["deleted = FALSE"]
-    },
-    "sql_template": "SELECT * FROM equsers",
-    "final_sql": "SELECT * FROM equsers WHERE deleted = FALSE",
-    "restrictions": ["deleted = FALSE"],
-    "explanation": "SQL сгенерирован QueryService с KB",
-    "agent_type": "QueryService с KB"
-}
-```
-
-#### `POST /execute-sql`
-**Описание**: Выполнение SQL запроса  
-**Content-Type**: `application/x-www-form-urlencoded`
-
-**Parameters**:
-- `question` (string, required) - Вопрос на русском языке
-- `role` (string, optional) - Роль пользователя
-- `department` (string, optional) - Отдел пользователя
-
-**Response**:
-```json
-{
-    "success": true,
-    "sql_template": "SELECT * FROM equsers",
-    "sql_corrected": "SELECT * FROM equsers WHERE deleted = FALSE",
-    "sql_with_roles": "SELECT * FROM equsers WHERE deleted = FALSE AND owner_id = '...'",
-    "data": [
-        {
-            "id": "uuid",
-            "login": "user1",
-            "email": "user1@example.com"
-        }
-    ],
-    "columns": ["id", "login", "email"],
-    "row_count": 1,
-    "execution_time": 0.123,
-    "restrictions": ["deleted = FALSE", "owner_id = '...'"],
-    "explanation": "SQL выполнен успешно. Найдено 1 записей.",
-    "agent_type": "QueryService с KB + Mock API"
-}
-```
+Возвращает статус работы API и версию.
 
 #### `GET /health`
-**Описание**: Проверка состояния системы  
-**Response**:
-```json
-{
-    "status": "healthy",
-    "agent": "Vanna AI + ProxyAPI + pgvector"
-}
-```
+Сводный статус компонентов (`api`, `vanna`, `customer_api`).
+
+#### `POST /test-search`
+Тест семантического поиска в векторной БД.
+Body: `{ question, search_type?: semantic|ddl|documentation|examples, limit?: number }`
+
+#### `POST /query`
+Генерация SQL.
+Body: `{ question, user_id?, role?, department?, context? }`
+Returns: `{ sql, question, user_id }`
+
+#### `POST /query/execute`
+Генерация и немедленное выполнение SQL через Customer API.
+Returns: `{ data, columns, row_count, execution_time, sql }`
+
+#### `POST /training/example`
+Добавление примера для обучения: `{ question, sql, user_id?, verified? }` → `{ success, example_id }`
+
+#### `GET /training/status`
+Статус обучения: `{ status, training_examples, last_training, model_version }`
 
 ---
 
 ## 🔧 Mock Customer API
 
-**Base URL**: `http://localhost:8080`
+**Base URL**: `http://localhost:8081`
 
 ### Endpoints
 
@@ -202,152 +142,47 @@
 
 ---
 
-## 🔍 Query Service API
+## 🔍 Query Service (Python API)
 
-### Класс `QueryService`
+### `QueryService`
+- `generate_sql(question: str, user_context: Dict[str, Any]) -> str`
+- `add_training_example(question: str, sql: str, user_id: str, verified: bool=False)`
+- `get_training_status() -> Dict[str, Any]`
+- `test_vector_search(question: str, search_type: str = "semantic", limit: int = 5) -> List[Dict]`
+- `is_ready() -> bool`
 
-#### `generate_sql(question: str, context: dict) -> str`
-**Описание**: Генерация SQL из естественного языка  
-**Parameters**:
-- `question` (str) - Вопрос на русском языке
-- `context` (dict) - Контекст запроса
-
-**Returns**: SQL запрос (str)
-
-**Example**:
-```python
-service = QueryService()
-sql = await service.generate_sql("покажи пользователей", {})
-# Returns: "SELECT * FROM equsers WHERE deleted = FALSE"
-```
-
-#### `get_context(question: str) -> str`
-**Описание**: Получение контекста для запроса  
-**Parameters**:
-- `question` (str) - Вопрос на русском языке
-
-**Returns**: Контекст для генерации SQL (str)
+Зависимости: `SimpleOpenAISQL` (прямой GPT-4o), `create_semantic_vanna_client()` (семантический RAG).
 
 ---
 
-## 🧠 Vanna AI Integration
+## 🧠 Vanna / Пайплайны
 
-### Класс `DocStructureVannaNative`
-
-#### `generate_sql(question: str) -> str`
-**Описание**: Генерация SQL через Vanna AI  
-**Parameters**:
-- `question` (str) - Вопрос на русском языке
-
-**Returns**: SQL запрос (str)
-
-#### `get_related_ddl(question: str) -> List[str]`
-**Описание**: Получение релевантных DDL скриптов  
-**Parameters**:
-- `question` (str) - Вопрос на русском языке
-
-**Returns**: Список DDL скриптов (List[str])
-
-#### `get_related_documentation(question: str) -> List[str]`
-**Описание**: Получение релевантной документации  
-**Parameters**:
-- `question` (str) - Вопрос на русском языке
-
-**Returns**: Список документации (List[str])
+- `src/vanna/vanna_pgvector_native.DocStructureVannaNative` — нативная интеграция VannaBase + PostgreSQL + ProxyAPI/OpenAI. Методы: `run_sql`, `get_training_plan_generic`, `train`, `generate_sql`.
+- `src/vanna/optimized_dual_pipeline.OptimizedDualPipeline` — мультимодельная генерация (gpt4/sqlcoder/ollama) и тренировка. Методы: `generate_sql`, `train_on_schema`, `train_on_examples`, `get_usage_stats`, `health_check`.
+- `src/vanna/enhanced_kb_agent.EnhancedKBAgent` — KB-агент поверх пайплайна. Методы: `train_agent`, `generate_sql`, `get_context_info`, `health_check`, `get_statistics`.
+- Утилиты генерации: `src/vanna/simple_openai_sql.SimpleOpenAISQL` (OpenAI/ProxyAPI), `src/vanna/ollama_native_sql.OllamaNativeSQL` (нативный Ollama API).
+- Семантический клиент: `src/vanna/vanna_semantic_fixed.create_semantic_vanna_client()` — `get_related_ddl`, `get_related_documentation`, `get_similar_question_sql`.
 
 ---
 
-## 🔧 Utility Functions
-
-### `src/utils/plan_sql_converter.py`
-
-#### `sql_to_plan(sql: str) -> dict`
-**Описание**: Конвертация SQL в план запроса  
-**Parameters**:
-- `sql` (str) - SQL запрос
-
-**Returns**: План запроса (dict)
-
-**Example**:
-```python
-plan = sql_to_plan("SELECT * FROM equsers WHERE deleted = FALSE")
-# Returns: {
-#     "tables": ["equsers"],
-#     "columns": ["*"],
-#     "conditions": ["deleted = FALSE"]
-# }
-```
-
-#### `plan_to_sql(plan: dict) -> str`
-**Описание**: Конвертация плана в SQL  
-**Parameters**:
-- `plan` (dict) - План запроса
-
-**Returns**: SQL запрос (str)
-
-### `src/tools/generate_embeddings.py`
-
-#### `EmbeddingGenerator.generate_embeddings(batch_size: int, dry_run: bool)`
-**Описание**: Генерация эмбеддингов для существующих записей  
-**Parameters**:
-- `batch_size` (int) - Размер батча для обработки
-- `dry_run` (bool) - Только показать что будет сделано
-
-**Example**:
-```python
-generator = EmbeddingGenerator(dsn, api_key)
-await generator.generate_embeddings(batch_size=100, dry_run=False)
-```
+## 📊 Ошибки
+- HTTP 4xx/5xx с сообщением об ошибке; глобальный обработчик возвращает JSON с полем `error`.
 
 ---
 
-## 📊 Error Handling
+## 🚀 Примеры
 
-### HTTP Status Codes
-
-- `200` - Успешный запрос
-- `400` - Неверные параметры запроса
-- `500` - Внутренняя ошибка сервера
-
-### Error Response Format
-
-```json
-{
-    "success": false,
-    "error": "Описание ошибки",
-    "details": "Дополнительные детали (опционально)"
-}
-```
-
-### Common Errors
-
-#### `QueryService не инициализирован`
-**Причина**: Проблемы с инициализацией QueryService  
-**Решение**: Проверить конфигурацию и подключение к БД
-
-#### `Mock API недоступен`
-**Причина**: Mock API не запущен или недоступен  
-**Решение**: Запустить Mock API на порту 8080
-
-#### `Не удалось сгенерировать SQL`
-**Причина**: Проблемы с LLM или контекстом  
-**Решение**: Проверить API ключи и конфигурацию
-
----
-
-## 🚀 Quick Start Examples
-
-### Python Client Example
-
+### Python (FastAPI)
 ```python
 import httpx
 
 # Генерация SQL
 async with httpx.AsyncClient() as client:
     response = await client.post(
-        "http://localhost:3000/generate-sql",
-        data={
-            "question": "покажи пользователей",
+        "http://localhost:8000/query",
+        json={
+            "question": "Покажи всех пользователей",
+            "user_id": "test",
             "role": "admin",
             "department": "IT"
         }
@@ -358,36 +193,37 @@ async with httpx.AsyncClient() as client:
 # Выполнение SQL
 async with httpx.AsyncClient() as client:
     response = await client.post(
-        "http://localhost:3000/execute-sql",
-        data={
-            "question": "покажи пользователей",
+        "http://localhost:8000/query/execute",
+        json={
+            "question": "Покажи всех пользователей",
+            "user_id": "test",
             "role": "admin",
             "department": "IT"
         }
     )
     result = response.json()
-    print(f"Results: {result['data']}")
+    print(f"Rows: {result['row_count']}")
 ```
 
-### cURL Examples
-
+### cURL
 ```bash
-# Генерация SQL
-curl -X POST http://localhost:3000/generate-sql \
-  -d "question=покажи пользователей&role=admin&department=IT"
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Покажи всех пользователей","user_id":"test","role":"admin","department":"IT"}'
 
-# Выполнение SQL
-curl -X POST http://localhost:3000/execute-sql \
-  -d "question=покажи пользователей&role=admin&department=IT"
+curl -X POST http://localhost:8000/query/execute \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Покажи всех пользователей","user_id":"test","role":"admin","department":"IT"}'
 
-# Проверка здоровья
-curl http://localhost:3000/health
+curl http://localhost:8000/health
 ```
 
 ---
 
-**Версия API**: 2.0.0  
-**Дата обновления**: 2024-10-15
+Версия: 2.1  
+Дата: 2025-11-03
+
+
 
 
 

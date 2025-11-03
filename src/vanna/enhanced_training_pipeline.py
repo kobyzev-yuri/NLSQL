@@ -53,7 +53,7 @@ class EnhancedTrainingPipeline:
     def extract_business_context_from_schema(self) -> Dict[str, Any]:
         """Извлекает бизнес-контекст из DocStructureSchema"""
         
-        schema_path = Path("DocStructureSchema")
+        schema_path = Path(os.getenv("DOCSTRUCTURE_DIR", "data/DocStructureSchema"))
         business_context = {
             "system_purpose": "Система управления поручениями и платежами",
             "main_entities": {
