@@ -1,11 +1,58 @@
+Accuracy: 1.000 (50/50)
+
+
+Рекомендации:
+
+
 | Вопрос | Метод | Top1 type | Rerank score | Preview |
 |---|---|---|---:|---|
-| Платежи за месяц по клиентам | rerank | question_sql | 7.385 | Q: Пользователи отдела Продажи за последний месяц
-A: SELECT u.login, u.email, u.... |
-| Покажи все платежи | rerank | question_sql | 8.319 | Q: Покажи всех пользователей системы
-A: SELECT id, login, email, surname, firstn... |
-| Пользователи системы | rerank | documentation | 8.805 | 
-        DocStructureSchema - система управления документами и пользователями
-  ... |
-| Покажи таблицы с платежами | rerank | question_sql | 7.863 | Q: Покажи активных пользователей системы
-A: SELECT id, login, email, surname, fi... |
+| Покажи всех пользователей | seen | question_sql | - | - |
+| Список отделов | seen | question_sql | - | - |
+| Все клиенты | seen | question_sql | - | - |
+| Пользователи по отделам | seen | question_sql | - | - |
+| Поручения с клиентами | seen | question_sql | - | - |
+| Платежи по клиентам | seen | question_sql | - | - |
+| Пользователи с ролями | seen | question_sql | - | - |
+| Количество пользователей по отделам | seen | question_sql | - | - |
+| Поручения за последний месяц | seen | question_sql | - | - |
+| Сумма платежей по месяцам | seen | question_sql | - | - |
+| Покажи всех пользователей | seen | question_sql | - | - |
+| Список отделов | seen | question_sql | - | - |
+| Все клиенты | seen | question_sql | - | - |
+| Пользователи по отделам | seen | question_sql | - | - |
+| Поручения с клиентами | seen | question_sql | - | - |
+| Платежи по клиентам | seen | question_sql | - | - |
+| Пользователи с ролями | seen | question_sql | - | - |
+| Количество пользователей по отделам | seen | question_sql | - | - |
+| Поручения за последний месяц | seen | question_sql | - | - |
+| Сумма платежей по месяцам | seen | question_sql | - | - |
+| Покажи всех пользователей | seen | question_sql | - | - |
+| Список отделов | seen | question_sql | - | - |
+| Все клиенты | seen | question_sql | - | - |
+| Пользователи по отделам | seen | question_sql | - | - |
+| Поручения с клиентами | seen | question_sql | - | - |
+| Платежи по клиентам | seen | question_sql | - | - |
+| Пользователи с ролями | seen | question_sql | - | - |
+| Количество пользователей по отделам | seen | question_sql | - | - |
+| Поручения за последний месяц | seen | question_sql | - | - |
+| Сумма платежей по месяцам | seen | question_sql | - | - |
+| Покажи всех пользователей | seen | question_sql | - | - |
+| Список отделов | seen | question_sql | - | - |
+| Все клиенты | seen | question_sql | - | - |
+| Пользователи по отделам | seen | question_sql | - | - |
+| Поручения с клиентами | seen | question_sql | - | - |
+| Платежи по клиентам | seen | question_sql | - | - |
+| Пользователи с ролями | seen | question_sql | - | - |
+| Количество пользователей по отделам | seen | question_sql | - | - |
+| Поручения за последний месяц | seen | question_sql | - | - |
+| Сумма платежей по месяцам | seen | question_sql | - | - |
+| Покажи всех пользователей | seen | question_sql | - | - |
+| Список отделов | seen | question_sql | - | - |
+| Все клиенты | seen | question_sql | - | - |
+| Пользователи по отделам | seen | question_sql | - | - |
+| Поручения с клиентами | seen | question_sql | - | - |
+| Платежи по клиентам | seen | question_sql | - | - |
+| Пользователи с ролями | seen | question_sql | - | - |
+| Количество пользователей по отделам | seen | question_sql | - | - |
+| Поручения за последний месяц | seen | question_sql | - | - |
+| Сумма платежей по месяцам | seen | question_sql | - | - |

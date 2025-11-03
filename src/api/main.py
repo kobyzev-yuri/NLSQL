@@ -4,6 +4,12 @@
 
 import sys
 import os
+from pathlib import Path
+
+# Load environment variables from config.env
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env")
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from fastapi import FastAPI, HTTPException, Depends

@@ -9,7 +9,12 @@ import asyncio
 import asyncpg
 import pandas as pd
 from typing import List, Dict, Any, Optional
+from pathlib import Path
 from openai import OpenAI
+
+# Load environment variables from config.env
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / "config.env")
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +36,10 @@ class DocStructureVectorDBSemantic:
             api_key=config.get("api_key", os.getenv("PROXYAPI_KEY")),
             base_url=config.get("base_url", "https://api.proxyapi.ru/openai/v1")
         )
+        
+        # Кеш модели эмбеддингов
+        self._embedding_model = None
+        self._embedding_model_name = None
         
         logger.info("✅ DocStructureVectorDBSemantic инициализирован")
     
@@ -57,7 +66,8 @@ class DocStructureVectorDBSemantic:
     async def get_similar_question_sql(self, question: str, **kwargs) -> List[str]:
         """Получение похожих Q/A пар через семантический поиск"""
         try:
-            context = await self._semantic_search(question, 'question_sql', limit=3)
+            limit = int(kwargs.get('limit', 3))
+            context = await self._semantic_search(question, 'question_sql', limit=limit)
             logger.info(f"✅ Получено {len(context)} релевантных Q/A пар")
             return context
         except Exception as e:
@@ -101,11 +111,22 @@ class DocStructureVectorDBSemantic:
             return []
     
     async def _generate_embedding(self, text: str) -> List[float]:
-        """Генерация эмбеддинга для текста"""
+        """Генерация эмбеддинга для текста (HF модель настраивается через HF_MODEL_NAME)."""
         try:
             from sentence_transformers import SentenceTransformer
-            model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-            return model.encode(text, convert_to_tensor=True).tolist()
+            
+            model_name = os.getenv('HF_MODEL_NAME', 'sentence-transformers/all-MiniLM-L6-v2')
+            
+            # Кешируем модель для повторного использования
+            if self._embedding_model is None or self._embedding_model_name != model_name:
+                logger.info(f"Loading embedding model: {model_name}")
+                self._embedding_model = SentenceTransformer(model_name)
+                self._embedding_model_name = model_name
+                test_dim = len(self._embedding_model.encode(["test"], normalize_embeddings=True)[0])
+                logger.info(f"Embedding model dimension: {test_dim}")
+            
+            vec = self._embedding_model.encode(text, normalize_embeddings=True)
+            return vec.tolist()
         except Exception as e:
             logger.error(f"❌ Ошибка генерации эмбеддинга: {e}")
             return []
