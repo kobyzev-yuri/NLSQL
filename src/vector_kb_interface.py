@@ -19,6 +19,7 @@ from typing import Dict, List, Any, Optional
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import asyncpg
 
 # Load environment variables from config.env
 from dotenv import load_dotenv
@@ -48,6 +49,137 @@ def test_api_connection():
         return False
     except:
         return False
+
+@st.cache_data(ttl=300)  # Кэш на 5 минут
+def get_documentation_from_db():
+    """Загрузка реальных документов из базы данных"""
+    try:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return []
+        
+        # Используем простой подход с созданием нового event loop
+        import asyncio
+        
+        async def fetch_docs():
+            conn = await asyncpg.connect(database_url)
+            try:
+                rows = await conn.fetch("""
+                    SELECT id, content, created_at 
+                    FROM vanna_vectors 
+                    WHERE content_type = 'documentation' 
+                    ORDER BY created_at DESC 
+                    LIMIT 50
+                """)
+                return [{"id": r["id"], "content": r["content"], "created_at": str(r["created_at"])} for r in rows]
+            finally:
+                await conn.close()
+        
+        # Создаем новый event loop для Streamlit
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            docs = loop.run_until_complete(fetch_docs())
+            loop.close()
+            return docs
+        except Exception as loop_error:
+            # Если не удалось через async, возвращаем пустой список
+            return []
+    except Exception as e:
+        # Если не удалось загрузить из БД, возвращаем пустой список
+        return []
+
+@st.cache_data(ttl=300)  # Кэш на 5 минут
+def get_ddl_from_db():
+    """Загрузка реальных DDL из базы данных с фильтрацией тестовых таблиц"""
+    try:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            return []
+        
+        import asyncio
+        import re as regex_module
+        
+        # Список паттернов для исключения тестовых/временных таблиц
+        exclude_patterns = [
+            r'^temp$',
+            r'^test_',
+            r'^tmp_',
+            r'^temp_',
+            r'_test$',
+            r'_temp$',
+            r'^public\.temp',
+            r'^public\.test_',
+            r'^public\.tmp_',
+        ]
+        
+        async def fetch_ddl():
+            conn = await asyncpg.connect(database_url)
+            try:
+                rows = await conn.fetch("""
+                    SELECT id, content, metadata, created_at 
+                    FROM vanna_vectors 
+                    WHERE content_type = 'ddl' 
+                    ORDER BY created_at DESC 
+                    LIMIT 200
+                """)
+                result = []
+                for r in rows:
+                    # Извлекаем имя таблицы из DDL или metadata
+                    table_name = None
+                    if r["metadata"]:
+                        table_name = r["metadata"].get("table_name") if isinstance(r["metadata"], dict) else None
+                    
+                    # Если нет в metadata, пытаемся извлечь из content
+                    if not table_name:
+                        content = r["content"]
+                        # Ищем CREATE TABLE table_name (может быть с schema)
+                        match = regex_module.search(
+                            r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([^\s.]+)\.)?([^\s(]+)',
+                            content,
+                            regex_module.IGNORECASE
+                        )
+                        if match:
+                            schema = match.group(1)
+                            table = match.group(2)
+                            if schema:
+                                table_name = f"{schema}.{table}"
+                            else:
+                                table_name = table
+                    
+                    if not table_name:
+                        table_name = "Unknown"
+                    
+                    # Фильтруем тестовые/временные таблицы
+                    should_exclude = False
+                    for pattern in exclude_patterns:
+                        if regex_module.match(pattern, table_name, regex_module.IGNORECASE):
+                            should_exclude = True
+                            break
+                    
+                    if should_exclude:
+                        continue  # Пропускаем тестовые таблицы
+                    
+                    result.append({
+                        "id": r["id"],
+                        "content": r["content"],
+                        "table_name": table_name,
+                        "created_at": str(r["created_at"])
+                    })
+                return result
+            finally:
+                await conn.close()
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            ddl_list = loop.run_until_complete(fetch_ddl())
+            loop.close()
+            return ddl_list
+        except Exception as loop_error:
+            return []
+    except Exception as e:
+        return []
 
 def call_api_search(question: str, search_type: str = "semantic", limit: int = 5):
     """Вызов API для тестирования поиска через /query"""
@@ -313,35 +445,165 @@ with tab2:
     with col2:
         st.subheader("Массовое добавление")
         
+        # Формат JSON файла
+        with st.expander("📋 Формат JSON файла", expanded=False):
+            st.markdown("""
+            **Формат:** Массив объектов с полями `question` и `sql`
+            
+            **Пример файла `qa_pairs.json`:**
+            ```json
+            [
+                {
+                    "question": "Покажи всех пользователей системы",
+                    "sql": "SELECT id, login, email, surname, firstname, department FROM equsers WHERE deleted = FALSE"
+                },
+                {
+                    "question": "Список всех клиентов с их контактами",
+                    "sql": "SELECT id, business_unit_name, inn, kpp, ogrn, phone, email FROM tbl_business_unit WHERE deleted = FALSE"
+                },
+                {
+                    "question": "Пользователи отдела Продажи за последний месяц",
+                    "sql": "SELECT u.login, u.email, u.surname, u.firstname FROM equsers u JOIN eq_departments d ON u.department = d.id WHERE d.name = 'Продажи' AND u.created_at >= CURRENT_DATE - INTERVAL '1 month'"
+                }
+            ]
+            ```
+            
+            **Обязательные поля:**
+            - `question` (string) - вопрос на естественном языке
+            - `sql` (string) - SQL запрос для ответа на вопрос (оптимизированный вариант)
+            
+            **Опциональные поля:**
+            - `sql_basic` (string) - базовый (неоптимизированный) SQL для сравнения
+            - `sql_optimized` (string) - оптимизированный SQL (альтернатива `sql` для пар SQL/SQL optimized)
+            - `improvement` (string) - описание улучшения производительности
+            - `domain` (string) - домен вопроса (users, payments, assignments, etc.)
+            - `tags` (array) - список тегов для категоризации
+            
+            **Пример с SQL optimized (для скрипта optimize):**
+            ```json
+            {
+                "question": "Покажи всех пользователей",
+                "sql_basic": "SELECT * FROM equsers",
+                "sql_optimized": "SELECT id, login, email FROM equsers WHERE deleted = FALSE",
+                "improvement": "50% меньше данных, быстрее выполнение"
+            }
+            ```
+            
+            **Примечание:** Для обучения на оптимизированных SQL используйте формат с `sql_basic` и `sql_optimized`.
+            Для массового добавления как Q/A пары используйте `sql` (оптимизированный) и опционально `sql_basic` для сравнения.
+            """)
+        
         # Загрузка файла
         uploaded_file = st.file_uploader(
             "Загрузите JSON файл с Q/A парами:",
             type=['json'],
-            help="Формат: [{'question': '...', 'sql': '...'}, ...]"
+            help="Формат: массив объектов [{'question': '...', 'sql': '...'}, ...]"
         )
         
         if uploaded_file:
             try:
                 data = json.load(uploaded_file)
-                st.info(f"Загружено {len(data)} Q/A пар")
                 
-                if st.button("📥 Импортировать все"):
-                    # Проверяем подключение к API
-                    if not test_api_connection():
-                        st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
-                        st.stop()
+                # Валидация формата
+                if not isinstance(data, list):
+                    st.error("❌ Ошибка: JSON должен быть массивом объектов")
+                    st.code('{"error": "Ожидается массив: [...]"}')
+                    st.stop()
+                
+                # Проверка структуры каждой пары
+                valid_pairs = []
+                invalid_pairs = []
+                for i, pair in enumerate(data):
+                    if not isinstance(pair, dict):
+                        invalid_pairs.append(f"Пара #{i+1}: не является объектом")
+                        continue
                     
-                    with st.spinner("Импортирую Q/A пары..."):
-                        # Пока что используем CLI скрипт, так как API для массового добавления еще не реализован
-                        st.info("⚠️ Массовое добавление Q/A пар через интерфейс пока не поддерживается. Используйте CLI скрипт:")
-                        st.code(f"python qa_management_script.py --action add --input qa_pairs.json")
+                    # Проверяем наличие question и sql (или sql_optimized)
+                    if "question" not in pair:
+                        invalid_pairs.append(f"Пара #{i+1}: отсутствует поле 'question'")
+                        continue
+                    
+                    # SQL может быть в поле 'sql' или 'sql_optimized'
+                    sql_value = pair.get("sql") or pair.get("sql_optimized")
+                    if not sql_value:
+                        invalid_pairs.append(f"Пара #{i+1}: отсутствует поле 'sql' или 'sql_optimized'")
+                        continue
+                    
+                    if not isinstance(pair["question"], str) or not pair["question"].strip():
+                        invalid_pairs.append(f"Пара #{i+1}: поле 'question' должно быть непустой строкой")
+                        continue
+                    
+                    if not isinstance(sql_value, str) or not sql_value.strip():
+                        invalid_pairs.append(f"Пара #{i+1}: поле 'sql'/'sql_optimized' должно быть непустой строкой")
+                        continue
+                    
+                    # Нормализуем: если есть sql_optimized, но нет sql, используем sql_optimized как sql
+                    normalized_pair = pair.copy()
+                    if "sql_optimized" in normalized_pair and "sql" not in normalized_pair:
+                        normalized_pair["sql"] = normalized_pair["sql_optimized"]
+                    
+                    # Для оптимизированных SQL: если есть sql_basic, это оптимизированный SQL
+                    if normalized_pair.get("sql_basic") or normalized_pair.get("sql_optimized"):
+                        # Убедимся, что sql_optimized установлен
+                        if "sql_optimized" not in normalized_pair:
+                            normalized_pair["sql_optimized"] = normalized_pair["sql"]
+                    
+                    valid_pairs.append(normalized_pair)
+                
+                # Отображение результатов валидации
+                if invalid_pairs:
+                    st.warning(f"⚠️ Найдено {len(invalid_pairs)} невалидных пар:")
+                    for error in invalid_pairs:
+                        st.text(f"  • {error}")
+                
+                if valid_pairs:
+                    st.success(f"✅ Валидных Q/A пар: {len(valid_pairs)}")
+                    
+                    # Показываем примеры валидных пар
+                    with st.expander(f"📖 Просмотр валидных пар (первые 3 из {len(valid_pairs)})"):
+                        for i, pair in enumerate(valid_pairs[:3], 1):
+                            st.markdown(f"**Пара #{i}:**")
+                            st.code(f"Q: {pair['question']}\nA: {pair['sql']}", language="sql")
+                            # Если есть sql_basic, показываем его для сравнения
+                            if pair.get('sql_basic'):
+                                st.markdown("*Базовый SQL (для сравнения):*")
+                                st.code(pair['sql_basic'], language="sql")
+                            if pair.get('improvement'):
+                                st.info(f"💡 Улучшение: {pair['improvement']}")
+                    
+                    if st.button("📥 Импортировать валидные пары", type="primary"):
+                        # Проверяем подключение к API
+                        if not test_api_connection():
+                            st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
+                            st.stop()
                         
-                        # В будущем здесь будет вызов API для массового добавления
-                        # api_result = call_api_bulk_add_qa(data)
-                        
-                        st.success(f"Инструкции для импорта {len(data)} Q/A пар показаны выше!")
+                        with st.spinner(f"Импортирую {len(valid_pairs)} Q/A пар..."):
+                            # Пока что используем CLI скрипт, так как API для массового добавления еще не реализован
+                            st.info("⚠️ Массовое добавление Q/A пар через интерфейс пока не поддерживается. Используйте CLI скрипт:")
+                            
+                            # Сохраняем валидные пары во временный файл
+                            import tempfile
+                            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as tmp_file:
+                                json.dump(valid_pairs, tmp_file, ensure_ascii=False, indent=2)
+                                tmp_path = tmp_file.name
+                            
+                            st.code(f"python qa_management_script.py --action add --input {tmp_path} --validate")
+                            st.info(f"💾 Валидные пары сохранены во временный файл: {tmp_path}")
+                            st.success(f"✅ Готово к импорту {len(valid_pairs)} Q/A пар!")
+                            
+                            # В будущем здесь будет вызов API для массового добавления
+                            # api_result = call_api_bulk_add_qa(valid_pairs)
+                else:
+                    st.error("❌ Нет валидных Q/A пар для импорта")
+                    
+            except json.JSONDecodeError as e:
+                st.error(f"❌ Ошибка парсинга JSON: {e}")
+                st.code(f"Позиция ошибки: строка {e.lineno}, колонка {e.colno}")
             except Exception as e:
-                st.error(f"Ошибка загрузки файла: {e}")
+                st.error(f"❌ Ошибка загрузки файла: {e}")
+                import traceback
+                with st.expander("Детали ошибки"):
+                    st.code(traceback.format_exc())
 
 with tab3:
     st.header("🎓 Обучение на новых данных")
@@ -351,8 +613,11 @@ with tab3:
     with col1:
         st.subheader("Обучение на DDL")
         
-        # Примеры DDL
-        ddl_examples = [
+        # Загружаем реальные DDL из базы данных
+        db_ddl = get_ddl_from_db()
+        
+        # Примеры-шаблоны для новых DDL (если в БД нет DDL)
+        ddl_templates = [
             "CREATE TABLE equsers (id SERIAL PRIMARY KEY, login VARCHAR(50), email VARCHAR(100), department VARCHAR(50), deleted BOOLEAN DEFAULT FALSE);",
             "CREATE TABLE tbl_principal_assignment (id SERIAL PRIMARY KEY, assignment_number VARCHAR(20), amount DECIMAL(15,2), business_unit_id INTEGER, creationdatetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
             "CREATE TABLE tbl_business_unit (id SERIAL PRIMARY KEY, business_unit_name VARCHAR(200), inn VARCHAR(12), phone VARCHAR(20));",
@@ -360,17 +625,56 @@ with tab3:
             "CREATE TABLE tbl_incoming_payments (id SERIAL PRIMARY KEY, amount DECIMAL(15,2), payment_date DATE, user_id INTEGER, business_unit_id INTEGER);"
         ]
         
-        # Показываем примеры DDL
-        st.markdown("**💡 Примеры DDL скриптов:**")
-        selected_ddl = st.selectbox(
-            "Выберите пример DDL:",
-            ["Выберите пример..."] + [f"{i+1}. {ex.split('(')[0].split()[-1]}" for i, ex in enumerate(ddl_examples)],
-            key="ddl_example_selector"
-        )
-        
-        if selected_ddl != "Выберите пример...":
-            ddl_idx = int(selected_ddl.split('.')[0]) - 1
-            st.session_state.selected_ddl = ddl_examples[ddl_idx]
+        # Формируем список для выбора
+        if db_ddl:
+            st.markdown(f"**📚 Уже обученные DDL из БД ({len(db_ddl)}):**")
+            
+            # Группируем по таблицам для удобства
+            ddl_options = ["Выберите DDL..."] + [
+                f"📄 {ddl['table_name']} (ID {ddl['id']})" 
+                for ddl in db_ddl
+            ]
+            
+            selected_ddl = st.selectbox(
+                "Выберите DDL для редактирования или как шаблон:",
+                ddl_options,
+                key="ddl_db_selector"
+            )
+            
+            if selected_ddl != "Выберите DDL...":
+                # Найти выбранный DDL
+                ddl_id = int(selected_ddl.split("ID ")[1].split(")")[0])
+                selected_ddl_data = next((d for d in db_ddl if d["id"] == ddl_id), None)
+                if selected_ddl_data:
+                    st.session_state.selected_ddl = selected_ddl_data["content"]
+                    st.info(f"📅 Создан: {selected_ddl_data['created_at']} | Таблица: {selected_ddl_data['table_name']}")
+            
+            st.markdown("---")
+            st.markdown("**💡 Или используйте шаблоны для новых DDL:**")
+            template_options = ["Выберите шаблон..."] + [
+                f"{i+1}. {ex.split('(')[0].split()[-1] if '(' in ex else ex.split()[2]}" 
+                for i, ex in enumerate(ddl_templates)
+            ]
+            selected_template = st.selectbox(
+                "Шаблоны DDL:",
+                template_options,
+                key="ddl_template_selector"
+            )
+            
+            if selected_template != "Выберите шаблон...":
+                ddl_idx = int(selected_template.split('.')[0]) - 1
+                st.session_state.selected_ddl = ddl_templates[ddl_idx]
+        else:
+            st.markdown("**💡 Примеры-шаблоны DDL (в БД пока нет DDL):**")
+            selected_ddl = st.selectbox(
+                "Выберите шаблон:",
+                ["Выберите шаблон..."] + [f"{i+1}. {ex.split('(')[0].split()[-1]}" for i, ex in enumerate(ddl_templates)],
+                key="ddl_example_selector"
+            )
+            
+            if selected_ddl != "Выберите шаблон...":
+                ddl_idx = int(selected_ddl.split('.')[0]) - 1
+                st.session_state.selected_ddl = ddl_templates[ddl_idx]
         
         ddl_text = st.text_area(
             "DDL скрипты:",
@@ -400,8 +704,11 @@ with tab3:
     with col2:
         st.subheader("Обучение на документации")
         
-        # Примеры документации
-        doc_examples = [
+        # Загружаем реальные документы из базы данных
+        db_docs = get_documentation_from_db()
+        
+        # Примеры-шаблоны для новых документов (если в БД нет документов)
+        doc_templates = [
             "Система управления документами DocStructureSchema содержит 12 основных таблиц. Пользователи (equsers) принадлежат к отделам (eq_departments) и имеют ролевые ограничения.",
             "Поручения (tbl_principal_assignment) создаются для бизнес-единиц (tbl_business_unit) и привязаны к пользователям. Платежи (tbl_incoming_payments) связаны с поручениями и клиентами.",
             "Ролевая модель: admin - полный доступ, manager - данные своего отдела, user - только свои данные. Ограничения применяются на уровне SQL запросов.",
@@ -409,17 +716,51 @@ with tab3:
             "Архитектура: PostgreSQL с Row Level Security, векторная база pgvector для семантического поиска, API на FastAPI с поддержкой ролевых ограничений."
         ]
         
-        # Показываем примеры документации
-        st.markdown("**💡 Примеры документации:**")
-        selected_doc = st.selectbox(
-            "Выберите пример документации:",
-            ["Выберите пример..."] + [f"{i+1}. {ex[:50]}..." for i, ex in enumerate(doc_examples)],
-            key="doc_example_selector"
-        )
-        
-        if selected_doc != "Выберите пример...":
-            doc_idx = int(selected_doc.split('.')[0]) - 1
-            st.session_state.selected_doc = doc_examples[doc_idx]
+        # Формируем список для выбора
+        if db_docs:
+            st.markdown(f"**📚 Уже обученные документы из БД ({len(db_docs)}):**")
+            doc_options = ["Выберите документ..."] + [
+                f"📄 ID {doc['id']}: {doc['content'][:60]}..." 
+                for doc in db_docs
+            ]
+            
+            selected_doc = st.selectbox(
+                "Выберите документ для редактирования или как шаблон:",
+                doc_options,
+                key="doc_db_selector"
+            )
+            
+            if selected_doc != "Выберите документ...":
+                # Найти выбранный документ
+                doc_id = int(selected_doc.split("ID ")[1].split(":")[0])
+                selected_doc_data = next((d for d in db_docs if d["id"] == doc_id), None)
+                if selected_doc_data:
+                    st.session_state.selected_doc = selected_doc_data["content"]
+                    st.info(f"📅 Создан: {selected_doc_data['created_at']}")
+            
+            st.markdown("---")
+            st.markdown("**💡 Или используйте шаблоны для новых документов:**")
+            template_options = ["Выберите шаблон..."] + [f"{i+1}. {ex[:50]}..." for i, ex in enumerate(doc_templates)]
+            selected_template = st.selectbox(
+                "Шаблоны:",
+                template_options,
+                key="doc_template_selector"
+            )
+            
+            if selected_template != "Выберите шаблон...":
+                doc_idx = int(selected_template.split('.')[0]) - 1
+                st.session_state.selected_doc = doc_templates[doc_idx]
+        else:
+            st.markdown("**💡 Примеры-шаблоны документации (в БД пока нет документов):**")
+            selected_doc = st.selectbox(
+                "Выберите шаблон:",
+                ["Выберите шаблон..."] + [f"{i+1}. {ex[:50]}..." for i, ex in enumerate(doc_templates)],
+                key="doc_template_selector"
+            )
+            
+            if selected_doc != "Выберите шаблон...":
+                doc_idx = int(selected_doc.split('.')[0]) - 1
+                st.session_state.selected_doc = doc_templates[doc_idx]
         
         doc_text = st.text_area(
             "Документация:",
@@ -536,6 +877,251 @@ with tab4:
                 st.markdown(f"**Улучшение:** {example['improvement']}")
     
     with col2:
+        st.subheader("➕ Добавление пары SQL/SQL optimized")
+        
+        question_opt = st.text_input(
+            "Вопрос:",
+            placeholder="Покажи всех пользователей",
+            key="opt_question"
+        )
+        
+        sql_basic_opt = st.text_area(
+            "Базовый SQL (неоптимизированный):",
+            height=100,
+            placeholder="SELECT * FROM equsers",
+            key="opt_sql_basic"
+        )
+        
+        sql_optimized_opt = st.text_area(
+            "Оптимизированный SQL:",
+            height=100,
+            placeholder="SELECT id, login, email, department FROM equsers WHERE deleted = FALSE",
+            key="opt_sql_optimized"
+        )
+        
+        improvement_opt = st.text_input(
+            "Описание улучшения (опционально):",
+            placeholder="50% меньше данных, быстрее выполнение",
+            key="opt_improvement"
+        )
+        
+        col_add_json, col_add_db = st.columns([1, 1])
+        
+        with col_add_json:
+            if st.button("➕ Добавить в JSON (для скачивания)"):
+                if question_opt and sql_basic_opt and sql_optimized_opt:
+                    # Формируем JSON в формате optimized_sql_examples.json
+                    pair_data = {
+                        "question": question_opt.strip(),
+                        "sql_basic": sql_basic_opt.strip(),
+                        "sql_optimized": sql_optimized_opt.strip(),
+                        "improvement": improvement_opt.strip() if improvement_opt else ""
+                    }
+                    
+                    st.success("✅ Пара сформирована!")
+                    st.code(json.dumps(pair_data, ensure_ascii=False, indent=2), language="json")
+                    
+                    # Добавляем в сессию для возможности сохранения
+                    if "optimized_pairs" not in st.session_state:
+                        st.session_state.optimized_pairs = []
+                    st.session_state.optimized_pairs.append(pair_data)
+                    
+                    st.info(f"💡 Пара сохранена в сессии. Всего пар: {len(st.session_state.optimized_pairs)}")
+                    st.info("💡 Формат соответствует optimized_sql_examples.json для скрипта optimize")
+                else:
+                    st.warning("Заполните вопрос и оба SQL запроса")
+        
+        with col_add_db:
+            if st.button("💾 Добавить в векторную базу (с EXPLAIN планом)"):
+                if question_opt and sql_basic_opt and sql_optimized_opt:
+                    # Проверяем подключение к API
+                    if not test_api_connection():
+                        st.error(f"❌ Core API недоступен. Убедитесь, что сервис запущен на {API_BASE_URL}")
+                        st.info("💡 Запустите: ./run_stack.sh start core_api")
+                        st.stop()
+                    
+                    # Формируем запрос для добавления в векторную базу
+                    request_data = {
+                        "question": question_opt.strip(),
+                        "sql": sql_optimized_opt.strip(),  # Оптимизированный SQL как основной
+                        "user_id": "vector_kb_interface",
+                        "verified": True,
+                        "sql_basic": sql_basic_opt.strip(),
+                        "sql_optimized": sql_optimized_opt.strip(),
+                        "improvement": improvement_opt.strip() if improvement_opt else "",
+                        "is_optimized": True
+                    }
+                    
+                    try:
+                        with st.spinner("🔄 Добавление в векторную базу с генерацией EXPLAIN планов..."):
+                            response = requests.post(
+                                f"{API_BASE_URL}/training/example",
+                                json=request_data,
+                                timeout=30
+                            )
+                            
+                            if response.status_code == 200:
+                                result = response.json()
+                                example_id = result.get("example_id", "unknown")
+                                
+                                # Проверяем результаты валидации оптимизации
+                                optimization_validated = result.get("optimization_validated")
+                                cost_basic = result.get("cost_basic")
+                                cost_optimized = result.get("cost_optimized")
+                                cost_improvement_percent = result.get("cost_improvement_percent")
+                                optimization_warning = result.get("optimization_warning")
+                                
+                                # Показываем статус добавления с учетом валидации
+                                if optimization_validated is True:
+                                    st.success(f"✅ Оптимизированный SQL добавлен в векторную базу!")
+                                    st.success(f"✅ Валидация пройдена: улучшение на {cost_improvement_percent}%")
+                                    if cost_basic is not None and cost_optimized is not None:
+                                        st.info(f"📊 Cost: {cost_basic:.2f} → {cost_optimized:.2f} (улучшение: {cost_improvement_percent:.2f}%)")
+                                elif optimization_validated is False:
+                                    st.warning(f"⚠️ Оптимизированный SQL добавлен, но валидация не пройдена!")
+                                    if optimization_warning:
+                                        st.error(optimization_warning)
+                                    if cost_basic is not None and cost_optimized is not None:
+                                        st.info(f"📊 Cost: базовый={cost_basic:.2f}, оптимизированный={cost_optimized:.2f}")
+                                else:
+                                    st.success(f"✅ Оптимизированный SQL добавлен в векторную базу!")
+                                
+                                st.info(f"📋 ID примера: {example_id}")
+                                st.info("💡 EXPLAIN планы сгенерированы автоматически для обоих SQL")
+                                
+                                # Показываем результаты валидации
+                                if optimization_validated is not None:
+                                    with st.expander("📊 Результаты валидации оптимизации"):
+                                        if optimization_validated:
+                                            st.success("✅ Валидация пройдена: оптимизированный SQL лучше базового")
+                                        else:
+                                            st.error("❌ Валидация не пройдена: оптимизированный SQL не лучше базового")
+                                        
+                                        if cost_basic is not None:
+                                            st.metric("Cost базового SQL", f"{cost_basic:.2f}")
+                                        if cost_optimized is not None:
+                                            st.metric("Cost оптимизированного SQL", f"{cost_optimized:.2f}")
+                                        if cost_improvement_percent is not None:
+                                            color = "normal" if cost_improvement_percent > 0 else "inverse"
+                                            st.metric("Улучшение", f"{cost_improvement_percent:.2f}%", delta=f"{cost_improvement_percent:.2f}%")
+                                
+                                # Показываем информацию о планах
+                                st.markdown("**📊 EXPLAIN планы сгенерированы автоматически:**")
+                                st.markdown("- План для оптимизированного SQL сохранен в `metadata.explain_plan`")
+                                st.markdown("- План для базового SQL сохранен в `metadata.explain_plan_basic`")
+                                st.markdown("- Планы будут включены в контекст при генерации SQL")
+                                
+                                # Опционально: показываем планы (если API возвращает их)
+                                if "explain_plan" in result or "explain_plan_basic" in result:
+                                    with st.expander("📈 Просмотр EXPLAIN планов"):
+                                        explain_plan_opt = result.get("explain_plan")
+                                        explain_plan_basic_val = result.get("explain_plan_basic")
+                                        
+                                        if explain_plan_opt:
+                                            st.markdown("**Оптимизированный SQL:**")
+                                            st.code(explain_plan_opt, language="sql")
+                                        else:
+                                            st.markdown("**Оптимизированный SQL:**")
+                                            st.warning("⚠️ План не сгенерирован (возможно ошибка выполнения или SQL)")
+                                            st.info("💡 Проверьте логи Core API для деталей ошибки. Возможные причины:")
+                                            st.info("   - Неверное имя колонки (используйте: python src/tools/check_table_columns.py)")
+                                            st.info("   - Неверное имя таблицы")
+                                            st.info("   - Синтаксическая ошибка в SQL")
+                                        
+                                        if explain_plan_basic_val:
+                                            st.markdown("**Базовый SQL:**")
+                                            st.code(explain_plan_basic_val, language="sql")
+                                        else:
+                                            st.markdown("**Базовый SQL:**")
+                                            st.warning("⚠️ План не сгенерирован")
+                                        
+                                        # Показываем сравнение, если есть метрики
+                                        width_basic = result.get("width_basic")
+                                        width_optimized = result.get("width_optimized")
+                                        rows_basic = result.get("rows_basic")
+                                        rows_optimized = result.get("rows_optimized")
+                                        
+                                        if cost_basic is not None or width_basic is not None:
+                                            st.markdown("---")
+                                            st.markdown("**📊 Сравнение метрик:**")
+                                            
+                                            comparison_rows = []
+                                            if cost_basic is not None and cost_optimized is not None:
+                                                comparison_rows.append({
+                                                    "Метрика": "Cost",
+                                                    "Базовый SQL": f"{cost_basic:.2f}",
+                                                    "Оптимизированный SQL": f"{cost_optimized:.2f}",
+                                                    "Улучшение": f"{cost_improvement_percent:.2f}%" if cost_improvement_percent is not None else "N/A"
+                                                })
+                                            if width_basic is not None and width_optimized is not None:
+                                                width_improvement = result.get("width_improvement_percent", 0)
+                                                comparison_rows.append({
+                                                    "Метрика": "Width (байт/строка)",
+                                                    "Базовый SQL": f"{width_basic:.0f}",
+                                                    "Оптимизированный SQL": f"{width_optimized:.0f}",
+                                                    "Улучшение": f"{width_improvement:.2f}%" if width_improvement is not None else "N/A"
+                                                })
+                                            if rows_basic is not None and rows_optimized is not None:
+                                                rows_improvement = result.get("rows_improvement_percent", 0)
+                                                comparison_rows.append({
+                                                    "Метрика": "Rows (строк)",
+                                                    "Базовый SQL": f"{rows_basic:.0f}",
+                                                    "Оптимизированный SQL": f"{rows_optimized:.0f}",
+                                                    "Улучшение": f"{rows_improvement:.2f}%" if rows_improvement is not None else "N/A"
+                                                })
+                                            
+                                            if comparison_rows:
+                                                st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True)
+                            else:
+                                error_detail = response.json().get("detail", "Неизвестная ошибка") if response.status_code != 200 else "Ошибка API"
+                                st.error(f"❌ Ошибка добавления: {error_detail}")
+                                st.code(f"Status: {response.status_code}\nResponse: {response.text}")
+                    except requests.exceptions.Timeout:
+                        st.error("❌ Таймаут при добавлении. SQL может быть сложным для генерации плана.")
+                    except Exception as e:
+                        st.error(f"❌ Ошибка: {str(e)}")
+                        st.info("💡 Убедитесь, что Core API запущен и доступен")
+                else:
+                    st.warning("Заполните вопрос и оба SQL запроса")
+        
+        # Показываем сохраненные пары и возможность скачать
+        if "optimized_pairs" in st.session_state and st.session_state.optimized_pairs:
+            st.markdown("---")
+            st.markdown(f"**📋 Сохранено пар: {len(st.session_state.optimized_pairs)}**")
+            
+            # Показываем предпросмотр
+            with st.expander(f"📖 Просмотр сохраненных пар (первые 2 из {len(st.session_state.optimized_pairs)})"):
+                for i, pair in enumerate(st.session_state.optimized_pairs[:2], 1):
+                    st.markdown(f"**Пара #{i}:**")
+                    st.code(f"Q: {pair['question']}\nБазовый: {pair['sql_basic']}\nОптимизированный: {pair['sql_optimized']}", language="sql")
+            
+            col_download, col_clear = st.columns([2, 1])
+            
+            with col_download:
+                if st.button("📥 Скачать optimized_sql_examples.json"):
+                    json_str = json.dumps(st.session_state.optimized_pairs, ensure_ascii=False, indent=2)
+                    st.download_button(
+                        label="⬇️ Скачать optimized_sql_examples.json",
+                        data=json_str,
+                        file_name="optimized_sql_examples.json",
+                        mime="application/json"
+                    )
+                    st.success("✅ Файл готов! Используйте его для:")
+                    st.code("""
+# Анализ производительности
+python qa_management_script.py --action performance --input optimized_sql_examples.json
+
+# Обучение на оптимизированных SQL
+python qa_management_script.py --action optimize --input optimized_sql_examples.json --output performance_report.json
+                    """)
+            
+            with col_clear:
+                if st.button("🗑️ Очистить"):
+                    st.session_state.optimized_pairs = []
+                    st.success("✅ Пара очищена")
+                    st.rerun()
+        
+        st.markdown("---")
         st.subheader("⚡ Принципы оптимизации")
         
         optimization_principles = [
@@ -551,18 +1137,6 @@ with tab4:
         
         for principle in optimization_principles:
             st.markdown(principle)
-        
-        st.subheader("📊 Анализ производительности")
-        
-        if st.button("🔍 Анализировать SQL"):
-            st.info("💡 Используйте CLI для анализа производительности:")
-            st.code("""
-# Анализ производительности SQL
-python qa_management_script.py --action performance --input optimized_sql_examples.json
-
-# Обучение на оптимизированных SQL
-python qa_management_script.py --action optimize --input optimized_sql_examples.json --output performance_report.json
-            """)
     
     st.subheader("🎓 Обучение на оптимизированных SQL")
     

@@ -24,8 +24,20 @@ from services.query_service import QueryService
 from services.customer_api_service import CustomerAPIService
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Вывод в stdout/stderr
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Устанавливаем уровень логирования для vanna модулей
+logging.getLogger('src.vanna').setLevel(logging.INFO)
+logging.getLogger('src.services').setLevel(logging.INFO)
+logging.getLogger('src.vanna.vanna_semantic_fixed').setLevel(logging.INFO)
+logging.getLogger('src.services.query_service').setLevel(logging.INFO)
 
 # Создание FastAPI приложения
 app = FastAPI(
@@ -197,24 +209,107 @@ async def add_training_example(request: TrainingExampleRequest):
     Добавление примера для обучения модели
     """
     try:
-        logger.info(f"Добавление примера обучения от пользователя {request.user_id}")
+        logger.info(f"📝 Добавление примера обучения от пользователя {request.user_id}")
+        logger.info(f"   Вопрос: {request.question[:100]}...")
+        logger.info(f"   SQL: {request.sql[:100] if request.sql else 'None'}...")
+        logger.info(f"   SQL базовый: {request.sql_basic[:100] if request.sql_basic else 'None'}...")
+        logger.info(f"   SQL оптимизированный: {request.sql_optimized[:100] if request.sql_optimized else 'None'}...")
         
         # Добавление примера в Vanna AI
-        await query_service.add_training_example(
+        result = await query_service.add_training_example(
             question=request.question,
             sql=request.sql,
             user_id=request.user_id,
-            verified=request.verified
+            verified=request.verified,
+            sql_basic=request.sql_basic,
+            sql_optimized=request.sql_optimized,
+            improvement=request.improvement,
+            domain=request.domain,
+            tags=request.tags
         )
+        
+        # result может быть dict с example_id, планами и результатами валидации, или None
+        logger.info(f"📊 Результат добавления: type={type(result)}")
+        if isinstance(result, dict):
+            example_id = result.get('example_id') or f"example_{request.user_id}_{hash(request.question)}"
+            explain_plan = result.get('explain_plan')
+            explain_plan_basic = result.get('explain_plan_basic')
+            logger.info(f"📋 Планы из result: explain_plan={'✅' if explain_plan else '❌'}, explain_plan_basic={'✅' if explain_plan_basic else '❌'}")
+            optimization_validated = result.get('optimization_validated')
+            cost_basic = result.get('cost_basic')
+            cost_optimized = result.get('cost_optimized')
+            cost_improvement_percent = result.get('cost_improvement_percent')
+            width_basic = result.get('width_basic')
+            width_optimized = result.get('width_optimized')
+            width_improvement_percent = result.get('width_improvement_percent')
+            rows_basic = result.get('rows_basic')
+            rows_optimized = result.get('rows_optimized')
+            rows_improvement_percent = result.get('rows_improvement_percent')
+            optimization_warning = result.get('optimization_warning')
+        else:
+            example_id = f"example_{request.user_id}_{hash(request.question)}"
+            explain_plan = None
+            explain_plan_basic = None
+            optimization_validated = None
+            cost_basic = None
+            cost_optimized = None
+            cost_improvement_percent = None
+            width_basic = None
+            width_optimized = None
+            width_improvement_percent = None
+            rows_basic = None
+            rows_optimized = None
+            rows_improvement_percent = None
+            optimization_warning = None
+        
+        # Формируем сообщение с учетом валидации
+        if optimization_validated is False:
+            message = f"Пример добавлен, но ⚠️ оптимизация не подтверждена: {optimization_warning or 'оптимизированный SQL не лучше базового'}"
+        elif optimization_validated is True:
+            # Формируем список улучшений
+            improvements = []
+            if cost_improvement_percent is not None and cost_improvement_percent > 0:
+                improvements.append(f"cost: {cost_improvement_percent:.2f}%")
+            if width_improvement_percent is not None and width_improvement_percent > 0:
+                improvements.append(f"width: {width_improvement_percent:.2f}%")
+            if rows_improvement_percent is not None and rows_improvement_percent > 0:
+                improvements.append(f"rows: {rows_improvement_percent:.2f}%")
+            
+            if improvements:
+                improvement_str = ", ".join(improvements)
+                message = f"Пример успешно добавлен. ✅ Оптимизация подтверждена: улучшение ({improvement_str})"
+            else:
+                message = f"Пример успешно добавлен. ✅ Оптимизация подтверждена"
+        else:
+            message = "Пример успешно добавлен"
+        
+        logger.info(f"📤 Возвращаем TrainingResponse:")
+        logger.info(f"   explain_plan: {'✅' if explain_plan else '❌'}")
+        logger.info(f"   explain_plan_basic: {'✅' if explain_plan_basic else '❌'}")
         
         return TrainingResponse(
             success=True,
-            message="Пример успешно добавлен",
-            example_id=f"example_{request.user_id}_{hash(request.question)}"
+            message=message,
+            example_id=example_id,
+            explain_plan=explain_plan,
+            explain_plan_basic=explain_plan_basic,
+            optimization_validated=optimization_validated,
+            cost_basic=cost_basic,
+            cost_optimized=cost_optimized,
+            cost_improvement_percent=cost_improvement_percent,
+            width_basic=width_basic,
+            width_optimized=width_optimized,
+            width_improvement_percent=width_improvement_percent,
+            rows_basic=rows_basic,
+            rows_optimized=rows_optimized,
+            rows_improvement_percent=rows_improvement_percent,
+            optimization_warning=optimization_warning
         )
         
     except Exception as e:
-        logger.error(f"Ошибка добавления примера: {e}")
+        logger.error(f"❌ Ошибка добавления примера: {e}")
+        import traceback
+        logger.error(f"   Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Ошибка добавления примера: {str(e)}")
 
 
