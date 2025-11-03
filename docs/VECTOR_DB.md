@@ -32,9 +32,17 @@ ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(384);
 ```
 
 ### 2) Откуда берутся данные
-- DDL: из `INFORMATION_SCHEMA.COLUMNS` (см. `DocStructureVannaNative.get_training_plan_generic` и методы `add_ddl`)
-- Документация: из внутренних текстов/файлов (метод `add_documentation`)
-- Q/A пары: ручные и полуавтоматические примеры (метод `add_question_sql`)
+- **DDL**: из `INFORMATION_SCHEMA.COLUMNS` (см. `DocStructureVannaNative.get_training_plan_generic` и методы `add_ddl`)
+- **Документация**: из внутренних текстов/файлов (метод `add_documentation`)
+- **Q/A пары**: ручные и полуавтоматические примеры (метод `add_question_sql`)
+  - **Обычные Q/A**: `question` + `sql`
+  - **Оптимизированные Q/A**: `question` + `sql_optimized` + опционально `sql_basic` для сравнения
+
+**Важно:** Оптимизированные SQL запросы хранятся как обычные Q/A пары с `content_type='question_sql'`, но в `metadata` содержат дополнительную информацию:
+- `is_optimized: true` - флаг оптимизированного SQL
+- `sql_basic` - базовый (неоптимизированный) SQL для сравнения
+- `sql_optimized` - оптимизированный SQL (дублирует `sql` в content)
+- `improvement` - описание улучшения производительности
 
 Кодовые точки:
 - `src/vanna/vanna_pgvector_native.py` (класс `DocStructureVectorDB` / `DocStructureVannaNative`):
@@ -44,18 +52,53 @@ ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(384);
   - ожидает `embedding` и использует pgvector `<->` cosine
 
 ### 3) Обучение/ингест
+
+**Варианты обучения:**
+
+#### 3.1) Базовое обучение (DDL + Документация + Q/A)
 Шаги:
 1. Создайте таблицу и индексы (см. DDL выше)
 2. Сгенерируйте обучающий контент:
-   - Схема БД → `train(plan=...)` из `DocStructureVannaNative`
-   - Документация → `add_documentation`
-   - Q/A → `add_question_sql`
+   - **Схема БД** → `train(plan=...)` из `DocStructureVannaNative`
+   - **Документация** → `add_documentation(doc_text)`
+   - **Q/A пары** → `add_question_sql(question, sql)`
 3. Сгенерируйте эмбеддинги для записей и сохраните в `embedding`:
-   - Используйте HF-модель `sentence-transformers/all-MiniLM-L6-v2` (размер 384)
-   - Или OpenAI embeddings (размер 1536) — потребуется изменить размерность столбца
+   ```bash
+   python -m src.tools.generate_embeddings_hf --dsn "$DATABASE_URL" --model "$HF_MODEL_NAME"
+   ```
 
-Практика генерации эмбеддингов:
-- `src/tools/generate_embeddings_hf.py` — базовый скрипт для генерации/обновления `embedding` (адаптируйте под вашу схему)
+#### 3.2) Обучение на оптимизированных SQL
+Для обучения модели генерировать эффективный SQL:
+1. Подготовьте файл `optimized_sql_examples.json`:
+   ```json
+   [
+       {
+           "question": "Покажи всех пользователей",
+           "sql_basic": "SELECT * FROM equsers",
+           "sql_optimized": "SELECT id, login, email FROM equsers WHERE deleted = FALSE",
+           "improvement": "50% меньше данных, быстрее выполнение"
+       }
+   ]
+   ```
+2. Добавьте оптимизированные Q/A в векторную базу:
+   ```python
+   vanna.add_question_sql(
+       question="Покажи всех пользователей",
+       sql="SELECT id, login, email FROM equsers WHERE deleted = FALSE",
+       sql_basic="SELECT * FROM equsers",
+       improvement="50% меньше данных, быстрее выполнение",
+       is_optimized=True
+   )
+   ```
+3. Сгенерируйте эмбеддинги:
+   ```bash
+   python -m src.tools.generate_embeddings_hf --dsn "$DATABASE_URL" --model "$HF_MODEL_NAME"
+   ```
+
+**Практика генерации эмбеддингов:**
+- `src/tools/generate_embeddings_hf.py` — базовый скрипт для генерации/обновления `embedding`
+- Поддерживает миграцию размерности (384 → 768) через флаг `--alter`
+- Полная перестройка через флаг `--rebuild`
 
 ### 4) Ретривер (семантический поиск)
 Запросы вида:

@@ -133,44 +133,126 @@ class QueryService:
             return ""
 
     async def _get_rag_context(self, question: str, domain: str) -> str:
-        """Получает RAG контекст для домена."""
+        """
+        Получает RAG контекст для домена с приоритизацией оптимизированных SQL.
+        Разделяет контекст на две секции: оптимизированные примеры (приоритет) и обычные примеры.
+        """
         try:
-            # Семантический поиск с доменными фильтрами
-            if self.semantic_vanna:
-                # Увеличиваем top_k для лучшего покрытия
-                results = await self.semantic_vanna.get_similar_question_sql(question, top_k=10)
+            # Семантический поиск с метаданными для различения оптимизированных SQL
+            if self.semantic_vanna and hasattr(self.semantic_vanna, 'get_similar_question_sql_with_metadata'):
+                # Получаем Q/A пары с метаданными (увеличиваем limit для лучшего покрытия)
+                results = await self.semantic_vanna.get_similar_question_sql_with_metadata(question, limit=20)
+                
                 if results:
+                    # Разделяем на оптимизированные и обычные
+                    optimized_examples = []
+                    regular_examples = []
+                    
+                    for result in results:
+                        content = result.get('content', '')
+                        is_optimized = result.get('is_optimized', False)
+                        sql_basic = result.get('sql_basic')
+                        improvement = result.get('improvement', '')
+                        metadata = result.get('metadata', {})
+                        
+                        # Извлекаем EXPLAIN план из metadata или из результата
+                        explain_plan = result.get('explain_plan')
+                        if not explain_plan and isinstance(metadata, dict):
+                            explain_plan = metadata.get('explain_plan')
+                        
+                        # Форматируем пример с дополнительной информацией об оптимизации
+                        if is_optimized:
+                            # Для оптимизированных SQL показываем сравнение и план
+                            formatted_parts = [content]
+                            
+                            if improvement:
+                                formatted_parts.append(f"[OPTIMIZED: {improvement}]")
+                            
+                            if explain_plan:
+                                # Добавляем план для понимания производительности
+                                formatted_parts.append(f"EXPLAIN PLAN:\n{explain_plan}")
+                            
+                            formatted = "\n".join(formatted_parts)
+                            optimized_examples.append(formatted)
+                        else:
+                            # Для обычных SQL тоже добавляем план, если есть
+                            formatted_parts = [content]
+                            if explain_plan:
+                                formatted_parts.append(f"EXPLAIN PLAN:\n{explain_plan}")
+                            formatted = "\n".join(formatted_parts)
+                            regular_examples.append(formatted)
+                    
+                    # Формируем контекст с приоритетом оптимизированных SQL
                     context_parts = []
-                    for result in results[:5]:  # Берем топ-5
-                        # Результат может быть строкой в формате "Q: ... A: ..."
-                        if isinstance(result, str):
-                            context_parts.append(result)
-                        elif hasattr(result, 'question') and hasattr(result, 'sql'):
-                            context_parts.append(f"Q: {result.question}\nSQL: {result.sql}")
+                    
+                    if optimized_examples:
+                        context_parts.append("===OPTIMIZED SQL EXAMPLES (PREFERRED - Use these patterns for efficiency):")
+                        context_parts.extend(optimized_examples[:5])  # Топ-5 оптимизированных (приоритет)
+                        logger.info(f"✅ Добавлено {len(optimized_examples[:5])} оптимизированных SQL с планами в контекст")
+                    
+                    if regular_examples:
+                        context_parts.append("===ADDITIONAL SQL EXAMPLES (reference):")
+                        context_parts.extend(regular_examples[:3])  # Топ-3 обычных (для справочной информации)
+                        logger.debug(f"Добавлено {len(regular_examples[:3])} обычных SQL в контекст")
+                    
                     return "\n\n".join(context_parts)
+            else:
+                # Fallback: используем обычный поиск без метаданных
+                results = await self.semantic_vanna.get_similar_question_sql(question, limit=5)
+                if results:
+                    return "\n\n".join(results[:5])
             return ""
         except Exception as e:
             logger.error(f"Ошибка получения RAG контекста: {e}")
             return ""
 
     def _build_smart_prompt(self, question: str, domain: str, ddl_tables: str, rag_context: str) -> str:
-        """Строит умный промпт с доменной кластеризацией."""
-        if domain == 'general':
-            # Для общего домена используем стандартный подход
-            return question
+        """
+        Строит умный промпт с доменной кластеризацией и приоритетом оптимизированных SQL.
+        """
+        # Системные инструкции с акцентом на оптимизацию
+        system_instructions = """You are a PostgreSQL expert. Generate ONLY valid, OPTIMIZED SQL code.
+
+PERFORMANCE PRIORITY RULES:
+1. ALWAYS prefer OPTIMIZED SQL patterns from examples (marked with [OPTIMIZED])
+2. Analyze EXPLAIN PLANs in examples to understand performance characteristics:
+   - Lower cost (e.g., cost=0.00..35.50) = faster execution
+   - Index Scan/Index Only Scan = better than Sequential Scan
+   - Use specific column names instead of SELECT * (minimize data transfer)
+   - Add appropriate WHERE filters to reduce data volume (filter early)
+   - Use INNER JOIN instead of LEFT JOIN when possible (faster execution)
+   - Add ORDER BY for logical sorting when needed
+3. Consider performance: minimize data transfer and execution time
+4. When comparing SQL options, prefer the one with lower EXPLAIN cost
+
+Generate SQL that is:
+- Functionally correct (returns correct data)
+- Performance-optimized (fast execution, minimal data transfer, low EXPLAIN cost)
+- Following patterns from OPTIMIZED examples when available
+- Using indexes effectively (check EXPLAIN PLANs in examples)"""
         
-        # Доменный промпт
+        if domain == 'general':
+            # Для общего домена используем стандартный подход, но с инструкциями
+            prompt_parts = [
+                system_instructions,
+                f"===Question (ru)",
+                question
+            ]
+            if rag_context:
+                prompt_parts.insert(-1, f"===Examples (SQL Patterns):\n{rag_context}")
+            return "\n\n".join(prompt_parts)
+        
+        # Доменный промпт с приоритетом оптимизированных SQL
         prompt_parts = [
+            system_instructions,
             f"===Domain: {domain.upper()}",
             f"===Tables (Domain-specific DDL)",
             ddl_tables,
         ]
         
         if rag_context:
-            prompt_parts.extend([
-                f"===Additional Context (RAG)",
-                rag_context,
-            ])
+            # RAG контекст уже содержит разделение на OPTIMIZED и обычные примеры
+            prompt_parts.append(rag_context)
         
         prompt_parts.extend([
             f"===Question (ru)",
@@ -332,22 +414,167 @@ class QueryService:
             logger.error(f"❌ Ошибка генерации SQL: {e}")
             raise
     
-    async def add_training_example(self, question: str, sql: str, user_id: str, verified: bool = False):
+    async def add_training_example(
+        self, 
+        question: str, 
+        sql: str, 
+        user_id: str, 
+        verified: bool = False,
+        sql_basic: Optional[str] = None,
+        sql_optimized: Optional[str] = None,
+        improvement: Optional[str] = None,
+        domain: Optional[str] = None,
+        tags: Optional[List[str]] = None
+    ):
         """
         Добавление примера для обучения
         
         Args:
             question: Вопрос пользователя
-            sql: SQL запрос
+            sql: SQL запрос (оптимизированный вариант)
             user_id: ID пользователя
             verified: Проверен ли пример
+            sql_basic: Базовый (неоптимизированный) SQL для сравнения
+            sql_optimized: Оптимизированный SQL (альтернатива sql)
+            improvement: Описание улучшения производительности
+            domain: Домен вопроса (users, payments, assignments, etc.)
+            tags: Список тегов для категоризации
         """
         try:
             logger.info(f"Добавление примера обучения от пользователя {user_id}")
             
-            # Добавление примера в пайплайн (если поддерживается)
-            # Пока что просто логируем
-            logger.info(f"Пример успешно добавлен: {question} -> {sql}")
+            # Определяем, является ли это оптимизированным SQL
+            is_optimized = sql_basic is not None or sql_optimized is not None
+            
+            # Используем sql_optimized как основной sql, если он указан
+            final_sql = sql_optimized if sql_optimized else sql
+            
+            # Добавление примера в векторную базу через semantic_vanna
+            if self.semantic_vanna:
+                try:
+                    # Подготовка kwargs для оптимизированных SQL
+                    kwargs = {}
+                    if sql_basic:
+                        kwargs['sql_basic'] = sql_basic
+                    if sql_optimized:
+                        kwargs['sql_optimized'] = sql_optimized
+                    if improvement:
+                        kwargs['improvement'] = improvement
+                    if domain:
+                        kwargs['domain'] = domain
+                    if tags:
+                        kwargs['tags'] = tags
+                    if is_optimized:
+                        kwargs['is_optimized'] = True
+                        # Для оптимизированных SQL явно включаем генерацию планов
+                        kwargs['generate_explain_plan'] = True
+                    
+                    # Добавляем через add_question_sql
+                    # Планы генерируются автоматически только для оптимизированных SQL
+                    logger.info(f"📤 Вызов add_question_sql с параметрами:")
+                    logger.info(f"   question: {question[:100]}...")
+                    logger.info(f"   sql: {final_sql[:100]}...")
+                    logger.info(f"   is_optimized: {is_optimized}")
+                    logger.info(f"   generate_explain_plan: {kwargs.get('generate_explain_plan', False)}")
+                    logger.info(f"   sql_basic: {kwargs.get('sql_basic', 'None')[:100] if kwargs.get('sql_basic') else 'None'}...")
+                    
+                    example_id = await self.semantic_vanna.add_question_sql(
+                        question=question,
+                        sql=final_sql,
+                        **kwargs
+                    )
+                    
+                    logger.info(f"✅ add_question_sql вернул example_id: {example_id}")
+                    
+                    opt_info = " (оптимизированный)" if is_optimized else ""
+                    logger.info(f"✅ Пример{opt_info} успешно добавлен в векторную базу: {example_id}")
+                    logger.info(f"   Вопрос: {question}")
+                    logger.info(f"   SQL: {final_sql[:100]}...")
+                    
+                    # Получаем планы из metadata для возврата в API
+                    explain_plan = kwargs.get('explain_plan')
+                    explain_plan_basic = kwargs.get('explain_plan_basic')
+                    
+                    logger.info(f"🔍 Планы из kwargs: explain_plan={'✅' if explain_plan else '❌'}, explain_plan_basic={'✅' if explain_plan_basic else '❌'}")
+                    
+                    # Получаем metadata из БД для извлечения планов и результатов валидации
+                    if self.semantic_vanna:
+                        try:
+                            import asyncpg
+                            import json
+                            conn = await asyncpg.connect(self.semantic_vanna.database_url)
+                            result = await conn.fetchrow(
+                                "SELECT metadata FROM vanna_vectors WHERE id = $1",
+                                int(example_id)
+                            )
+                            await conn.close()
+                            
+                            if result:
+                                metadata = result['metadata']
+                                if isinstance(metadata, str):
+                                    metadata = json.loads(metadata)
+                                
+                                logger.info(f"📋 Metadata из БД содержит: explain_plan={'✅' if metadata.get('explain_plan') else '❌'}, explain_plan_basic={'✅' if metadata.get('explain_plan_basic') else '❌'}")
+                                
+                                # Извлекаем планы
+                                if not explain_plan:
+                                    explain_plan = metadata.get('explain_plan')
+                                    logger.info(f"📝 Извлечен explain_plan из metadata: {'✅' if explain_plan else '❌'}")
+                                if not explain_plan_basic:
+                                    explain_plan_basic = metadata.get('explain_plan_basic')
+                                    logger.info(f"📝 Извлечен explain_plan_basic из metadata: {'✅' if explain_plan_basic else '❌'}")
+                                
+                                # Извлекаем результаты валидации оптимизации
+                                optimization_validated = metadata.get('optimization_validated')
+                                cost_basic = metadata.get('cost_basic')
+                                cost_optimized = metadata.get('cost_optimized')
+                                cost_improvement_percent = metadata.get('cost_improvement_percent')
+                                width_basic = metadata.get('width_basic')
+                                width_optimized = metadata.get('width_optimized')
+                                width_improvement_percent = metadata.get('width_improvement_percent')
+                                rows_basic = metadata.get('rows_basic')
+                                rows_optimized = metadata.get('rows_optimized')
+                                rows_improvement_percent = metadata.get('rows_improvement_percent')
+                                optimization_warning = metadata.get('optimization_warning')
+                                
+                                return {
+                                    'example_id': example_id,
+                                    'explain_plan': explain_plan,
+                                    'explain_plan_basic': explain_plan_basic,
+                                    'optimization_validated': optimization_validated,
+                                    'cost_basic': cost_basic,
+                                    'cost_optimized': cost_optimized,
+                                    'cost_improvement_percent': cost_improvement_percent,
+                                    'width_basic': width_basic,
+                                    'width_optimized': width_optimized,
+                                    'width_improvement_percent': width_improvement_percent,
+                                    'rows_basic': rows_basic,
+                                    'rows_optimized': rows_optimized,
+                                    'rows_improvement_percent': rows_improvement_percent,
+                                    'optimization_warning': optimization_warning
+                                }
+                        except Exception as e:
+                            logger.warning(f"⚠️ Не удалось получить планы и валидацию из БД: {e}")
+                    
+                    # Возвращаем example_id и планы для API response (fallback если не удалось получить из БД)
+                    return {
+                        'example_id': example_id,
+                        'explain_plan': explain_plan,
+                        'explain_plan_basic': explain_plan_basic,
+                        'optimization_validated': None,
+                        'cost_basic': None,
+                        'cost_optimized': None,
+                        'cost_improvement_percent': None,
+                        'optimization_warning': None
+                    }
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️ Не удалось добавить в векторную базу: {e}")
+                    logger.info(f"Пример логируется: {question} -> {final_sql}")
+                    return {'example_id': None, 'explain_plan': None, 'explain_plan_basic': None}
+            else:
+                logger.info(f"Пример успешно добавлен: {question} -> {final_sql}")
+                return {'example_id': None, 'explain_plan': None, 'explain_plan_basic': None}
             
         except Exception as e:
             logger.error(f"Ошибка добавления примера: {e}")

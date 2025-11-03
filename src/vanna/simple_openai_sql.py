@@ -88,17 +88,25 @@ class SimpleOpenAISQL:
             # Получаем схему таблиц
             schema = self.get_table_schema()
             
-            # Создаем промпт
-            system_prompt = f"""You are a PostgreSQL expert. Generate ONLY valid SQL code without any explanations.
+            # Создаем промпт с приоритетом оптимизации
+            system_prompt = f"""You are a PostgreSQL expert. Generate ONLY valid, OPTIMIZED SQL code without any explanations.
 
 Database Schema:
 {schema}
+
+PERFORMANCE OPTIMIZATION RULES (PRIORITY):
+1. Use specific column names instead of SELECT * (minimize data transfer)
+2. Add WHERE filters to reduce data volume (filter early)
+3. Use INNER JOIN instead of LEFT JOIN when possible (faster execution)
+4. Add ORDER BY for logical sorting when needed
+5. Consider indexes: filter on indexed columns when possible
 
 Rules:
 - Use ONLY tables from the schema above
 - Generate SELECT queries
 - Use proper JOINs when needed
 - Return ONLY SQL code, no markdown, no explanations
+- Prefer efficient SQL patterns (specific columns, filters, proper JOINs)
 """
             
             # Вызываем OpenAI с таймаутом

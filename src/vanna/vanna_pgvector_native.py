@@ -130,9 +130,15 @@ class DocStructureVectorDB(VannaBase):
         
         Args:
             question: Вопрос на естественном языке
-            sql: SQL запрос
-            **kwargs: Дополнительные параметры
-            
+            sql: SQL запрос (оптимизированный вариант)
+            **kwargs: Дополнительные параметры:
+                - sql_basic: базовый (неоптимизированный) SQL для сравнения
+                - sql_optimized: альтернативное название для sql (для совместимости)
+                - improvement: описание улучшения производительности
+                - domain: домен вопроса (users, payments, assignments, etc.)
+                - tags: список тегов для категоризации
+                - is_optimized: флаг, что это оптимизированный SQL
+                
         Returns:
             str: ID добавленного элемента
         """
@@ -140,11 +146,34 @@ class DocStructureVectorDB(VannaBase):
             with self.conn.cursor() as cur:
                 # Преобразуем metadata в JSON строку
                 import json
-                metadata_json = json.dumps({
+                
+                # Определяем, является ли это оптимизированным SQL
+                is_optimized = kwargs.get('is_optimized', False) or kwargs.get('sql_basic') is not None or kwargs.get('sql_optimized') is not None
+                
+                metadata = {
                     'type': 'question_sql',
                     'question': question,
                     'sql': sql
-                })
+                }
+                
+                # Добавляем информацию об оптимизации, если есть
+                if is_optimized:
+                    metadata['is_optimized'] = True
+                    if kwargs.get('sql_basic'):
+                        metadata['sql_basic'] = kwargs['sql_basic']
+                    if kwargs.get('sql_optimized'):
+                        metadata['sql_optimized'] = kwargs['sql_optimized']
+                    if kwargs.get('improvement'):
+                        metadata['improvement'] = kwargs['improvement']
+                
+                # Добавляем дополнительные метаданные
+                if kwargs.get('domain'):
+                    metadata['domain'] = kwargs['domain']
+                if kwargs.get('tags'):
+                    metadata['tags'] = kwargs['tags']
+                
+                metadata_json = json.dumps(metadata)
+                
                 cur.execute("""
                     INSERT INTO vanna_vectors (content, content_type, metadata)
                     VALUES (%s, %s, %s)
@@ -154,7 +183,8 @@ class DocStructureVectorDB(VannaBase):
                 result = cur.fetchone()
                 self.conn.commit()
                 
-                logger.info(f"✅ Вопрос-SQL добавлен с ID: {result[0]}")
+                opt_info = " (оптимизированный)" if is_optimized else ""
+                logger.info(f"✅ Вопрос-SQL{opt_info} добавлен с ID: {result[0]}")
                 return str(result[0])
                 
         except Exception as e:
