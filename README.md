@@ -52,6 +52,8 @@ SQL: SELECT * FROM equsers WHERE deleted = false
 ### 3. **RAG (Retrieval Augmented Generation)**
 - Семантический поиск по векторной базе
 - Использование обучающих примеров (DDL, документация, Q/A)
+- Идеология обучения основана на [vanna-ai](https://github.com/vanna-ai/vanna) ([исследование](https://github.com/vanna-ai/vanna/blob/v2/papers/ai-sql-accuracy-2023-08-17.md), [документация](https://docs.vanna.ai/docs/training))
+- Расширено оптимизированными SQL с EXPLAIN планами
 - Top-K retrieval
 
 ### 4. **Интерфейс обучения Vector KB**
@@ -235,7 +237,7 @@ sql4A/
 ├── src/
 │   ├── api/main.py                   # Core API
 │   ├── services/query_service.py     # Генерация SQL + RAG
-│   ├── vanna/                        # LLM обертки
+│   ├── vanna/                        # LLM обертки (на базе [vanna-ai](https://github.com/vanna-ai/vanna))
 │   ├── simple_web_interface.py       # Simple UI
 │   ├── streamlit_main.py             # Streamlit UI
 │   └── mock_customer_api.py          # Mock API

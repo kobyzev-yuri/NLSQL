@@ -157,6 +157,10 @@ Returns: `{ data, columns, row_count, execution_time, sql }`
 
 ## 🧠 Vanna / Пайплайны
 
+**Библиотека:** [vanna-ai](https://github.com/vanna-ai/vanna) — система генерации SQL из естественного языка с RAG.
+
+**Наши реализации на базе Vanna:**
+
 - `src/vanna/vanna_pgvector_native.DocStructureVannaNative` — нативная интеграция VannaBase + PostgreSQL + ProxyAPI/OpenAI. Методы: `run_sql`, `get_training_plan_generic`, `train`, `generate_sql`.
 - `src/vanna/optimized_dual_pipeline.OptimizedDualPipeline` — мультимодельная генерация (gpt4/sqlcoder/ollama) и тренировка. Методы: `generate_sql`, `train_on_schema`, `train_on_examples`, `get_usage_stats`, `health_check`.
 - `src/vanna/enhanced_kb_agent.EnhancedKBAgent` — KB-агент поверх пайплайна. Методы: `train_agent`, `generate_sql`, `get_context_info`, `health_check`, `get_statistics`.
