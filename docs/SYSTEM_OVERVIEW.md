@@ -179,6 +179,21 @@ AND creationdatetime >= CURRENT_DATE - INTERVAL '1 month'
 
 **Переключение моделей:** через `config.env`
 
+### 6. **Конвертация SQL ↔ Plan**
+
+**Файл:** `src/utils/plan_sql_converter.py`
+
+**Функциональность:**
+- `SQLToPlanConverter` — преобразование SQL запросов в структурированный план (таблицы, поля, условия, JOIN, GROUP BY, ORDER BY, LIMIT)
+- `PlanToSQLConverter` — обратное преобразование плана в SQL запрос
+
+**Использование:**
+- Конвертация используется в Mock API для работы с планами запросов (например, `POST /api/plan/execute`)
+- Позволяет системе работать как с SQL, так и со структурированными планами
+
+**⚠️ Замена заказчиком:**
+Заказчик может заменить реализацию в `src/utils/plan_sql_converter.py` на свою собственную, если требуется другой формат планов или другая логика конвертации. Интерфейс классов `SQLToPlanConverter` и `PlanToSQLConverter` должен быть сохранён для совместимости с существующим кодом.
+
 ## 🔄 Полный поток данных
 
 ### Пример: "Покажи всех пользователей" (роль: user)
@@ -264,7 +279,7 @@ sql4A/
 │   │   ├── ollama_native_sql.py    # Обертка Ollama
 │   │   └── vanna_semantic_fixed.py # RAG/векторный поиск
 │   ├── utils/
-│   │   └── plan_sql_converter.py   # SQL ↔ Plan конвертер
+│   │   └── plan_sql_converter.py   # SQL ↔ Plan конвертер (заменяемо заказчиком)
 │   ├── simple_web_interface.py     # Simple UI
 │   ├── streamlit_main.py           # Streamlit UI
 │   └── mock_customer_api.py        # Mock API

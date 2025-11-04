@@ -94,6 +94,9 @@ Returns: `{ data, columns, row_count, execution_time, sql }`
 
 #### `POST /api/plan/execute`
 **Описание**: Выполнение плана запроса  
+
+**Примечание:** Конвертация плана в SQL выполняется через `src/utils/plan_sql_converter.py` (класс `PlanToSQLConverter`). Заказчик может заменить эту реализацию на свою собственную, сохранив интерфейс класса для совместимости.
+
 **Content-Type**: `application/json`
 
 **Request Body**:
