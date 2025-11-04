@@ -14,10 +14,10 @@
 cd /mnt/ai/cnn/sql4A
 ./start_all_services.sh
 
-# 2. Откройте в браузере
-http://localhost:3000   # Simple UI (основной интерфейс)
-http://localhost:8501   # Streamlit UI
-http://localhost:8503   # Vector KB (обучение)
+# 2. Откройте в браузере (локально)
+# localhost:3000   # Simple UI (основной интерфейс)
+# localhost:8501   # Streamlit UI
+# localhost:8503   # Vector KB (обучение)
 ```
 
 ---
@@ -156,7 +156,7 @@ TRAINING_DATA_DIR=training_data
 
 ### 1. Генерация SQL через Simple UI
 
-1. Откройте http://localhost:3000
+1. Откройте `http://localhost:3000`
 2. Выберите роль (admin/manager/user)
 3. Введите вопрос: "Покажи всех пользователей"
 4. Смотрите результат:
@@ -167,7 +167,7 @@ TRAINING_DATA_DIR=training_data
 
 ### 2. Обучение векторной базы
 
-1. Откройте http://localhost:8503 (если порт занят, скрипт использует 8504)
+1. Откройте `http://localhost:8503` (если порт занят, скрипт использует 8504)
 2. Вкладка "🔍 Тестирование поиска"
    - Введите вопрос
    - Просмотрите найденные примеры
@@ -290,7 +290,7 @@ sql4A/
 
 ## Метрики качества
 
-Просмотр через Vector KB Interface (http://localhost:8503):
+Просмотр через Vector KB Interface (`http://localhost:8503`):
 
 - **Top-1 Accuracy** - точность первого результата
 - **Top-3 Accuracy** - точность топ-3 результатов
