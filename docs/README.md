@@ -17,6 +17,7 @@
 - **CHUNKING_STRATEGY.md** - Стратегия разбиения на чанки и оптимизация параметров
 - **CHUNKING_ANALYSIS.md** - Анализ текущего состояния chunking и рекомендации
 - **INTERFACE_DATA_PREPARATION_COMPLIANCE.md** - Соответствие интерфейса требованиям по подготовке данных
+- **INTERFACE_OPTIMIZATION_PLAN.md** - План оптимизации интерфейса и chunking для эффективного извлечения
 
 ## Справочники
 - **API_REFERENCE.md** - API эндпоинты
