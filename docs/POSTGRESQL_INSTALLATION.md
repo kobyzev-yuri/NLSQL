@@ -106,7 +106,7 @@ psql -U postgres
 
 ```cmd
 # Переход в директорию проекта
-cd C:\path\to\sql4A
+cd C:\path\to\NLSQL
 
 # Запуск скрипта загрузки
 load_database.bat

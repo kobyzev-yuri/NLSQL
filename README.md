@@ -233,7 +233,7 @@ AND login = 'test_user'
 ## Структура проекта
 
 ```
-sql4A/
+NLSQL/
 ├── src/
 │   ├── api/main.py                   # Core API
 │   ├── services/query_service.py     # Генерация SQL + RAG

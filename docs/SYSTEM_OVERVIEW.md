@@ -267,7 +267,7 @@ curl http://localhost:8503         # Vector KB
 ## 📁 Структура проекта
 
 ```
-sql4A/
+NLSQL/
 ├── src/
 │   ├── api/
 │   │   └── main.py                 # Core API (FastAPI)
