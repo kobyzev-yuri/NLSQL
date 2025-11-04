@@ -45,9 +45,12 @@ log_info "🚀 Запуск всех сервисов NL→SQL системы"
 log_info "📁 Рабочая директория: $REPO_DIR"
 
 # Проверка виртуального окружения
-if [[ "$CONDA_DEFAULT_ENV" != "py310" ]]; then
+if [[ "${CONDA_DEFAULT_ENV:-}" != "py310" ]]; then
     log_warning "Активация виртуального окружения py310..."
-    source /mnt/ai/src/anaconda3/bin/activate py310
+    if command -v conda >/dev/null 2>&1; then
+        eval "$(conda shell.bash hook)"
+        conda activate py310 || true
+    fi
 fi
 
 # Проверка конфигурации
@@ -101,22 +104,22 @@ log_info "🚀 Запуск сервисов..."
 
 # 1. Core API (8000)
 start_service "core_api" \
-    "cd $REPO_DIR && source /mnt/ai/src/anaconda3/bin/activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload" \
+    "cd $REPO_DIR && eval \"\$(conda shell.bash hook)\" && conda activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload" \
     8000
 
 # 2. Mock API (8081) - исправленный порт
 start_service "mock_api" \
-    "cd $REPO_DIR && source /mnt/ai/src/anaconda3/bin/activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8081 --reload" \
+    "cd $REPO_DIR && eval \"\$(conda shell.bash hook)\" && conda activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8081 --reload" \
     8081
 
 # 3. Simple UI (3000)
 start_service "simple_ui" \
-    "cd $REPO_DIR && source /mnt/ai/src/anaconda3/bin/activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload" \
+    "cd $REPO_DIR && eval \"\$(conda shell.bash hook)\" && conda activate py310 && source config.env && PYTHONPATH=\$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload" \
     3000
 
 # 4. Streamlit UI (8501) - правильный файл
 start_service "streamlit" \
-    "cd $REPO_DIR && source /mnt/ai/src/anaconda3/bin/activate py310 && source config.env && PYTHONPATH=\$(pwd) streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0" \
+    "cd $REPO_DIR && eval \"\$(conda shell.bash hook)\" && conda activate py310 && source config.env && PYTHONPATH=\$(pwd) streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0" \
     8501
 
 # Ожидание запуска

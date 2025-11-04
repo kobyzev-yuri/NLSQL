@@ -32,9 +32,12 @@ log_info "🚀 Запуск Vector KB Interface"
 log_info "📁 Рабочая директория: $REPO_DIR"
 
 # Проверка виртуального окружения
-if [[ "$CONDA_DEFAULT_ENV" != "py310" ]]; then
+if [[ "${CONDA_DEFAULT_ENV:-}" != "py310" ]]; then
     log_warning "Активация виртуального окружения py310..."
-    source /mnt/ai/src/anaconda3/bin/activate py310
+    if command -v conda >/dev/null 2>&1; then
+        eval "$(conda shell.bash hook)"
+        conda activate py310 || true
+    fi
 fi
 
 # Проверка конфигурации
@@ -66,7 +69,10 @@ log_info "🚀 Запуск Streamlit интерфейса..."
 log_info "📝 Интерфейс будет доступен по адресу: http://localhost:${VKB_PORT}"
 
 cd "$REPO_DIR"
-source /mnt/ai/src/anaconda3/bin/activate py310
+if command -v conda >/dev/null 2>&1; then
+    eval "$(conda shell.bash hook)"
+    conda activate py310 || true
+fi
 source config.env 2>/dev/null || true
 PYTHONPATH="$(pwd)" streamlit run src/vector_kb_interface.py \
     --server.port ${VKB_PORT} \

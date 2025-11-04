@@ -37,7 +37,8 @@
 ### 1. Активация окружения
 ```bash
 cd /mnt/ai/cnn/sql4A
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 source config.env
 ```
 
@@ -60,7 +61,8 @@ source config.env
 ### Core API (8000)
 ```bash
 cd /mnt/ai/cnn/sql4A
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -68,7 +70,8 @@ PYTHONPATH=$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ### Mock API (8081)
 ```bash
 cd /mnt/ai/cnn/sql4A
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8081 --reload
 ```
@@ -76,7 +79,8 @@ PYTHONPATH=$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8
 ### Simple UI (3000)
 ```bash
 cd /mnt/ai/cnn/sql4A
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload
 ```
@@ -84,7 +88,8 @@ PYTHONPATH=$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 300
 ### Streamlit UI (8501)
 ```bash
 cd /mnt/ai/cnn/sql4A
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 source config.env
 PYTHONPATH=$(pwd) streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0
 ```
@@ -177,7 +182,8 @@ echo $CONDA_DEFAULT_ENV
 
 # Переактивировать
 conda deactivate
-source /mnt/ai/src/anaconda3/bin/activate py310
+eval "$(conda shell.bash hook)"
+conda activate py310
 ```
 
 ### Проблемы с базой данных
