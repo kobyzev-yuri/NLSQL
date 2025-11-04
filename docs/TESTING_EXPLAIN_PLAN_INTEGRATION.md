@@ -300,6 +300,7 @@ curl -X POST http://localhost:8000/query \
 
 ## 📚 Связанные документы
 
+- [TEST_EXPLAIN_PLAN.md](TEST_EXPLAIN_PLAN.md) - Быстрый тест EXPLAIN планов
 - [EXPLAIN_PLAN_INTEGRATION.md](EXPLAIN_PLAN_INTEGRATION.md) - Детали реализации
 - [SQL_OPTIMIZATION_TRAINING_GUIDE.md](SQL_OPTIMIZATION_TRAINING_GUIDE.md) - Обучение на оптимизированных SQL
 - [TRAINING_GUIDE.md](TRAINING_GUIDE.md) - Полное руководство по обучению

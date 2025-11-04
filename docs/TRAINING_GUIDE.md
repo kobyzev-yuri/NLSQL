@@ -120,6 +120,8 @@
    - Скачайте `optimized_sql_examples.json`
    - Используйте для скрипта `optimize`
 
+**Быстрый гайд:** [QUICK_ADD_OPTIMIZED_SQL.md](QUICK_ADD_OPTIMIZED_SQL.md)
+
 **Формат для массового добавления:**
 ```json
 [
@@ -193,6 +195,8 @@ curl -X POST http://localhost:8000/semantic-search \
   -d '{"query":"Покажи всех пользователей","limit":5}' | jq .
 ```
 
+**Быстрый тест:** [QUICK_TEST.md](QUICK_TEST.md)
+
 ## 📝 Рекомендации
 
 1. **Начните с базового обучения:**
@@ -253,6 +257,9 @@ curl -X POST http://localhost:8000/semantic-search \
 
 ## 📚 Связанные документы
 
+- [QUICK_ADD_OPTIMIZED_SQL.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/QUICK_ADD_OPTIMIZED_SQL.md) — быстрое добавление оптимизированного SQL
+- [QUICK_TEST.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/QUICK_TEST.md) — быстрый тест EXPLAIN планов
+- [TEST_EXPLAIN_PLAN.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/TEST_EXPLAIN_PLAN.md) — тестирование EXPLAIN планов
 - [VECTOR_DB.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/VECTOR_DB.md) — структура/индексация векторной таблицы (pgvector, 768d)
 - [SQL_OPTIMIZATION_TRAINING_GUIDE.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/SQL_OPTIMIZATION_TRAINING_GUIDE.md) — детали обучения на оптимизированных SQL
 - [OPTIMIZED_SQL_MARKING.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/OPTIMIZED_SQL_MARKING.md) — маркировка оптимизированных примеров
