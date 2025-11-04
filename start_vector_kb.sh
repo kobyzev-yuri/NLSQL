@@ -32,11 +32,12 @@ log_info "🚀 Запуск Vector KB Interface"
 log_info "📁 Рабочая директория: $REPO_DIR"
 
 # Проверка виртуального окружения
-if [[ "${CONDA_DEFAULT_ENV:-}" != "py310" ]]; then
-    log_warning "Активация виртуального окружения py310..."
+CONDA_ENV_NAME="${CONDA_ENV_NAME:-py310}"
+if [[ "${CONDA_DEFAULT_ENV:-}" != "$CONDA_ENV_NAME" ]]; then
+    log_warning "Активация виртуального окружения $CONDA_ENV_NAME..."
     if command -v conda >/dev/null 2>&1; then
         eval "$(conda shell.bash hook)"
-        conda activate py310 || true
+        conda activate "$CONDA_ENV_NAME" || true
     fi
 fi
 
@@ -71,7 +72,7 @@ log_info "📝 Интерфейс будет доступен по адресу:
 cd "$REPO_DIR"
 if command -v conda >/dev/null 2>&1; then
     eval "$(conda shell.bash hook)"
-    conda activate py310 || true
+    conda activate "$CONDA_ENV_NAME" || true
 fi
 source config.env 2>/dev/null || true
 PYTHONPATH="$(pwd)" streamlit run src/vector_kb_interface.py \

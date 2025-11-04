@@ -4,10 +4,11 @@
 cd "$(dirname "$0")"
 
 # Активация виртуального окружения
-# Активируем conda окружение py310 без абсолютных путей
+# Активируем conda окружение (имя можно задать переменной CONDA_ENV_NAME)
+CONDA_ENV_NAME="${CONDA_ENV_NAME:-py310}"
 if command -v conda >/dev/null 2>&1; then
     eval "$(conda shell.bash hook)"
-    conda activate py310
+    conda activate "$CONDA_ENV_NAME" || true
 fi
 
 # Загрузка переменных окружения

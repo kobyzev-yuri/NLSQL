@@ -29,7 +29,7 @@
 ## 🐍 Требования
 
 - **Python**: 3.10+
-- **Виртуальное окружение**: Anaconda `py310`
+- **Виртуальное окружение**: своё (venv/conda) — опционально
 - **База данных**: PostgreSQL с тестовой БД `test_docstructure`
 
 ## ⚡ Быстрый запуск
@@ -37,8 +37,11 @@
 ### 1. Активация окружения
 ```bash
 cd /mnt/ai/cnn/sql4A
-eval "$(conda shell.bash hook)"
-conda activate py310
+# Вариант A (venv)
+python3 -m venv .venv
+source .venv/bin/activate
+# Вариант B (conda)
+eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}
 source config.env
 ```
 
@@ -61,8 +64,7 @@ source config.env
 ### Core API (8000)
 ```bash
 cd /mnt/ai/cnn/sql4A
-eval "$(conda shell.bash hook)"
-conda activate py310
+source .venv/bin/activate || { eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}; }
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -70,8 +72,7 @@ PYTHONPATH=$(pwd) uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 ### Mock API (8081)
 ```bash
 cd /mnt/ai/cnn/sql4A
-eval "$(conda shell.bash hook)"
-conda activate py310
+source .venv/bin/activate || { eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}; }
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8081 --reload
 ```
@@ -79,8 +80,7 @@ PYTHONPATH=$(pwd) uvicorn src.mock_customer_api:mock_app --host 0.0.0.0 --port 8
 ### Simple UI (3000)
 ```bash
 cd /mnt/ai/cnn/sql4A
-eval "$(conda shell.bash hook)"
-conda activate py310
+source .venv/bin/activate || { eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}; }
 source config.env
 PYTHONPATH=$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload
 ```
@@ -88,8 +88,7 @@ PYTHONPATH=$(pwd) uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 300
 ### Streamlit UI (8501)
 ```bash
 cd /mnt/ai/cnn/sql4A
-eval "$(conda shell.bash hook)"
-conda activate py310
+source .venv/bin/activate || { eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}; }
 source config.env
 PYTHONPATH=$(pwd) streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0
 ```
@@ -177,13 +176,10 @@ sudo fuser -k 8081/tcp
 
 ### Проблемы с виртуальным окружением
 ```bash
-# Проверить активное окружение
-echo $CONDA_DEFAULT_ENV
-
-# Переактивировать
-conda deactivate
-eval "$(conda shell.bash hook)"
-conda activate py310
+# venv
+source .venv/bin/activate
+# conda
+eval "$(conda shell.bash hook)" && conda activate ${CONDA_ENV_NAME:-py310}
 ```
 
 ### Проблемы с базой данных
