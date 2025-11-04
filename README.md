@@ -1,13 +1,13 @@
-# NL→SQL Система с GPT-4o и RAG
+# NL→SQL система с GPT-4o и RAG
 
 Система преобразования естественного языка в SQL запросы для PostgreSQL с использованием GPT-4o, семантического поиска (RAG) и ролевых ограничений.
 
 **Версия:** 2.0  
-**Дата:** 28 октября 2025
+**Дата:** 4 ноября 2025
 
 ---
 
-## 🚀 Быстрый старт
+## Быстрый старт
 
 ```bash
 # 1. Запуск всех сервисов
@@ -22,7 +22,7 @@ http://localhost:8503   # Vector KB (обучение)
 
 ---
 
-## 📊 Интерфейсы системы
+## Интерфейсы системы
 
 | Порт | Интерфейс | Назначение | URL |
 |------|-----------|------------|-----|
@@ -34,7 +34,7 @@ http://localhost:8503   # Vector KB (обучение)
 
 ---
 
-## ✨ Основные возможности
+## Возможности
 
 ### 1. **Генерация SQL из естественного языка**
 ```
@@ -48,12 +48,12 @@ SQL: SELECT * FROM equsers WHERE deleted = false
 - 👨‍💼 **manager** - данные своего отдела
 - 👤 **user** - только свои данные
 
-### 3. **RAG (Retrieval Augmented Generation)** 🆕
+### 3. **RAG (Retrieval Augmented Generation)**
 - Семантический поиск по векторной базе
-- Улучшение качества SQL через примеры
-- Top-K retrieval + reranking
+- Использование обучающих примеров (DDL, документация, Q/A)
+- Top-K retrieval
 
-### 4. **Интерфейс обучения Vector KB** 🆕
+### 4. **Интерфейс обучения Vector KB**
 - Тестирование семантического поиска
 - Добавление Q/A пар
 - Обучение на примерах DDL/SQL
@@ -61,7 +61,7 @@ SQL: SELECT * FROM equsers WHERE deleted = false
 
 ---
 
-## 🏗️ Архитектура
+## Архитектура
 
 ```
 User Interface (3000/8501/8503)
@@ -80,28 +80,28 @@ User Interface (3000/8501/8503)
     • Vector DB (vanna_vectors)
 ```
 
-**Детальная архитектура:** `docs/SYSTEM_OVERVIEW.md`
+Подробнее: `docs/SYSTEM_OVERVIEW.md`
 
 ---
 
-## 📚 Документация
+## Документация
 
 ### Основные документы
 
-- **[SYSTEM_OVERVIEW.md](docs/SYSTEM_OVERVIEW.md)** - Полный обзор системы 🆕
+- **[SYSTEM_OVERVIEW.md](docs/SYSTEM_OVERVIEW.md)** - Обзор системы
 - **[ROLE_RESTRICTIONS_GUIDE.md](docs/ROLE_RESTRICTIONS_GUIDE.md)** - Настройка ролевых ограничений
 - **[VECTOR_KB_INTERFACE_GUIDE.md](docs/VECTOR_KB_INTERFACE_GUIDE.md)** - Работа с интерфейсом обучения
 - **[SERVICES_STARTUP_GUIDE.md](docs/SERVICES_STARTUP_GUIDE.md)** - Запуск и управление
 
 ### Дополнительные
 
-- **[VANNA_TRAINING_GUIDE.md](docs/VANNA_TRAINING_GUIDE.md)** - Обучение векторной базы
+- **[TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md)** - Обучение RAG (основной документ)
 - **[API_REFERENCE.md](docs/API_REFERENCE.md)** - Справочник API
-- **[SQL_DATA_FLOW.md](docs/SQL_DATA_FLOW.md)** - Поток данных SQL
+- **[VECTOR_DB.md](docs/VECTOR_DB.md)** - Структура и индексы pgvector
 
 ---
 
-## 🔧 Управление системой
+## Управление системой
 
 ### Все сервисы
 
@@ -131,7 +131,7 @@ curl http://localhost:3000
 
 ---
 
-## ⚙️ Конфигурация
+## Конфигурация
 
 **Файл:** `config.env`
 
@@ -151,7 +151,7 @@ TRAINING_DATA_DIR=training_data
 
 ---
 
-## 📖 Примеры использования
+## Примеры использования
 
 ### 1. Генерация SQL через Simple UI
 
@@ -166,11 +166,10 @@ TRAINING_DATA_DIR=training_data
 
 ### 2. Обучение векторной базы
 
-1. Откройте http://localhost:8503
+1. Откройте http://localhost:8503 (если порт занят, скрипт использует 8504)
 2. Вкладка "🔍 Тестирование поиска"
    - Введите вопрос
    - Просмотрите найденные примеры
-   - Проверьте rerank scores
 3. Вкладка "➕ Добавление Q/A пар"
    - Добавьте новый вопрос и SQL
    - Система автоматически создаст эмбеддинг
@@ -203,7 +202,7 @@ curl -X POST http://localhost:8000/semantic-search \
 
 ---
 
-## 🎯 Ролевые ограничения
+## Ролевые ограничения
 
 ### Примеры ограничений
 
@@ -222,13 +221,13 @@ SELECT * FROM equsers WHERE deleted = false
 AND login = 'test_user'
 ```
 
-**Настройка:** `src/mock_customer_api.py` → функция `apply_role_restrictions()`
+Настройка: `src/mock_customer_api.py` → функция `apply_role_restrictions()`
 
 **Документация:** `docs/ROLE_RESTRICTIONS_GUIDE.md`
 
 ---
 
-## 📁 Структура проекта
+## Структура проекта
 
 ```
 sql4A/
@@ -239,19 +238,19 @@ sql4A/
 │   ├── simple_web_interface.py       # Simple UI
 │   ├── streamlit_main.py             # Streamlit UI
 │   └── mock_customer_api.py          # Mock API
-├── vector_kb_interface.py            # Vector KB Interface 🆕
+├── vector_kb_interface.py            # Vector KB Interface
 ├── docs/                             # Документация
 ├── training_data/                    # Обучающие данные
 ├── logs/                             # Логи
 ├── config.env                        # Конфигурация
 ├── start_all_services.sh             # Запуск всех
 ├── run_stack.sh                      # Управление
-└── start_vector_kb.sh                # Запуск Vector KB 🆕
+└── start_vector_kb.sh                # Запуск Vector KB
 ```
 
 ---
 
-## 🔄 Процесс генерации SQL
+## Процесс генерации SQL
 
 ```
 1. User Input
@@ -278,29 +277,27 @@ sql4A/
 
 ---
 
-## 🛠️ Технологии
+## Технологии
 
 - **Backend:** Python 3.10, FastAPI, Streamlit
 - **LLM:** GPT-4o (ProxyAPI.ru), Ollama (опционально)
 - **Database:** PostgreSQL 14+
 - **Vector DB:** pgvector
-- **Embeddings:** all-MiniLM-L6-v2
-- **Reranking:** cross-encoder/ms-marco-MiniLM-L-6-v2
+- **Embeddings:** intfloat/multilingual-e5-base (768d)
 
 ---
 
-## 📊 Метрики качества
+## Метрики качества
 
 Просмотр через Vector KB Interface (http://localhost:8503):
 
 - **Top-1 Accuracy** - точность первого результата
 - **Top-3 Accuracy** - точность топ-3 результатов
 - **MRR** (Mean Reciprocal Rank) - средняя позиция релевантного результата
-- **Rerank Score** - качество reranking
 
 ---
 
-## 🐛 Отладка
+## Отладка
 
 ### Логи
 
@@ -335,17 +332,11 @@ ps aux | grep "uvicorn\|streamlit"
 
 ---
 
-## 🚀 Roadmap
-
-- [ ] Streaming ответов от LLM
-- [ ] Кэширование запросов
-- [ ] Поддержка JOIN через RAG
-- [ ] Автоматическое пополнение векторной базы
-- [ ] Мультиязычность
+<!-- Удалено: Roadmap. README отражает только текущий функционал. -->
 
 ---
 
-## 📞 Поддержка
+## Поддержка
 
 1. **Документация:** `docs/SYSTEM_OVERVIEW.md`
 2. **Логи:** `logs/`
@@ -353,10 +344,10 @@ ps aux | grep "uvicorn\|streamlit"
 
 ---
 
-## 📄 Лицензия
+## Лицензия
 
 Внутренний проект
 
 ---
 
-**Дата последнего обновления:** 28 октября 2025
+**Дата последнего обновления:** 4 ноября 2025

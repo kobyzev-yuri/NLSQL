@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS vanna_vectors (
     content TEXT NOT NULL,
     content_type VARCHAR(50) NOT NULL, -- 'ddl' | 'documentation' | 'question_sql'
     metadata JSONB,
-    embedding vector(384),             -- или 1536 при использовании OpenAI
+    embedding vector(768),             -- 768 для intfloat/multilingual-e5-base; 1536 для OpenAI
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -28,7 +28,7 @@ ON vanna_vectors (content_type);
 
 Замечание: в текущем коде есть имплементации, где таблица создаётся без `embedding`. Для корректной работы семантического поиска из `vanna_semantic_fixed.py` и `src/services/query_service.py` (RAG) требуется столбец `embedding` и индекс. Добавьте его миграцией:
 ```sql
-ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(384);
+ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(768);
 ```
 
 ### 2) Откуда берутся данные
@@ -116,7 +116,7 @@ LIMIT $3;
 ### 5) Текущие ограничения и TODO
 - В некоторых местах `_create_vector_table()` создаёт таблицу без `embedding`; добавьте столбец и индекс миграцией (см. выше)
 - Генерация эмбеддингов не всегда вызывается автоматически — запустите утилиту и/или встроите шаг в пайплайн обучения
-- Размерность `embedding` должна совпадать с выбранной моделью (384 для HF miniLM, 1536 для OpenAI) во всех местах
+- Размерность `embedding` должна совпадать с выбранной моделью (768 для HF `intfloat/multilingual-e5-base`, 1536 для OpenAI) во всех местах
 - Настройте периодическую переиндексацию/обновление IVF параметров для больших массивов данных
 
 ### 6) Рекомендации по конфигурации

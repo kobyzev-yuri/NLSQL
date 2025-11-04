@@ -214,6 +214,6 @@ TRAINING_DATA_DIR=training_data
 ## 📚 Дополнительные ресурсы
 
 - [API Reference](API_REFERENCE.md)
-- [PostgreSQL Dialect Fix](POSTGRESQL_DIALECT_FIX.md)
-- [System Architecture](SYSTEM_ARCHITECTURE.md)
-- [Training Guide](VANNA_TRAINING_GUIDE.md)
+- [System Overview](SYSTEM_OVERVIEW.md)
+- [Training Guide](TRAINING_GUIDE.md)
+- [Vector DB](VECTOR_DB.md)

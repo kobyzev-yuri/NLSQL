@@ -8,29 +8,29 @@
 
 ```
 ┌─────────────────┐    HTTP API    ┌─────────────────┐    ┌─────────────────┐
-│  Streamlit UI   │ ──────────────▶│   FastAPI       │ ──▶│  Vector DB      │
-│  (Port 8503)    │                │  (Port 3000)    │    │  (PostgreSQL +  │
+│  Streamlit UI   │ ──────────────▶│   Core API      │ ──▶│  Vector DB      │
+│  (Port 8503)    │                │  (Port 8000)    │    │  (PostgreSQL +  │
 │                 │                │                 │    │   pgvector)     │
 └─────────────────┘                └─────────────────┘    └─────────────────┘
 ```
 
 ## Запуск
 
-### 1. Запуск FastAPI сервиса
+### 1. Запуск всех сервисов
 ```bash
 cd /mnt/ai/cnn/sql4A
-python src/simple_web_interface.py
+./start_all_services.sh
 ```
 
 ### 2. Запуск Vector KB Interface
 ```bash
 cd /mnt/ai/cnn/sql4A
-streamlit run vector_kb_interface.py --server.port 8503
+./start_vector_kb.sh  # если 8503 занят, скрипт использует 8504
 ```
 
 ### 3. Доступ к интерфейсу
-- **Vector KB Interface**: http://localhost:8503
-- **FastAPI Docs**: http://localhost:3000/docs
+- **Vector KB Interface**: http://localhost:8503 (или :8504)
+- **Core API Docs**: http://localhost:8000/docs
 
 ## Функциональность
 
@@ -51,14 +51,10 @@ streamlit run vector_kb_interface.py --server.port 8503
 4. Просмотрите результаты
 
 **API вызовы**:
-```python
-# Тестирование поиска
-POST /test-search
-{
-    "question": "Покажи всех пользователей",
-    "search_type": "semantic",
-    "limit": 5
-}
+```bash
+curl -X POST http://localhost:8000/semantic-search \
+  -H "Content-Type: application/json" \
+  -d '{"query":"Покажи всех пользователей","limit":5}'
 ```
 
 ### 📝 Добавление Q/A пар
@@ -77,14 +73,7 @@ POST /test-search
 }
 ```
 
-**CLI команды**:
-```bash
-# Создание шаблона
-python qa_management_script.py --action template --output qa_template.json
-
-# Добавление Q/A пар
-python qa_management_script.py --action add --input qa_pairs.json --validate
-```
+Загрузка через интерфейс или REST API (`POST /training/example`).
 
 ### 🎓 Обучение
 
@@ -95,13 +84,11 @@ python qa_management_script.py --action add --input qa_pairs.json --validate
 - **Документация**: Бизнес-логика и правила
 - **Q/A пары**: Примеры вопросов и SQL
 
-**CLI команды**:
+**Генерация эмбеддингов**:
 ```bash
-# Генерация эмбеддингов
-python qa_management_script.py --action embeddings
-
-# Обучение на оптимизированных SQL
-python qa_management_script.py --action optimize --input optimized_sql_examples.json
+python -m src.tools.generate_embeddings_hf \
+  --dsn "$DATABASE_URL" \
+  --model "$HF_MODEL_NAME"
 ```
 
 ### 🚀 Оптимизация SQL
@@ -128,20 +115,7 @@ WHERE deleted = FALSE
 
 ### 📊 Аналитика качества
 
-**Метрики**:
-- **Precision (P)**: Доля корректных SQL запросов
-- **Recall (R)**: Доля найденных корректных SQL
-- **F1-Score**: Гармоническое среднее P и R
-
-**Бенчмарк по сложности**:
-- **Простые запросы**: SELECT без JOIN (3 запроса)
-- **Средние запросы**: С JOIN, без агрегации (4 запроса)
-- **Сложные запросы**: С агрегацией, GROUP BY (3 запроса)
-
-**Запуск бенчмарка**:
-```bash
-python benchmark_by_complexity.py
-```
+**Метрики в интерфейсе**: Top‑1, Top‑3, MRR для retrieval.
 
 ### ⚙️ Настройки
 
@@ -150,10 +124,8 @@ python benchmark_by_complexity.py
 - Максимальная длина контекста
 - Размер батча для эмбеддингов
 
-**Модели эмбеддингов**:
-- `all-MiniLM-L6-v2` - Быстрая, компактная (22MB)
-- `all-mpnet-base-v2` - Высокое качество (420MB)
-- `paraphrase-multilingual-MiniLM-L12-v2` - Многоязычная (118MB)
+**Модель эмбеддингов по умолчанию**:
+- `intfloat/multilingual-e5-base` (768d)
 
 ## API Endpoints
 
@@ -162,56 +134,33 @@ python benchmark_by_complexity.py
 | Endpoint | Method | Описание |
 |----------|--------|----------|
 | `/health` | GET | Проверка здоровья системы |
-| `/test-search` | POST | Тестирование поиска в векторке |
-| `/generate-sql` | POST | Генерация SQL запроса |
-| `/query` | POST | Полный цикл генерации SQL |
+| `/semantic-search` | POST | Семантический поиск по KB |
+| `/query` | POST | Генерация SQL |
 
 ### Примеры API вызовов
 
-```python
-import requests
-
-# Проверка здоровья
-response = requests.get("http://localhost:3000/health")
-
-# Тестирование поиска
-response = requests.post(
-    "http://localhost:3000/test-search",
-    json={
-        "question": "Покажи всех пользователей",
-        "search_type": "semantic",
-        "limit": 5
-    }
-)
-
-# Генерация SQL
-response = requests.post(
-    "http://localhost:3000/generate-sql",
-    data={"question": "Покажи всех пользователей"}
-)
+```bash
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/semantic-search -H "Content-Type: application/json" -d '{"query":"Покажи всех пользователей","limit":5}'
+curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d '{"question":"Покажи всех пользователей","role":"user","department":"IT"}'
 ```
 
 ## Структура файлов
 
 ```
 /mnt/ai/cnn/sql4A/
-├── vector_kb_interface.py          # Основной интерфейс
-├── vector_db_tester.py             # CLI тестер векторки
-├── benchmark_by_complexity.py      # Бенчмарк по сложности
-├── qa_management_script.py         # CLI управление Q/A
-├── enhanced_qa_training.py        # Обучение на оптимизированных SQL
-├── optimized_sql_examples.json     # Примеры оптимизированных SQL
-├── complexity_benchmark_results.json # Результаты бенчмарка
-└── docs/
-    └── VECTOR_KB_INTERFACE_GUIDE.md # Эта документация
+├── src/vector_kb_interface.py      # Streamlit интерфейс
+├── src/tools/generate_embeddings_hf.py
+├── docs/VECTOR_DB.md
+└── docs/VECTOR_KB_INTERFACE_GUIDE.md
 ```
 
 ## Troubleshooting
 
-### Проблема: FastAPI недоступен
-**Решение**: Убедитесь, что сервис запущен на порту 3000
+### Проблема: Core API недоступен
+**Решение**: Убедитесь, что сервис запущен на порту 8000
 ```bash
-python src/simple_web_interface.py
+./start_all_services.sh
 ```
 
 ### Проблема: Ошибка подключения к векторке
@@ -249,13 +198,11 @@ python qa_management_script.py --action test --input training_data/sql_examples.
 
 ## Связанные документы
 
-- [VANNA_TRAINING_GUIDE.md](../docs/VANNA_TRAINING_GUIDE.md) - Руководство по обучению
-- [RAG_IMPROVEMENT_CHECKLIST.md](../RAG_IMPROVEMENT_CHECKLIST.md) - Чеклист улучшений RAG
-- [VECTOR_KB_IMPROVEMENT_PLAN.md](../VECTOR_KB_IMPROVEMENT_PLAN.md) - План улучшения векторки
+- [TRAINING_GUIDE.md](../docs/TRAINING_GUIDE.md) - Руководство по обучению
+- [VECTOR_DB.md](../docs/VECTOR_DB.md) - Структура и индексация векторной таблицы
 - [SERVICES_STARTUP_GUIDE.md](../docs/SERVICES_STARTUP_GUIDE.md) - Руководство по сервисам
 
 ## Контакты
 
-- **GitHub**: [kobyzev-yuri/NLSQL](https://github.com/kobyzev-yuri/NLSQL)
 - **Документация**: `/mnt/ai/cnn/sql4A/docs/`
 - **Логи**: `/mnt/ai/cnn/sql4A/logs/`
