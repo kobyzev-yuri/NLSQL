@@ -2,7 +2,7 @@
 
 Этот документ — центральное руководство по обучению RAG в системе NL→SQL: подготовка данных (DDL/документация/Q&A), генерация эмбеддингов, проверка качества и связи с верификационными и отчётными документами.
 
-> **Признательность:** Идеология базового обучения RAG (DDL + Documentation + Q/A пары) основана на подходе библиотеки [vanna-ai](https://github.com/vanna-ai/vanna). Методология контекстного поиска релевантных примеров описана в их исследовании: [AI SQL Accuracy: Testing different LLMs + context strategies](https://github.com/vanna-ai/vanna/blob/v2/papers/ai-sql-accuracy-2023-08-17.md). См. также [их документацию по обучению](https://docs.vanna.ai/docs/training). Наша система расширяет этот подход добавлением оптимизированных SQL с EXPLAIN планами для улучшения производительности генерируемых запросов.
+> **Признательность:** Идеология базового обучения RAG (DDL + Documentation + Q/A пары) основана на подходе библиотеки [vanna-ai](https://github.com/vanna-ai/vanna). Методология контекстного поиска релевантных примеров описана в их исследовании: [AI SQL Accuracy: Testing different LLMs + context strategies](https://github.com/vanna-ai/vanna/blob/v2/papers/ai-sql-accuracy-2023-08-17.md). См. также [их документацию](https://vanna.ai/docs). Наша система расширяет этот подход добавлением оптимизированных SQL с EXPLAIN планами для улучшения производительности генерируемых запросов.
 
 ## 📋 Обзор
 
