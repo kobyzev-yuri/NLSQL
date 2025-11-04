@@ -6,10 +6,10 @@
 
 | Сервис | Порт | Описание | URL |
 |--------|------|----------|-----|
-| **Core API** | 8000 | Основной API для NL→SQL | http://localhost:8000/docs |
-| **Mock API** | 8081 | API заказчика с ролевыми ограничениями | http://localhost:8081/health |
-| **Simple UI** | 3000 | Простой веб-интерфейс | http://localhost:3000 |
-| **Streamlit UI** | 8501 | Продвинутый интерфейс | http://localhost:8501 |
+| **Core API** | 8000 | Основной API для NL→SQL | `http://localhost:8000/docs` |
+| **Mock API** | 8081 | API заказчика с ролевыми ограничениями | `http://localhost:8081/health` |
+| **Simple UI** | 3000 | Простой веб-интерфейс | `http://localhost:3000` |
+| **Streamlit UI** | 8501 | Продвинутый интерфейс | `http://localhost:8501` |
 
 ## 🔧 Архитектура взаимодействия
 
@@ -205,7 +205,7 @@ TRAINING_DATA_DIR=training_data
 
 ## 🎯 Использование
 
-1. **Откройте браузер** и перейдите на http://localhost:3000 или http://localhost:8501
+1. **Откройте браузер** и перейдите на `http://localhost:3000` или `http://localhost:8501`
 2. **Введите вопрос** на русском языке (например: "Покажи всех пользователей")
 3. **Выберите роль** (admin, manager, user)
 4. **Нажмите "Генерировать SQL"** или "Выполнить SQL"

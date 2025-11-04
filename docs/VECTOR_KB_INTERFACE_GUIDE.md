@@ -29,8 +29,8 @@ cd /mnt/ai/cnn/sql4A
 ```
 
 ### 3. Доступ к интерфейсу
-- **Vector KB Interface**: http://localhost:8503 (или :8504)
-- **Core API Docs**: http://localhost:8000/docs
+- **Vector KB Interface**: `http://localhost:8503` (или :8504)
+- **Core API Docs**: `http://localhost:8000/docs`
 
 ## Функциональность
 

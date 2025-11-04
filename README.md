@@ -26,11 +26,12 @@ http://localhost:8503   # Vector KB (обучение)
 
 | Порт | Интерфейс | Назначение | URL |
 |------|-----------|------------|-----|
-| **3000** | Simple UI | Веб-интерфейс с детализацией | http://localhost:3000 |
-| **8501** | Streamlit UI | Пользовательский интерфейс | http://localhost:8501 |
-| **8503** | **Vector KB** | **Обучение RAG и тестирование** | http://localhost:8503 |
-| 8000 | Core API | REST API (генерация SQL) | http://localhost:8000/docs |
-| 8081 | Mock API | Ролевые ограничения | http://localhost:8081/health |
+| **3000** | Simple UI | Веб-интерфейс с детализацией | `http://localhost:3000` |
+| **8501** | Streamlit UI | Пользовательский интерфейс | `http://localhost:8501` |
+| **8503** | **Vector KB** | **Обучение RAG и тестирование** | `http://localhost:8503` |
+| 8000 | Core API | REST API (генерация SQL) | `http://localhost:8000/docs` |
+| 8081 | Mock API | Ролевые ограничения | `http://localhost:8081/health` |
+Примечание: указанные URL работают только локально после запуска сервисов.
 
 ---
 

@@ -19,7 +19,7 @@ cd /mnt/ai/cnn/sql4A
 
 ### Основные сценарии
 - Генерация SQL: в UI введите вопрос, выберите роль (admin/manager/user), выполните.
-- Обучение RAG: интерфейс Vector KB (http://localhost:8503) — проверка поиска, добавление Q/A.
+- Обучение RAG: интерфейс Vector KB (`http://localhost:8503`) — проверка поиска, добавление Q/A.
 - Проверка здоровья: `curl http://localhost:8000/health`.
 
 ### Конфигурация
