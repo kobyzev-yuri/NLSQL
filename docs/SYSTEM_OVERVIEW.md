@@ -219,7 +219,7 @@ AND creationdatetime >= CURRENT_DATE - INTERVAL '1 month'
 ### Запуск всех сервисов
 
 ```bash
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./start_all_services.sh
 ```
 

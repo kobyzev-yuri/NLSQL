@@ -41,7 +41,7 @@
 
 ### 1. Откройте файл
 ```bash
-nano /mnt/ai/cnn/sql4A/src/mock_customer_api.py
+nano src/mock_customer_api.py
 ```
 
 ### 2. Найдите функцию `apply_role_restrictions`
@@ -103,7 +103,7 @@ elif role == "user":
 ### 4. Перезапустите Mock API
 
 ```bash
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./run_stack.sh restart mock_api
 ```
 
@@ -172,7 +172,7 @@ logger.info(f"Применение ограничений для роли: {role
 
 Смотрите логи:
 ```bash
-tail -f /mnt/ai/cnn/sql4A/logs/mock_api_8081.err
+tail -f logs/mock_api_8081.err
 ```
 
 ## Безопасность

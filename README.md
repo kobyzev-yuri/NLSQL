@@ -11,7 +11,7 @@
 
 ```bash
 # 1. Запуск всех сервисов
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./start_all_services.sh
 
 # 2. Откройте в браузере (локально)

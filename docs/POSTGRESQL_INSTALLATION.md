@@ -54,7 +54,7 @@ sudo systemctl restart postgresql
 
 ```bash
 # Переход в директорию проекта
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 
 # Запуск скрипта загрузки
 chmod +x load_database.sh

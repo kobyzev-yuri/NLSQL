@@ -7,7 +7,7 @@
 
 ### Быстрый старт
 ```bash
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./start_all_services.sh
 # UI:
 #  - http://localhost:3000  (Simple UI)

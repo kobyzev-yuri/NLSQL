@@ -18,13 +18,13 @@
 
 ### 1. Запуск всех сервисов
 ```bash
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./start_all_services.sh
 ```
 
 ### 2. Запуск Vector KB Interface
 ```bash
-cd /mnt/ai/cnn/sql4A
+cd NLSQL
 ./start_vector_kb.sh  # если 8503 занят, скрипт использует 8504
 ```
 
@@ -148,7 +148,7 @@ curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d 
 ## Структура файлов
 
 ```
-/mnt/ai/cnn/sql4A/
+NLSQL/
 ├── src/vector_kb_interface.py      # Streamlit интерфейс
 ├── src/tools/generate_embeddings_hf.py
 ├── docs/VECTOR_DB.md
@@ -204,5 +204,5 @@ python qa_management_script.py --action test --input training_data/sql_examples.
 
 ## Контакты
 
-- **Документация**: `/mnt/ai/cnn/sql4A/docs/`
-- **Логи**: `/mnt/ai/cnn/sql4A/logs/`
+- **Документация**: `docs/`
+- **Логи**: `logs/`
