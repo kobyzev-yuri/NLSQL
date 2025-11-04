@@ -231,21 +231,21 @@ async def home():
             
             <div class="examples">
                 <h3>💡 Примеры вопросов:</h3>
-                <div class="example" onclick="setQuestion('Покажи всех пользователей')">Покажи всех пользователей</div>
-                <div class="example" onclick="setQuestion('Сколько клиентов в системе?')">Сколько клиентов в системе?</div>
-                <div class="example" onclick="setQuestion('Покажи поручения за последний месяц')">Покажи поручения за последний месяц</div>
-                <div class="example" onclick="setQuestion('Статистика по отделам')">Статистика по отделам</div>
-                <div class="example" onclick="setQuestion('Покажи всех пользователей')">Покажи всех пользователей</div>
-                <div class="example" onclick="setQuestion('Пользователи по отделам')">Пользователи по отделам</div>
-                <div class="example" onclick="setQuestion('Платежи за сегодня по клиентам')">Платежи за сегодня по клиентам</div>
-                <div class="example" onclick="setQuestion('Поручения менеджера manager')">Поручения менеджера manager</div>
-                <div class="example" onclick="setQuestion('Список бизнес-единиц с ИНН')">Список бизнес-единиц с ИНН</div>
+                <div class="example" onclick="setQuestion('Покажи всех пользователей с email')">Покажи всех пользователей с email</div>
+                <div class="example" onclick="setQuestion('Сколько всего поручений в системе?')">Сколько всего поручений в системе?</div>
+                <div class="example" onclick="setQuestion('Покажи последние 10 поручений')">Покажи последние 10 поручений</div>
+                <div class="example" onclick="setQuestion('Список всех бизнес-единиц с ИНН')">Список всех бизнес-единиц с ИНН</div>
+                <div class="example" onclick="setQuestion('Сколько платежей в системе?')">Сколько платежей в системе?</div>
+                <div class="example" onclick="setQuestion('Пользователи с фамилией Смирнов')">Пользователи с фамилией Смирнов</div>
+                <div class="example" onclick="setQuestion('Бизнес-единицы с указанным телефоном')">Бизнес-единицы с указанным телефоном</div>
+                <div class="example" onclick="setQuestion('Поручения за последний месяц')">Поручения за последний месяц</div>
+                <div class="example" onclick="setQuestion('Пользователи с yandex.ru в email')">Пользователи с yandex.ru в email</div>
             </div>
             
             <form id="sqlForm">
                 <div class="form-group">
                     <label for="question">Вопрос на русском языке:</label>
-                    <textarea id="question" name="question" placeholder="Например: Покажи всех пользователей, Сколько клиентов в системе?, Поручения за последний месяц" required></textarea>
+                    <textarea id="question" name="question" placeholder="Например: Покажи всех пользователей с email, Сколько поручений в системе?, Список бизнес-единиц с ИНН" required></textarea>
                 </div>
                 <div class="form-group" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
                     <div>
@@ -259,9 +259,11 @@ async def home():
                     <div>
                         <label for="department">Отдел:</label>
                         <select id="department" name="department">
-                            <option value="IT">IT</option>
-                            <option value="Sales">Sales</option>
-                            <option value="Support">Support</option>
+                            <option value="Департамент продаж">Департамент продаж</option>
+                            <option value="Отдел 1">Отдел 1</option>
+                            <option value="Продажи">Продажи</option>
+                            <option value="Продажи 2">Продажи 2</option>
+                            <option value="Управление Крупного Крупнейшего Бизнеса">Управление Крупного Крупнейшего Бизнеса</option>
                         </select>
                     </div>
                 </div>
@@ -274,20 +276,20 @@ async def home():
                 <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
                     <h4>🔐 Текущая роль:</h4>
                     <p><strong>Роль:</strong> <span id="currentRole">admin (Администратор)</span></p>
-                    <p><strong>Отдел:</strong> <span id="currentDepartment">IT</span></p>
+                    <p><strong>Отдел:</strong> <span id="currentDepartment">Департамент продаж</span></p>
                     <p><strong>Логин:</strong> <span id="currentUser">test_user</span></p>
                     <div class="roles-grid">
-                        <div class="role-card" data-role="admin" data-dept="IT">
+                        <div class="role-card" data-role="admin">
                             <p class="role-title">👑 admin (Администратор)</p>
-                            <p class="role-desc">Полный доступ ко всем данным</p>
+                            <p class="role-desc">Полный доступ ко всем данным независимо от отдела</p>
                         </div>
-                        <div class="role-card" data-role="manager" data-dept="Sales">
+                        <div class="role-card" data-role="manager">
                             <p class="role-title">👨‍💼 manager (Менеджер)</p>
-                            <p class="role-desc">Доступ к данным своего отдела</p>
+                            <p class="role-desc">Доступ к данным своего отдела (выберите отдел отдельно)</p>
                         </div>
-                        <div class="role-card" data-role="user" data-dept="Support">
+                        <div class="role-card" data-role="user">
                             <p class="role-title">👤 user (Пользователь)</p>
-                            <p class="role-desc">Ограниченный доступ к данным</p>
+                            <p class="role-desc">Ограниченный доступ к своим данным</p>
                         </div>
                     </div>
                 </div>
@@ -529,16 +531,14 @@ async def home():
                 currentDept.textContent = deptSelect.value;
             });
 
-            // Быстрый выбор роли из карточек
+            // Быстрый выбор роли из карточек (без изменения отдела)
             document.querySelectorAll('.role-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const r = card.getAttribute('data-role');
-                    const d = card.getAttribute('data-dept');
                     roleSelect.value = r;
-                    deptSelect.value = d;
                     const map = { admin: 'admin (Администратор)', manager: 'manager (Менеджер)', user: 'user (Пользователь)' };
                     currentRole.textContent = map[r] || r;
-                    currentDept.textContent = d;
+                    // Отдел не меняем - он выбирается отдельно
                 });
             });
         </script>
@@ -550,7 +550,7 @@ async def home():
 async def generate_sql(
     question: str = Form(...),
     role: str = Form("admin"),
-    department: str = Form("IT")
+    department: str = Form("Департамент продаж")
 ):
     """Генерация SQL через QueryService с KB"""
     global query_service
@@ -654,7 +654,7 @@ async def generate_sql(
 async def execute_sql(
     question: str = Form(...),
     role: str = Form("admin"),
-    department: str = Form("IT")
+    department: str = Form("Департамент продаж")
 ):
     """Выполнение SQL и показ результатов"""
     global query_service

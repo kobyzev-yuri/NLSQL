@@ -29,7 +29,7 @@ with col1:
     with col_role:
         role = st.selectbox("Роль:", ["admin", "manager", "user"])
     with col_dept:
-        department = st.selectbox("Отдел:", ["IT", "Finance", "HR"])
+        department = st.selectbox("Отдел:", ["Департамент продаж", "Отдел 1", "Продажи", "Продажи 2", "Управление Крупного Крупнейшего Бизнеса"])
     
     # Поле ввода
     # Инициализируем session state для примера
@@ -39,7 +39,7 @@ with col1:
     question = st.text_area(
         "Ваш вопрос:",
         value=st.session_state.example_question,
-        placeholder="Например: Покажи все поручения за последний месяц",
+        placeholder="Например: Покажи всех пользователей с email, Сколько поручений в системе?",
         height=100,
         key="question_input"
     )
@@ -168,10 +168,10 @@ with col2:
 # Примеры запросов
 st.subheader("💡 Примеры запросов")
 examples = [
-    "Покажи все поручения",
-    "Найди пользователей из IT отдела", 
-    "Покажи статистику по платежам",
-    "Найди документы за последний месяц"
+    "Покажи всех пользователей с email",
+    "Сколько поручений в системе?", 
+    "Список бизнес-единиц с ИНН",
+    "Пользователи с фамилией Смирнов"
 ]
 
 # Создаем кнопки примеров
@@ -189,13 +189,15 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     try:
-        response = requests.get("http://localhost:3000/", timeout=5)
+        response = requests.get("http://localhost:3000/", timeout=10)
         if response.status_code == 200:
-            st.success("✅ FastAPI (3000)")
+            st.success("✅ Simple UI (3000)")
         else:
-            st.error("❌ FastAPI (3000)")
-    except:
-        st.error("❌ FastAPI (3000)")
+            st.error(f"❌ Simple UI (3000) - HTTP {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Simple UI (3000) - {str(e)[:50]}")
+    except Exception as e:
+        st.error(f"❌ Simple UI (3000) - {str(e)[:50]}")
 
 with col2:
     try:

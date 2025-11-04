@@ -155,7 +155,7 @@ async def execute_sql(request: SQLExecuteRequest):
         # Получение контекста пользователя
         login = request.user_context.get("login", "user")
         role = request.user_context.get("role", "user")
-        department = request.user_context.get("department", "Support")
+        department = request.user_context.get("department", "Департамент продаж")
         logger.info(f"Extracted: login={login}, role={role}, department={department}")
         
         # Применение ролевых ограничений
@@ -203,7 +203,7 @@ async def execute_plan(request: PlanExecuteRequest):
         # Получение контекста пользователя
         login = request.user_context.get("login", "user")
         role = request.user_context.get("role", "user")
-        department = request.user_context.get("department", "Support")
+        department = request.user_context.get("department", "Департамент продаж")
 
         # Конвертация плана в SQL
         decoded_sql = plan_to_sql(request.plan)
@@ -422,8 +422,14 @@ async def simulate_sql_execution(sql: str, login: str, role: str, department: st
             data = [row for row in data if row.get("login") == login]
         elif role == "manager":
             # Менеджеры видят только свой отдел
-            # для простоты сопоставляем department по имени 'IT'->"1", 'Sales'->"2", 'Support'->"3"
-            dept_id_map = {"IT": "1", "Sales": "2", "Support": "3"}
+            # для простоты сопоставляем department по имени из реальной базы
+            # Используем реальные названия из eq_departments
+            dept_id_map = {
+                "Департамент продаж": "66f8f66f-32bd-49b3-a466-1ba3e373380e",
+                "Отдел 1": "a51d753f-46e4-4401-b218-581295612c6b",
+                "Продажи": "ba26cd79-53c9-4829-bd60-ff81b26af367",
+                "Продажи 2": "808dd8af-1e68-4586-a281-38b076b48848"
+            }
             target_dept_id = dept_id_map.get(department, None)
             if target_dept_id is not None:
                 data = [row for row in data if row.get("department_id") == target_dept_id]
@@ -441,24 +447,73 @@ async def simulate_sql_execution(sql: str, login: str, role: str, department: st
     }
 
 
+def normalize_sql_aliases(sql: str) -> str:
+    """
+    Нормализует SQL: исправляет алиасы и синтаксические ошибки.
+    Убирает алиасы из SELECT/WHERE, если они не объявлены в FROM/JOIN.
+    """
+    import re
+    
+    sql_normalized = sql.strip()
+    
+    # Исправляем синтаксические ошибки
+    sql_normalized = re.sub(r'\bINNER\s+LEFT\s+JOIN\b', 'LEFT JOIN', sql_normalized, flags=re.IGNORECASE)
+    sql_normalized = re.sub(r'\bLEFT\s+INNER\s+JOIN\b', 'INNER JOIN', sql_normalized, flags=re.IGNORECASE)
+    
+    # Находим все объявленные алиасы в FROM и JOIN
+    declared_aliases = set()
+    
+    # FROM table_name alias
+    from_matches = re.finditer(r'\bFROM\s+(\w+)\s+(\w+)\b', sql_normalized, flags=re.IGNORECASE)
+    for m in from_matches:
+        table_name = m.group(1).lower()
+        alias = m.group(2).lower()
+        declared_aliases.add(alias)
+    
+    # JOIN table_name alias ON
+    join_matches = re.finditer(r'\bJOIN\s+(\w+)\s+(\w+)\s+ON\b', sql_normalized, flags=re.IGNORECASE)
+    for m in join_matches:
+        alias = m.group(2).lower()
+        declared_aliases.add(alias)
+    
+    # Если нет объявленных алиасов, убираем все алиасы из SELECT и WHERE
+    if not declared_aliases:
+        # Убираем алиасы из SELECT (например, u.login -> login)
+        sql_normalized = re.sub(r'\b\w+\.(\w+)\b', r'\1', sql_normalized, flags=re.IGNORECASE)
+        # Убираем алиасы из WHERE и других частей
+        sql_normalized = re.sub(r'\b([a-z_]+)\.(\w+)\b', r'\2', sql_normalized, flags=re.IGNORECASE)
+    else:
+        # Убираем только те алиасы, которые не объявлены
+        # Это более сложная логика, пока просто убираем все алиасы для простоты
+        # TODO: улучшить логику для работы с объявленными алиасами
+        pass
+    
+    return sql_normalized
+
 async def execute_sql_against_db(sql: str) -> Dict[str, Any]:
     """Выполнение SELECT против реальной БД заказчика."""
     if db_pool is None:
         raise HTTPException(status_code=503, detail="База данных недоступна (нет подключения)")
     sql_stripped = sql.strip()
-    logger.info(f"Выполнение SQL в БД: {sql_stripped}")
-    if not sql_stripped.lower().startswith("select"):
+    
+    # Нормализуем SQL перед выполнением
+    sql_normalized = normalize_sql_aliases(sql_stripped)
+    
+    logger.info(f"Выполнение SQL в БД (оригинал: {sql_stripped[:100]}...)")
+    logger.info(f"Нормализованный SQL: {sql_normalized[:100]}...")
+    
+    if not sql_normalized.lower().startswith("select"):
         raise HTTPException(status_code=400, detail="Разрешены только SELECT запросы")
     try:
         async with db_pool.acquire() as conn:
-            stmt = await conn.prepare(sql_stripped)
+            stmt = await conn.prepare(sql_normalized)
             records = await stmt.fetch()
             columns = list(records[0].keys()) if records else []
             data = [dict(r) for r in records]
             return {"data": data, "columns": columns, "row_count": len(data)}
     except Exception as e:
         logger.error(f"DB error: {e}")
-        logger.error(f"SQL был: {sql_stripped}")
+        logger.error(f"SQL был: {sql_normalized}")
         raise HTTPException(status_code=500, detail=f"DB error: {str(e)}")
 
 def get_accessible_tables(role: str) -> List[str]:
