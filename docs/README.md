@@ -13,6 +13,7 @@
 ## Обучение
 - **VECTOR_KB_INTERFACE_GUIDE.md** - Интерфейс обучения RAG
 - **VANNA_TRAINING_GUIDE.md** - Обучение векторной базы
+- **CUSTOMER_DATA_PREPARATION_GUIDE.md** - Инструкция для заказчика по подготовке данных
 
 ## Справочники
 - **API_REFERENCE.md** - API эндпоинты

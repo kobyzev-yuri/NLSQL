@@ -617,31 +617,93 @@ Generate SQL that is:
         try:
             logger.info(f"Тестирование поиска: {question} (тип: {search_type})")
             
-            if not self.semantic_vanna:
-                logger.error("Семантический RAG не инициализирован")
-                return []
+            # Делаем прямой поиск с метаданными из БД (не зависим от semantic_vanna)
+            import asyncpg
+            from sentence_transformers import SentenceTransformer
+            import os
             
-            # Выполняем поиск в зависимости от типа
-            if search_type == "semantic":
-                results = await self.semantic_vanna.get_related_ddl(question)
-            elif search_type == "ddl":
-                results = await self.semantic_vanna.get_related_ddl(question)
-            elif search_type == "documentation":
-                results = await self.semantic_vanna.get_related_documentation(question)
-            elif search_type == "examples":
-                results = await self.semantic_vanna.get_related_question_sql(question)
+            # Генерируем эмбеддинг для вопроса
+            # ВАЖНО: используем ту же модель, что и для создания эмбеддингов в БД!
+            model_name = os.getenv('HF_MODEL_NAME', 'intfloat/multilingual-e5-base')
+            logger.info(f"Используем модель эмбеддингов: {model_name}")
+            embedding_model = SentenceTransformer(model_name)
+            # Для multilingual-e5-base нужно добавить префикс для запросов
+            if 'multilingual-e5' in model_name.lower():
+                question_with_prefix = f"query: {question}"
             else:
-                # По умолчанию используем семантический поиск
-                results = await self.semantic_vanna.get_related_ddl(question)
+                question_with_prefix = question
+            question_embedding = embedding_model.encode([question_with_prefix], normalize_embeddings=True)[0]
             
-            # Форматируем результаты
+            # Подключаемся к БД
+            database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:1234@localhost:5432/test_docstructure')
+            conn = await asyncpg.connect(database_url)
+            
+            # Определяем content_type для поиска
+            content_type_map = {
+                "semantic": "ddl",
+                "ddl": "ddl",
+                "documentation": "documentation",
+                "examples": "question_sql"
+            }
+            target_content_type = content_type_map.get(search_type, "ddl")
+            
+            # Конвертируем эмбеддинг в строку для pgvector
+            embedding_str = '[' + ','.join(map(str, question_embedding)) + ']'
+            
+            # Семантический поиск с метаданными (исключаем временные/тестовые таблицы)
+            query = """
+                SELECT 
+                    content, 
+                    metadata,
+                    content_type,
+                    embedding <-> $1::vector as distance
+                FROM vanna_vectors 
+                WHERE content_type = $2 
+                  AND embedding IS NOT NULL
+                  AND (
+                    metadata->>'table' IS NULL 
+                    OR (
+                      metadata->>'table' NOT LIKE 'temp_%'
+                      AND metadata->>'table' NOT LIKE 'tmp_%'
+                      AND metadata->>'table' NOT LIKE 'test_%'
+                      AND metadata->>'table' NOT LIKE 'vanna_%'
+                      AND metadata->>'table' NOT LIKE 'chroma_%'
+                    )
+                  )
+                ORDER BY embedding <-> $1::vector
+                LIMIT $3
+            """
+            
+            rows = await conn.fetch(query, embedding_str, target_content_type, limit)
+            await conn.close()
+            
+            # Форматируем результаты с метаданными
             formatted_results = []
-            for i, result in enumerate(results[:limit]):
-                formatted_results.append({
-                    "content": result,
+            for i, row in enumerate(rows):
+                distance = float(row['distance'])
+                score = 1.0 - distance  # Преобразуем distance в score
+                
+                result = {
+                    "content": row['content'],
+                    "content_type": row['content_type'],
                     "type": search_type,
-                    "rank": i + 1
-                })
+                    "rank": i + 1,
+                    "score": score,
+                    "distance": distance
+                }
+                
+                # Добавляем метаданные если есть
+                metadata = row.get('metadata')
+                if metadata:
+                    if isinstance(metadata, str):
+                        import json
+                        try:
+                            metadata = json.loads(metadata)
+                        except:
+                            metadata = {}
+                    result["metadata"] = metadata
+                
+                formatted_results.append(result)
             
             logger.info(f"Найдено {len(formatted_results)} результатов для типа {search_type}")
             return formatted_results

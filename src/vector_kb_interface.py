@@ -182,37 +182,27 @@ def get_ddl_from_db():
         return []
 
 def call_api_search(question: str, search_type: str = "semantic", limit: int = 5):
-    """Вызов API для тестирования поиска через /query"""
+    """Вызов API для тестирования поиска через /test-search"""
     try:
         response = requests.post(
-            f"{API_BASE_URL}/query",
+            f"{API_BASE_URL}/test-search",
             json={
                 "question": question,
-                "user_id": "kb_test_user",
-                "role": "admin",
-                "department": "IT",
-                "context": {}
+                "search_type": search_type,
+                "limit": limit
             },
             timeout=30
         )
         if response.status_code == 200:
             data = response.json()
-            # /query возвращает SQLResponse с полями: sql, question, user_id
-            if data.get('sql'):
-                # Форматируем результат как результаты поиска
-                results = []
-                results.append({
-                    "content": f"Сгенерированный SQL: {data['sql']}",
-                    "type": "sql",
-                    "rank": 1
-                })
-                
+            # /test-search возвращает результаты поиска с чанками
+            if data.get('success') is True:
                 return {
                     "success": True,
                     "question": question,
                     "search_type": search_type,
-                    "results": results[:limit],
-                    "total_found": len(results[:limit])
+                    "results": data.get('results', []),
+                    "total_found": data.get('total_found', len(data.get('results', [])))
                 }
             else:
                 return {"error": data.get('error', 'Неизвестная ошибка')}
@@ -241,6 +231,60 @@ def call_api_generate_sql(question: str):
             return {"error": f"HTTP {response.status_code}", "details": response.text}
     except Exception as e:
         return {"error": str(e)}
+
+def call_api_execute_sql(sql: str):
+    """Вызов Mock Customer API для выполнения SQL напрямую"""
+    try:
+        import uuid
+        # Используем Mock API напрямую для выполнения SQL
+        mock_api_url = os.getenv('MOCK_API_URL', 'http://localhost:8081')
+        response = requests.post(
+            f"{mock_api_url}/api/sql/execute",
+            json={
+                "sql_template": sql,
+                "user_context": {
+                    "user_id": "kb_test_user",
+                    "login": "kb_test_user",
+                    "role": "admin",
+                    "department": "IT"
+                },
+                "request_id": str(uuid.uuid4())
+            },
+            timeout=60
+        )
+        if response.status_code == 200:
+            data = response.json()
+            # Mock API возвращает результат напрямую, не в формате {success: 1}
+            if 'data' in data or 'columns' in data:
+                return {
+                    "success": True,
+                    "data": data.get('data', []),
+                    "columns": data.get('columns', []),
+                    "row_count": data.get('row_count', len(data.get('data', []))),
+                    "execution_time": data.get('execution_time', 0.0),
+                    "sql": data.get('final_sql', data.get('sql', sql))
+                }
+            elif data.get('success') == 1:
+                return {
+                    "success": True,
+                    "data": data.get('data', []),
+                    "columns": data.get('columns', []),
+                    "row_count": len(data.get('data', [])),
+                    "execution_time": data.get('execution_time', 0.0),
+                    "sql": data.get('final_sql', sql)
+                }
+            else:
+                return {"success": False, "error": data.get('errormsg', data.get('detail', 'Ошибка выполнения SQL'))}
+        else:
+            error_text = response.text
+            try:
+                error_json = response.json()
+                error_msg = error_json.get('detail', error_json.get('message', error_text))
+            except:
+                error_msg = error_text
+            return {"success": False, "error": f"HTTP {response.status_code}: {error_msg}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # Основные вкладки
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -306,7 +350,13 @@ with tab1:
             help="Выберите тип поиска для тестирования"
         )
         
-        max_results = st.slider("Максимум результатов:", 1, 20, 5)
+        max_results = st.slider(
+            "Максимум результатов:", 
+            1, 20, 5,
+            help="Количество чанков для отображения (1-20)"
+        )
+        
+        st.caption(f"📊 Будет возвращено до {max_results} наиболее релевантных чанков")
     
     with col1:
         # Динамические примеры в зависимости от типа поиска
@@ -334,6 +384,14 @@ with tab1:
             help="Введите вопрос на естественном языке для тестирования поиска"
         )
     
+    # Инициализация session_state если нужно
+    if 'search_results' not in st.session_state:
+        st.session_state.search_results = []
+    if 'search_query' not in st.session_state:
+        st.session_state.search_query = ''
+    if 'search_type' not in st.session_state:
+        st.session_state.search_type = 'semantic'
+    
     if st.button("🔍 Тестировать поиск", type="primary"):
         if query:
             # Проверяем подключение к API
@@ -351,19 +409,189 @@ with tab1:
                         st.stop()
                     
                     results = search_result.get('results', [])
-                    st.success(f"Найдено {len(results)} результатов")
+                    # Сохраняем результаты в session_state ПЕРЕД любыми другими операциями
+                    st.session_state.search_results = results
+                    st.session_state.search_query = query
+                    st.session_state.search_type = search_type
                     
-                    # Отображаем результаты
-                    for i, result in enumerate(results[:max_results]):
-                        with st.expander(f"Результат {i+1}"):
-                            if isinstance(result, dict):
-                                content = result.get('content', str(result))
-                            else:
-                                content = str(result)
-                            st.code(content, language="sql")
-                            
+                    if len(results) == 0:
+                        st.warning(f"⚠️ Результаты не найдены для запроса: '{query}' (тип: {search_type})")
+                        st.info("💡 Возможные причины:")
+                        st.info("   - Векторная база знаний пуста (не проведено обучение)")
+                        st.info("   - Семантический RAG не инициализирован")
+                        st.info("   - Запрос не соответствует ни одному чанку в базе")
+                        st.info("   - Попробуйте другой тип поиска (ddl, documentation, examples)")
+                        st.session_state.search_results = []  # Очищаем результаты
+                    else:
+                        st.success(f"✅ Найдено {len(results)} результатов")
+                        # Перезагружаем страницу для отображения результатов
+                        st.rerun()
+                    
                 except Exception as e:
                     st.error(f"Ошибка поиска: {e}")
+                    st.session_state.search_results = []
+    
+    # Показываем сохраненные результаты поиска (из нового поиска или из session_state)
+    # ВАЖНО: этот блок должен быть ВНЕ блока кнопки поиска, чтобы результаты не терялись
+    display_results = st.session_state.get('search_results', [])
+    display_query = st.session_state.get('search_query', '')
+    display_search_type = st.session_state.get('search_type', 'semantic')
+    
+    if display_results:
+        # Отображаем результаты с метаданными чанков
+        st.divider()
+        st.markdown(f"**📋 Результаты поиска для: '{display_query}'** (тип: {display_search_type})")
+        
+        for i, result in enumerate(display_results[:max_results]):
+            if isinstance(result, dict):
+                content = result.get('content', result.get('ddl', result.get('documentation', result.get('question', str(result)))))
+                content_type = result.get('content_type', result.get('type', display_search_type))
+                score = result.get('score', result.get('distance'))
+                rank = result.get('rank', i + 1)
+                metadata = result.get('metadata', {})
+                
+                # Формируем заголовок с информацией о чанке
+                title_parts = [f"Результат {rank}"]
+                if content_type and content_type != 'unknown':
+                    title_parts.append(f"📋 {content_type}")
+                if score is not None:
+                    if isinstance(score, float):
+                        title_parts.append(f"⭐ {score:.4f}")
+                    else:
+                        title_parts.append(f"⭐ {score}")
+                
+                with st.expander(" | ".join(title_parts)):
+                    # Показываем метаданные
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if content_type and content_type != 'unknown':
+                            st.markdown(f"**Тип:** `{content_type}`")
+                        if metadata:
+                            if 'table' in metadata:
+                                st.markdown(f"**Таблица:** `{metadata.get('table')}`")
+                            if 'column' in metadata:
+                                st.markdown(f"**Колонка:** `{metadata.get('column')}`")
+                    with col2:
+                        if score is not None:
+                            if isinstance(score, float):
+                                score_str = f"{score:.4f}"
+                            else:
+                                score_str = str(score)
+                            st.markdown(f"**Релевантность:** `{score_str}`")
+                        if metadata:
+                            if 'source' in metadata:
+                                st.markdown(f"**Источник:** `{metadata.get('source')}`")
+                    
+                    # Показываем содержимое чанка
+                    st.markdown("**Содержимое чанка:**")
+                    if content_type in ['ddl', 'DDL'] or 'DDL' in str(content):
+                        st.code(content, language="sql")
+                    elif content_type in ['documentation', 'doc']:
+                        st.markdown(content)
+                    elif content_type in ['question_sql', 'examples', 'qa']:
+                        # Для Q/A пар показываем вопрос и SQL
+                        if isinstance(result, dict) and 'question' in result and 'sql' in result:
+                            st.markdown(f"**Вопрос:** {result.get('question')}")
+                            st.code(result.get('sql', content), language="sql")
+                        else:
+                            st.code(content, language="sql")
+                    else:
+                        # По умолчанию показываем как SQL
+                        st.code(content, language="sql")
+                    
+                    # Дополнительные метаданные
+                    if metadata and len(metadata) > 2:
+                        with st.expander("📋 Все метаданные"):
+                            st.json(metadata)
+            else:
+                # Fallback для не-словарей (строки)
+                with st.expander(f"Результат {i+1} | 📋 {display_search_type}"):
+                    st.markdown(f"**Тип:** `{display_search_type}`")
+                    st.markdown("**Содержимое чанка:**")
+                    # Определяем язык по типу поиска
+                    if display_search_type in ['ddl', 'semantic']:
+                        st.code(str(result), language="sql")
+                    elif display_search_type == 'documentation':
+                        st.markdown(str(result))
+                    else:
+                        st.code(str(result), language="sql")
+        
+        # После отображения результатов - предлагаем сгенерировать SQL
+        st.divider()
+        st.subheader("🚀 Генерация SQL на основе найденных чанков")
+        
+        col_gen, col_exec = st.columns(2)
+        
+        with col_gen:
+            if st.button("📝 Сгенерировать SQL", type="primary", key="generate_sql_btn"):
+                # Сохраняем результаты поиска перед генерацией
+                st.session_state.search_results = display_results
+                st.session_state.search_query = display_query
+                st.session_state.search_type = display_search_type
+                
+                with st.spinner("Генерирую SQL запрос..."):
+                    try:
+                        sql_result = call_api_generate_sql(display_query)
+                        if sql_result and sql_result.get('sql'):
+                            st.session_state.generated_sql = sql_result['sql']
+                            st.session_state.show_sql = True
+                            st.rerun()  # Перезагружаем для отображения SQL
+                        else:
+                            st.error(f"Ошибка генерации SQL: {sql_result.get('error', 'Неизвестная ошибка')}")
+                    except Exception as e:
+                        st.error(f"Ошибка: {e}")
+        
+        with col_exec:
+            if st.session_state.get('generated_sql'):
+                if st.button("▶️ Выполнить SQL", key="execute_sql_btn"):
+                    # Сохраняем результаты поиска перед выполнением
+                    st.session_state.search_results = display_results
+                    st.session_state.search_query = display_query
+                    st.session_state.search_type = display_search_type
+                    
+                    with st.spinner("Выполняю SQL запрос..."):
+                        try:
+                            execute_result = call_api_execute_sql(st.session_state.generated_sql)
+                            if execute_result and execute_result.get('success'):
+                                st.session_state.sql_execution_result = execute_result
+                                st.session_state.show_execution = True
+                                st.rerun()  # Перезагружаем для отображения результатов
+                            else:
+                                st.error(f"Ошибка выполнения: {execute_result.get('error', 'Неизвестная ошибка')}")
+                        except Exception as e:
+                            st.error(f"Ошибка: {e}")
+        
+        # Показываем сгенерированный SQL (без перезагрузки страницы)
+        if st.session_state.get('show_sql') and st.session_state.get('generated_sql'):
+            st.markdown("**📝 Сгенерированный SQL:**")
+            st.code(st.session_state.generated_sql, language="sql")
+            
+            # Показываем результаты выполнения
+            if st.session_state.get('show_execution') and st.session_state.get('sql_execution_result'):
+                exec_result = st.session_state.sql_execution_result
+                st.markdown("**📊 Результаты выполнения:**")
+                
+                if exec_result.get('data') and len(exec_result.get('data', [])) > 0:
+                    # Преобразуем данные в DataFrame для лучшего отображения
+                    columns = exec_result.get('columns', [])
+                    data = exec_result.get('data', [])
+                    
+                    if columns and data:
+                        # Если есть названия колонок, используем их
+                        if isinstance(data[0], dict):
+                            df = pd.DataFrame(data)
+                        elif isinstance(data[0], list):
+                            df = pd.DataFrame(data, columns=columns)
+                        else:
+                            df = pd.DataFrame(data)
+                        
+                        st.dataframe(df, use_container_width=True, height=400)
+                        st.success(f"✅ Найдено строк: {exec_result.get('row_count', len(data))} | Время выполнения: {exec_result.get('execution_time', 0):.3f}с")
+                    else:
+                        st.dataframe(data, use_container_width=True)
+                        st.success(f"✅ Найдено строк: {len(data)}")
+                else:
+                    st.info("ℹ️ Запрос выполнен успешно, но результатов нет")
 
 with tab2:
     st.header("📝 Добавление новых Q/A пар")

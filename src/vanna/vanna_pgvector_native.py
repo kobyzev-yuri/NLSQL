@@ -58,7 +58,7 @@ class DocStructureVectorDB(VannaBase):
     
     def add_ddl(self, ddl: str, **kwargs) -> str:
         """
-        Добавление DDL в векторную БД
+        Добавление DDL в векторную БД с фильтрацией временных/тестовых таблиц
         
         Args:
             ddl: DDL оператор
@@ -68,14 +68,50 @@ class DocStructureVectorDB(VannaBase):
             str: ID добавленного элемента
         """
         try:
+            import re
+            
+            # Извлекаем имя таблицы из DDL для фильтрации
+            table_name = None
+            # Ищем CREATE TABLE table_name (может быть с schema)
+            match = re.search(
+                r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([^\s.]+)\.)?([^\s(]+)',
+                ddl,
+                re.IGNORECASE
+            )
+            if match:
+                schema = match.group(1)
+                table = match.group(2)
+                if schema:
+                    table_name = f"{schema}.{table}"
+                else:
+                    table_name = table
+            
+            # Фильтруем временные/тестовые таблицы
+            if table_name:
+                exclude_patterns = [
+                    r'^temp$', r'^test_', r'^tmp_', r'^temp_',
+                    r'_test$', r'_temp$',
+                    r'^public\.temp', r'^public\.test_', r'^public\.tmp_',
+                    r'^vanna_', r'^chroma_',  # Служебные таблицы
+                ]
+                
+                for pattern in exclude_patterns:
+                    if re.match(pattern, table_name, re.IGNORECASE):
+                        logger.info(f"⏭️ Пропущен временный/тестовый DDL для таблицы: {table_name}")
+                        return None  # Возвращаем None вместо ID, чтобы показать что добавление пропущено
+            
             # Создаем таблицу для векторов если не существует
             self._create_vector_table()
             
             # Добавляем DDL в векторную БД
             with self.conn.cursor() as cur:
-                # Преобразуем metadata в JSON строку
+                # Преобразуем metadata в JSON строку с именем таблицы
                 import json
-                metadata_json = json.dumps({'type': 'ddl'})
+                metadata_dict = {
+                    'type': 'ddl',
+                    'table': table_name if table_name else None
+                }
+                metadata_json = json.dumps(metadata_dict)
                 cur.execute("""
                     INSERT INTO vanna_vectors (content, content_type, metadata)
                     VALUES (%s, %s, %s)
@@ -85,7 +121,7 @@ class DocStructureVectorDB(VannaBase):
                 result = cur.fetchone()
                 self.conn.commit()
                 
-                logger.info(f"✅ DDL добавлен с ID: {result[0]}")
+                logger.info(f"✅ DDL добавлен с ID: {result[0]} для таблицы: {table_name}")
                 return str(result[0])
                 
         except Exception as e:
