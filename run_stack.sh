@@ -109,7 +109,7 @@ Usage: $(basename "$0") <start|stop|restart|status|logs>
   logs     tail last lines of service logs
 
 ENV expected (examples):
-  PROXYAPI_KEY / OPENAI_API_KEY / OPENAI_BASE_URL
+  OPENAI_API_KEY / OPENAI_BASE_URL
   OLLAMA_BASE_URL / OLLAMA_MODEL
   CUSTOMER_DB_DSN=postgresql://postgres:1234@localhost:5432/test_docstructure
 USAGE

@@ -193,9 +193,9 @@ psql -h localhost -U postgres -d test_docstructure -c "SELECT 1;"
 ### Переменные окружения (config.env)
 ```bash
 # ProxyAPI Configuration
-PROXYAPI_BASE_URL=https://api.proxyapi.ru/openai/v1
-PROXYAPI_API_KEY=sk-...
-PROXYAPI_CHAT_MODEL=gpt-4o
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
+OPENAI_MODEL=gpt-4o
 
 # Database Configuration
 DATABASE_URL=postgresql://postgres:1234@localhost:5432/test_docstructure

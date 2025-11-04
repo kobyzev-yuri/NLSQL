@@ -329,10 +329,16 @@ async def home():
                     formData.append('role', role);
                     formData.append('department', department);
                     
+                    // Увеличиваем таймаут для генерации SQL (может занимать до 90 секунд)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 секунд
+                    
                     const response = await fetch('/generate-sql', {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
                     
                     const data = await response.json();
                     
@@ -421,7 +427,18 @@ async def home():
                         body: formData
                     });
                     
-                    const data = await response.json();
+                    let data;
+                    if (!response.ok) {
+                        // Если статус не 200, пытаемся получить текст ошибки
+                        const errorText = await response.text();
+                        try {
+                            data = JSON.parse(errorText);
+                        } catch {
+                            data = { success: false, error: `HTTP ${response.status}: ${errorText.substring(0, 200)}` };
+                        }
+                    } else {
+                        data = await response.json();
+                    }
                     
                     if (data.success) {
                         resultDiv.className = 'result success';

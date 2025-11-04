@@ -40,7 +40,7 @@ class QueryService:
                 'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
                 'api_key': os.getenv("OPENAI_API_KEY"),
                 'base_url': os.getenv("OPENAI_BASE_URL", 'https://api.proxyapi.ru/openai/v1'),
-                'temperature': 0.2
+                'temperature': float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
             }
             
             self.pipeline = create_simple_sql_generator(config)
@@ -400,7 +400,9 @@ Generate SQL that is:
 
             # Шаг 5: Генерируем SQL через простой генератор
             logger.info("🔄 Используем прямой вызов OpenAI GPT-4o...")
-            sql = self.pipeline.generate_sql(smart_question, timeout=60)
+            # Обертываем синхронный вызов в thread pool, чтобы не блокировать event loop
+            import asyncio
+            sql = await asyncio.to_thread(self.pipeline.generate_sql, smart_question, 60)
             result = {'success': True, 'sql': sql, 'model': 'gpt-4o-direct'}
 
             if result and result.get('success') and result.get('sql'):

@@ -28,6 +28,7 @@ class SimpleOpenAISQL:
         self.api_key = config.get('api_key') or os.getenv('OPENAI_API_KEY')
         self.base_url = config.get('base_url') or os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
         self.model = config.get('model', 'gpt-4o')
+        self.temperature = config.get('temperature') or float(os.getenv('OPENAI_TEMPERATURE', '0.2'))
         self.database_url = config.get('database_url', 'postgresql://postgres:1234@localhost:5432/test_docstructure')
         
         # Создаем OpenAI клиент
@@ -117,7 +118,7 @@ Rules:
                     {"role": "user", "content": question}
                 ],
                 max_tokens=500,
-                temperature=0.2,
+                temperature=self.temperature,
                 timeout=timeout
             )
             
