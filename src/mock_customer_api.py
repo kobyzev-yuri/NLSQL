@@ -11,9 +11,14 @@ import asyncio
 import random
 import logging
 from datetime import datetime
+from pathlib import Path
 from src.utils.plan_sql_converter import plan_to_sql
 import os
 import asyncpg
+
+# Load environment variables from config.env before anything else
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env", override=True)
 
 logger = logging.getLogger(__name__)
 

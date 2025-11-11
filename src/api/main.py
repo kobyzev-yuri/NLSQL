@@ -15,8 +15,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
+import asyncpg
 
 from models.requests import QueryRequest, TrainingExampleRequest, HealthCheckRequest
 from models.responses import SQLResponse, QueryResultResponse, ErrorResponse, HealthCheckResponse, TrainingResponse
@@ -60,6 +62,42 @@ app.add_middleware(
 # Инициализация сервисов
 query_service = QueryService()
 customer_api_service = CustomerAPIService()
+
+# Модели для работы с комментариями
+class CommentRequest(BaseModel):
+    comment: str
+
+class TableInfo(BaseModel):
+    table_name: str
+    table_comment: Optional[str] = None
+
+class ColumnInfo(BaseModel):
+    column_name: str
+    data_type: str
+    column_comment: Optional[str] = None
+
+class CommentsStats(BaseModel):
+    total_tables: int
+    tables_with_comments: int
+    tables_without_comments: int
+    total_columns: int
+    columns_with_comments: int
+    columns_without_comments: int
+    coverage_tables: float
+    coverage_columns: float
+
+# Функция для получения подключения к БД
+async def get_db_connection():
+    """Получить подключение к PostgreSQL"""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise HTTPException(status_code=500, detail="DATABASE_URL не настроен")
+    try:
+        conn = await asyncpg.connect(database_url)
+        return conn
+    except Exception as e:
+        logger.error(f"Ошибка подключения к БД: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка подключения к БД: {str(e)}")
 
 
 @app.get("/", response_model=Dict[str, str])
@@ -325,6 +363,271 @@ async def get_training_status():
     except Exception as e:
         logger.error(f"Ошибка получения статуса обучения: {e}")
         raise HTTPException(status_code=500, detail=f"Ошибка получения статуса: {str(e)}")
+
+
+# ==================== Эндпоинты для работы с комментариями БД ====================
+
+@app.get("/api/database/tables", response_model=List[TableInfo])
+async def get_tables_with_comments():
+    """
+    Получить список всех таблиц с информацией о комментариях
+    """
+    conn = None
+    try:
+        conn = await get_db_connection()
+        
+        # Получаем список таблиц с комментариями
+        rows = await conn.fetch("""
+            SELECT 
+                t.table_name,
+                COALESCE(obj_description(c.oid, 'pg_class'), '') as table_comment
+            FROM information_schema.tables t
+            LEFT JOIN pg_class c ON c.relname = t.table_name
+            LEFT JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+            WHERE t.table_schema = 'public'
+            AND t.table_type = 'BASE TABLE'
+            ORDER BY 
+                CASE WHEN obj_description(c.oid, 'pg_class') IS NULL THEN 0 ELSE 1 END,
+                t.table_name
+        """)
+        
+        tables = [
+            TableInfo(
+                table_name=row['table_name'],
+                table_comment=row['table_comment'] if row['table_comment'] else None
+            )
+            for row in rows
+        ]
+        
+        return tables
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка получения списка таблиц: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения списка таблиц: {str(e)}")
+    finally:
+        if conn:
+            await conn.close()
+
+
+@app.get("/api/database/tables/{table_name}/columns", response_model=List[ColumnInfo])
+async def get_table_columns(table_name: str):
+    """
+    Получить список колонок таблицы с комментариями
+    """
+    conn = None
+    try:
+        conn = await get_db_connection()
+        
+        # Получаем OID таблицы
+        table_oid = await conn.fetchval("""
+            SELECT c.oid
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = $1 AND n.nspname = 'public'
+        """, table_name)
+        
+        if not table_oid:
+            raise HTTPException(status_code=404, detail=f"Таблица '{table_name}' не найдена")
+        
+        # Получаем колонки с комментариями
+        rows = await conn.fetch("""
+            SELECT 
+                c.column_name,
+                c.data_type,
+                COALESCE(col_description($1::oid, c.ordinal_position), '') as column_comment
+            FROM information_schema.columns c
+            WHERE c.table_schema = 'public' 
+            AND c.table_name = $2
+            ORDER BY c.ordinal_position
+        """, table_oid, table_name)
+        
+        columns = [
+            ColumnInfo(
+                column_name=row['column_name'],
+                data_type=row['data_type'],
+                column_comment=row['column_comment'] if row['column_comment'] else None
+            )
+            for row in rows
+        ]
+        
+        return columns
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка получения колонок таблицы {table_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения колонок: {str(e)}")
+    finally:
+        if conn:
+            await conn.close()
+
+
+@app.post("/api/database/tables/{table_name}/comment")
+async def add_table_comment(table_name: str, request: CommentRequest):
+    """
+    Добавить или обновить COMMENT ON TABLE
+    """
+    conn = None
+    try:
+        conn = await get_db_connection()
+        
+        # Проверяем существование таблицы
+        table_exists = await conn.fetchval("""
+            SELECT EXISTS (
+                SELECT 1 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = $1
+            )
+        """, table_name)
+        
+        if not table_exists:
+            raise HTTPException(status_code=404, detail=f"Таблица '{table_name}' не найдена")
+        
+        # Выполняем COMMENT ON TABLE
+        # PostgreSQL не поддерживает параметризацию для COMMENT, поэтому используем безопасное форматирование
+        # Экранируем одинарные кавычки в комментарии
+        escaped_comment = request.comment.replace("'", "''")
+        await conn.execute(
+            f"COMMENT ON TABLE public.\"{table_name}\" IS '{escaped_comment}'"
+        )
+        
+        logger.info(f"✅ Комментарий добавлен для таблицы {table_name}")
+        
+        return {
+            "success": True,
+            "message": f"Комментарий для таблицы '{table_name}' успешно добавлен",
+            "table_name": table_name,
+            "comment": request.comment
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка добавления комментария для таблицы {table_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка добавления комментария: {str(e)}")
+    finally:
+        if conn:
+            await conn.close()
+
+
+@app.post("/api/database/tables/{table_name}/columns/{column_name}/comment")
+async def add_column_comment(table_name: str, column_name: str, request: CommentRequest):
+    """
+    Добавить или обновить COMMENT ON COLUMN
+    """
+    conn = None
+    try:
+        conn = await get_db_connection()
+        
+        # Проверяем существование колонки
+        column_exists = await conn.fetchval("""
+            SELECT EXISTS (
+                SELECT 1 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' 
+                AND table_name = $1 
+                AND column_name = $2
+            )
+        """, table_name, column_name)
+        
+        if not column_exists:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Колонка '{column_name}' в таблице '{table_name}' не найдена"
+            )
+        
+        # Выполняем COMMENT ON COLUMN
+        # PostgreSQL не поддерживает параметризацию для COMMENT, поэтому используем безопасное форматирование
+        # Экранируем одинарные кавычки в комментарии
+        escaped_comment = request.comment.replace("'", "''")
+        await conn.execute(
+            f"COMMENT ON COLUMN public.\"{table_name}\".\"{column_name}\" IS '{escaped_comment}'"
+        )
+        
+        logger.info(f"✅ Комментарий добавлен для колонки {table_name}.{column_name}")
+        
+        return {
+            "success": True,
+            "message": f"Комментарий для колонки '{table_name}.{column_name}' успешно добавлен",
+            "table_name": table_name,
+            "column_name": column_name,
+            "comment": request.comment
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка добавления комментария для колонки {table_name}.{column_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка добавления комментария: {str(e)}")
+    finally:
+        if conn:
+            await conn.close()
+
+
+@app.get("/api/database/comments/stats", response_model=CommentsStats)
+async def get_comments_statistics():
+    """
+    Получить статистику по комментариям в БД
+    """
+    conn = None
+    try:
+        conn = await get_db_connection()
+        
+        # Статистика по таблицам
+        table_stats = await conn.fetchrow("""
+            SELECT 
+                COUNT(*) as total_tables,
+                COUNT(CASE WHEN obj_description(c.oid, 'pg_class') IS NOT NULL THEN 1 END) as tables_with_comments
+            FROM information_schema.tables t
+            LEFT JOIN pg_class c ON c.relname = t.table_name
+            LEFT JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+            WHERE t.table_schema = 'public'
+            AND t.table_type = 'BASE TABLE'
+        """)
+        
+        # Статистика по колонкам
+        column_stats = await conn.fetchrow("""
+            SELECT 
+                COUNT(*) as total_columns,
+                COUNT(CASE WHEN col_description(c.oid, col.ordinal_position) IS NOT NULL THEN 1 END) as columns_with_comments
+            FROM information_schema.columns col
+            JOIN information_schema.tables t ON t.table_name = col.table_name AND t.table_schema = col.table_schema
+            LEFT JOIN pg_class c ON c.relname = col.table_name
+            LEFT JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+            WHERE col.table_schema = 'public'
+            AND t.table_type = 'BASE TABLE'
+        """)
+        
+        total_tables = table_stats['total_tables'] or 0
+        tables_with_comments = table_stats['tables_with_comments'] or 0
+        tables_without_comments = total_tables - tables_with_comments
+        
+        total_columns = column_stats['total_columns'] or 0
+        columns_with_comments = column_stats['columns_with_comments'] or 0
+        columns_without_comments = total_columns - columns_with_comments
+        
+        coverage_tables = (tables_with_comments / total_tables * 100) if total_tables > 0 else 0.0
+        coverage_columns = (columns_with_comments / total_columns * 100) if total_columns > 0 else 0.0
+        
+        return CommentsStats(
+            total_tables=total_tables,
+            tables_with_comments=tables_with_comments,
+            tables_without_comments=tables_without_comments,
+            total_columns=total_columns,
+            columns_with_comments=columns_with_comments,
+            columns_without_comments=columns_without_comments,
+            coverage_tables=round(coverage_tables, 2),
+            coverage_columns=round(coverage_columns, 2)
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка получения статистики по комментариям: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения статистики: {str(e)}")
+    finally:
+        if conn:
+            await conn.close()
 
 
 # Обработчик ошибок

@@ -4,6 +4,12 @@
 
 import sys
 import os
+from pathlib import Path
+
+# Load environment variables from config.env before anything else
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / "config.env", override=True)
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 import logging

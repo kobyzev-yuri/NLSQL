@@ -14,7 +14,7 @@ from openai import OpenAI
 
 # Load environment variables from config.env
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / "config.env")
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / "config.env", override=True)
 
 logger = logging.getLogger(__name__)
 

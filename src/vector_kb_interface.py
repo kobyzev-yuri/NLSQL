@@ -23,7 +23,7 @@ import asyncpg
 
 # Load environment variables from config.env
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env")
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env", override=True)
 
 # Настройка страницы
 st.set_page_config(
@@ -286,14 +286,81 @@ def call_api_execute_sql(sql: str):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+# Функции для работы с комментариями БД
+def call_api_get_tables_with_comments():
+    """Получить список таблиц с комментариями"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/database/tables", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {"error": f"HTTP {response.status_code}", "details": response.text}
+    except Exception as e:
+        return {"error": str(e)}
+
+def call_api_get_table_columns(table_name: str):
+    """Получить список колонок таблицы с комментариями"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/database/tables/{table_name}/columns", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {"error": f"HTTP {response.status_code}", "details": response.text}
+    except Exception as e:
+        return {"error": str(e)}
+
+def call_api_add_table_comment(table_name: str, comment: str):
+    """Добавить COMMENT ON TABLE"""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/api/database/tables/{table_name}/comment",
+            json={"comment": comment},
+            timeout=10
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {"detail": response.text}
+            return {"success": False, "error": error_data.get('detail', f"HTTP {response.status_code}")}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def call_api_add_column_comment(table_name: str, column_name: str, comment: str):
+    """Добавить COMMENT ON COLUMN"""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/api/database/tables/{table_name}/columns/{column_name}/comment",
+            json={"comment": comment},
+            timeout=10
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {"detail": response.text}
+            return {"success": False, "error": error_data.get('detail', f"HTTP {response.status_code}")}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def call_api_get_comments_stats():
+    """Получить статистику по комментариям"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/database/comments/stats", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {"error": f"HTTP {response.status_code}", "details": response.text}
+    except Exception as e:
+        return {"error": str(e)}
+
 # Основные вкладки
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🔍 Тестирование поиска", 
     "📝 Добавление Q/A", 
     "🎓 Обучение", 
     "🚀 Оптимизация SQL",
     "📊 Аналитика", 
-    "⚙️ Настройки"
+    "⚙️ Настройки",
+    "📝 Документирование БД"
 ])
 
 with tab1:
@@ -1733,6 +1800,226 @@ with tab6:
             json.dump(settings, f, indent=2)
         
         st.success("Настройки сохранены!")
+
+with tab7:
+    st.header("📝 Документирование базы данных")
+    st.markdown("""
+    **Цель:** Добавление комментариев к таблицам и колонкам прямо в PostgreSQL через `COMMENT ON TABLE` и `COMMENT ON COLUMN`.
+    
+    Комментарии сохраняются в самой БД и автоматически попадают в векторную базу знаний при генерации DDL.
+    """)
+    
+    # Проверка подключения к API
+    if not test_api_connection():
+        st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
+        st.info("💡 Запустите: ./run_stack.sh start core_api")
+        st.stop()
+    
+    # Статистика
+    st.subheader("📊 Статистика комментариев")
+    stats_result = call_api_get_comments_stats()
+    
+    if "error" in stats_result:
+        st.error(f"❌ Ошибка получения статистики: {stats_result.get('error')}")
+    else:
+        stats = stats_result
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Всего таблиц", stats.get('total_tables', 0))
+        with col2:
+            st.metric(
+                "С комментариями", 
+                stats.get('tables_with_comments', 0),
+                delta=f"{stats.get('coverage_tables', 0):.1f}%"
+            )
+        with col3:
+            st.metric("Всего колонок", stats.get('total_columns', 0))
+        with col4:
+            st.metric(
+                "С комментариями",
+                stats.get('columns_with_comments', 0),
+                delta=f"{stats.get('coverage_columns', 0):.1f}%"
+            )
+        
+        # Прогресс-бар
+        coverage = stats.get('coverage_tables', 0)
+        st.progress(coverage / 100)
+        st.caption(f"Прогресс документирования таблиц: {coverage:.1f}%")
+    
+    st.markdown("---")
+    
+    # Список таблиц
+    st.subheader("📋 Список таблиц")
+    
+    # Поиск таблиц
+    search_query = st.text_input(
+        "🔍 Поиск таблицы:",
+        placeholder="Введите название таблицы для поиска...",
+        key="table_search"
+    )
+    
+    # Фильтр
+    filter_type = st.radio(
+        "Фильтр:",
+        ["Все", "С комментариями", "Без комментариев"],
+        horizontal=True
+    )
+    
+    # Загрузка списка таблиц
+    with st.spinner("Загрузка списка таблиц..."):
+        tables_result = call_api_get_tables_with_comments()
+    
+    if "error" in tables_result:
+        st.error(f"❌ Ошибка получения списка таблиц: {tables_result.get('error')}")
+    else:
+        tables = tables_result
+        
+        # Фильтрация по типу комментариев
+        if filter_type == "С комментариями":
+            filtered_tables = [t for t in tables if t.get('table_comment')]
+        elif filter_type == "Без комментариев":
+            filtered_tables = [t for t in tables if not t.get('table_comment')]
+        else:
+            filtered_tables = tables
+        
+        # Фильтрация по поисковому запросу
+        if search_query:
+            search_lower = search_query.lower()
+            filtered_tables = [t for t in filtered_tables if search_lower in t['table_name'].lower()]
+        
+        st.info(f"Найдено таблиц: {len(filtered_tables)} из {len(tables)}")
+        
+        # Показываем таблицы порциями (пагинация)
+        if len(filtered_tables) > 20:
+            st.warning(f"⚠️ Найдено {len(filtered_tables)} таблиц. Показаны первые 20. Используйте поиск для фильтрации.")
+            filtered_tables = filtered_tables[:20]
+        
+        # Отображение таблиц
+        for table in filtered_tables:
+            has_comment = table.get('table_comment') is not None
+            icon = "✅" if has_comment else "❌"
+            
+            with st.expander(f"{icon} **{table['table_name']}**"):
+                st.markdown(f"### 📝 Комментарий к таблице `{table['table_name']}`")
+                st.info("💡 **Комментарий таблицы** описывает общее назначение таблицы, её роль в системе, связи с другими таблицами.")
+                
+                # Показываем текущий комментарий
+                if has_comment:
+                    st.markdown("**Текущий комментарий:**")
+                    st.info(table['table_comment'])
+                else:
+                    st.warning("⚠️ Комментарий отсутствует")
+                
+                st.markdown("---")
+                
+                # Поле для ввода комментария с placeholder
+                comment_key = f"comment_input_{table['table_name']}"
+                current_comment = table.get('table_comment', '')
+                
+                # Показываем краткую подсказку с примером
+                st.caption("💡 **Подсказка:** Опишите назначение таблицы, основные поля, связи. Пример: 'Таблица пользователей системы. Содержит учетные записи сотрудников с привязкой к отделам (eq_departments). Основные поля: login, email, department.'")
+                
+                # Поле для ввода комментария (показываем текущий комментарий или пустое поле)
+                comment_text = st.text_area(
+                    f"**Введите или отредактируйте комментарий для таблицы `{table['table_name']}`:**",
+                    value=current_comment,
+                    height=150,
+                    placeholder="Например: Таблица пользователей системы. Содержит учетные записи сотрудников с привязкой к отделам и ролям. Основные поля: login, email, department.",
+                    help="Опишите назначение таблицы, основные поля, связи с другими таблицами, бизнес-правила. Комментарий будет сохранен в PostgreSQL через COMMENT ON TABLE.",
+                    key=comment_key
+                )
+                
+                if st.button("💾 Сохранить комментарий таблицы", key=f"save_table_{table['table_name']}", type="primary"):
+                    if comment_text.strip():
+                        with st.spinner("Сохранение комментария..."):
+                            result = call_api_add_table_comment(table['table_name'], comment_text.strip())
+                            if result.get('success'):
+                                st.success(f"✅ Комментарий для таблицы `{table['table_name']}` успешно сохранен!")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Ошибка: {result.get('error', 'Неизвестная ошибка')}")
+                    else:
+                        st.warning("⚠️ Комментарий не может быть пустым")
+                
+                st.markdown("---")
+                
+                # Раздел для комментариев колонок (только по запросу)
+                st.markdown(f"### 📝 Комментарии к колонкам (опционально)")
+                st.info("💡 **Комментарии колонок** обычно нужны только для ключевых таблиц. Нажмите кнопку ниже, если нужно добавить комментарии к колонкам этой таблицы.")
+                
+                # Ключ для хранения состояния загрузки колонок
+                show_columns_key = f"show_columns_{table['table_name']}"
+                
+                # Кнопка для загрузки колонок
+                if st.button("📋 Показать колонки для комментирования", key=f"btn_show_cols_{table['table_name']}"):
+                    st.session_state[show_columns_key] = True
+                    st.rerun()
+                
+                # Загружаем колонки только если пользователь нажал кнопку
+                if st.session_state.get(show_columns_key, False):
+                    with st.spinner("Загрузка колонок..."):
+                        columns_result = call_api_get_table_columns(table['table_name'])
+                    
+                    if "error" in columns_result:
+                        st.error(f"❌ Ошибка получения колонок: {columns_result.get('error')}")
+                    else:
+                        columns = columns_result
+                        st.markdown(f"**Всего колонок:** {len(columns)}")
+                        
+                        # Кнопка для скрытия колонок
+                        if st.button("❌ Скрыть колонки", key=f"btn_hide_cols_{table['table_name']}"):
+                            st.session_state[show_columns_key] = False
+                            st.rerun()
+                        
+                        if not columns:
+                            st.warning("⚠️ Колонки не найдены")
+                        else:
+                            # Показываем все колонки с возможностью редактирования
+                            for col in columns:
+                                col_has_comment = col.get('column_comment') is not None
+                                col_icon = "✅" if col_has_comment else "❌"
+                                
+                                st.markdown("---")
+                                st.markdown(f"#### {col_icon} **{col['column_name']}** (`{col.get('data_type', '')}`)")
+                                
+                                if col_has_comment:
+                                    st.markdown("**Текущий комментарий:**")
+                                    st.info(col['column_comment'])
+                                else:
+                                    st.warning("⚠️ Комментарий отсутствует")
+                                
+                                # Поле для ввода комментария колонки
+                                col_comment_key = f"col_comment_{table['table_name']}_{col['column_name']}"
+                                col_current_comment = col.get('column_comment', '')
+                                
+                                col_comment_text = st.text_area(
+                                    f"**Комментарий для колонки `{col['column_name']}`:**",
+                                    value=col_current_comment,
+                                    height=100,
+                                    placeholder=f"Например: {'Внешний ключ на таблицу...' if 'id' in col['column_name'].lower() else 'Описание назначения колонки...'}",
+                                    help=f"Опишите назначение колонки {col['column_name']}, её тип ({col.get('data_type', '')}), ограничения, связи.",
+                                    key=col_comment_key
+                                )
+                                
+                                if st.button("💾 Сохранить", key=f"save_col_{table['table_name']}_{col['column_name']}", type="primary"):
+                                    if col_comment_text.strip():
+                                        with st.spinner("Сохранение комментария..."):
+                                            result = call_api_add_column_comment(
+                                                table['table_name'],
+                                                col['column_name'],
+                                                col_comment_text.strip()
+                                            )
+                                            if result.get('success'):
+                                                st.success(f"✅ Комментарий для колонки `{col['column_name']}` успешно сохранен!")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"❌ Ошибка: {result.get('error', 'Неизвестная ошибка')}")
+                                    else:
+                                        st.warning("⚠️ Комментарий не может быть пустым")
+    
+    st.markdown("---")
+    st.info("💡 **Подсказка:** Раскройте нужную таблицу в списке выше, чтобы добавить или отредактировать комментарий. Для комментирования колонок используйте кнопку '📋 Показать колонки для комментирования' внутри каждой таблицы. Комментарии сохраняются прямо в PostgreSQL через `COMMENT ON TABLE` и `COMMENT ON COLUMN`.")
+    st.markdown("---")
 
 # Боковая панель с быстрыми действиями
 with st.sidebar:

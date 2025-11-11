@@ -6,9 +6,14 @@
 
 import os
 import logging
+from pathlib import Path
 from openai import OpenAI
 import psycopg
 from typing import Dict, Any
+
+# Load environment variables from config.env before anything else
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / "config.env", override=True)
 
 logger = logging.getLogger(__name__)
 

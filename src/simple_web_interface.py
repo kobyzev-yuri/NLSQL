@@ -10,6 +10,12 @@ import logging
 import os
 import sys
 import re
+from pathlib import Path
+
+# Load environment variables from config.env before anything else
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env", override=True)
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from src.utils.plan_sql_converter import sql_to_plan

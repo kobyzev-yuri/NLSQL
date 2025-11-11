@@ -5,7 +5,13 @@ Streamlit приложение для NL→SQL системы
 import streamlit as st
 import requests
 import json
+import os
+from pathlib import Path
 from typing import Dict, Any
+
+# Load environment variables from config.env before anything else
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / "config.env", override=True)
 
 # Настройка страницы
 st.set_page_config(
