@@ -1647,12 +1647,34 @@ with tab5:
 with tab6:
     st.header("⚙️ Настройки")
     
+    st.info("""
+    **💡 Важно:** Настройки в этом интерфейсе предназначены для предпросмотра и примеров. 
+    Реальная конфигурация системы задается в файле `config.env`.
+    
+    Для смены модели эмбеддингов и перестроения индексов используйте CLI инструменты (см. инструкции ниже).
+    """)
+    
+    st.markdown("---")
+    
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.subheader("Параметры поиска")
+        st.subheader("Параметры поиска (⚠️ Не реализовано)")
         
-        # Примеры настроек
+        st.warning("""
+        **⚠️ Внимание:** Эти параметры в настоящее время НЕ используются в системе.
+        Они сохранены здесь только для справки и будущей реализации.
+        
+        **Текущая реализация:**
+        - Поиск возвращает фиксированное количество результатов (`limit`)
+        - Фильтрация по порогу схожести не применяется
+        - Ограничение длины контекста не реализовано
+        """)
+        
+        st.markdown("---")
+        st.markdown("**💡 Планируемая функциональность:**")
+        
+        # Примеры настроек (для справки)
         config_examples = [
             {"name": "Консервативный", "similarity": 0.8, "context": 2000, "description": "Высокая точность, меньше результатов"},
             {"name": "Сбалансированный", "similarity": 0.7, "context": 4000, "description": "Оптимальный баланс точности и полноты"},
@@ -1661,8 +1683,7 @@ with tab6:
             {"name": "Точный", "similarity": 0.9, "context": 3000, "description": "Максимальная точность, меньше ложных срабатываний"}
         ]
         
-        # Показываем примеры конфигураций
-        st.markdown("**💡 Примеры конфигураций:**")
+        st.markdown("**Примеры конфигураций (для справки):**")
         selected_config = st.selectbox(
             "Выберите предустановку:",
             ["Выберите конфигурацию..."] + [f"{i+1}. {ex['name']} - {ex['description']}" for i, ex in enumerate(config_examples)],
@@ -1676,130 +1697,132 @@ with tab6:
             st.session_state.selected_context = config['context']
         
         similarity_threshold = st.slider(
-            "Порог схожести:",
+            "Порог схожести (не используется):",
             0.0, 1.0, st.session_state.get('selected_similarity', 0.7),
-            help="Минимальная схожесть для включения в результаты"
+            help="⚠️ Планируется: минимальная схожесть (cosine distance) для включения в результаты. Сейчас не применяется."
         )
         
         max_context_length = st.number_input(
-            "Максимальная длина контекста:",
+            "Максимальная длина контекста (не используется):",
             min_value=100, max_value=10000, value=st.session_state.get('selected_context', 4000),
-            help="Максимальное количество токенов в контексте"
+            help="⚠️ Планируется: максимальное количество токенов в контексте для LLM. Сейчас не применяется."
         )
+        
+        st.info("""
+        **Как работает сейчас:**
+        - Поиск возвращает топ-N результатов по cosine distance (без порога)
+        - Контекст формируется из всех найденных чанков (без ограничения длины)
+        - Параметр `limit` в API определяет количество чанков (обычно 3-10)
+        """)
     
     with col2:
-        st.subheader("Модель эмбеддингов")
+        st.subheader("Текущая конфигурация")
         
-        # Примеры моделей с описаниями
-        model_examples = [
-            {
-                "name": "all-MiniLM-L6-v2",
-                "description": "Быстрая, компактная модель (384 dim)",
-                "speed": "⚡ Быстро",
-                "quality": "⭐⭐⭐ Хорошо",
-                "size": "22MB"
-            },
-            {
-                "name": "all-mpnet-base-v2", 
-                "description": "Высокое качество, медленнее (768 dim)",
-                "speed": "🐌 Медленно",
-                "quality": "⭐⭐⭐⭐⭐ Отлично",
-                "size": "420MB"
-            },
-            {
-                "name": "paraphrase-multilingual-MiniLM-L12-v2",
-                "description": "Многоязычная модель (384 dim)",
-                "speed": "⚡ Быстро",
-                "quality": "⭐⭐⭐⭐ Очень хорошо",
-                "size": "118MB"
-            },
-            {
-                "name": "all-distilroberta-v1",
-                "description": "Сбалансированная модель (768 dim)",
-                "speed": "⚡⚡ Средне",
-                "quality": "⭐⭐⭐⭐ Очень хорошо",
-                "size": "290MB"
-            },
-            {
-                "name": "all-MiniLM-L12-v2",
-                "description": "Улучшенная мини-модель (384 dim)",
-                "speed": "⚡ Быстро",
-                "quality": "⭐⭐⭐⭐ Очень хорошо",
-                "size": "33MB"
-            }
-        ]
+        # Показываем текущую модель из config.env
+        current_model = os.getenv("HF_MODEL_NAME", "не задана")
+        st.info(f"""
+        **Текущая модель эмбеддингов:**
+        `{current_model}`
         
-        # Показываем примеры моделей
-        st.markdown("**💡 Примеры моделей:**")
-        selected_model = st.selectbox(
-            "Выберите модель:",
-            ["Выберите модель..."] + [f"{i+1}. {ex['name']} - {ex['description']}" for i, ex in enumerate(model_examples)],
-            key="model_example_selector"
-        )
+        Задается в `config.env` через переменную `HF_MODEL_NAME`.
+        """)
         
-        if selected_model != "Выберите модель...":
-            model_idx = int(selected_model.split('.')[0]) - 1
-            model = model_examples[model_idx]
-            st.session_state.selected_model = f"sentence-transformers/{model['name']}"
-            st.info(f"**{model['speed']}** | **{model['quality']}** | **{model['size']}**")
+        st.markdown("---")
+        st.markdown("**💡 Доступные модели:**")
+        st.markdown("""
+        - `intfloat/multilingual-e5-base` (768 dim) - многоязычная, текущая
+        - `sentence-transformers/all-MiniLM-L6-v2` (384 dim) - быстрая, компактная
+        - `sentence-transformers/all-mpnet-base-v2` (768 dim) - высокое качество
+        - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dim) - многоязычная
         
-        embedding_model = st.selectbox(
-            "Модель:",
-            [
-                "sentence-transformers/all-MiniLM-L6-v2",
-                "sentence-transformers/all-mpnet-base-v2", 
-                "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-                "sentence-transformers/all-distilroberta-v1",
-                "sentence-transformers/all-MiniLM-L12-v2"
-            ],
-            index=0 if not st.session_state.get('selected_model') else [
-                "sentence-transformers/all-MiniLM-L6-v2",
-                "sentence-transformers/all-mpnet-base-v2", 
-                "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-                "sentence-transformers/all-distilroberta-v1",
-                "sentence-transformers/all-MiniLM-L12-v2"
-            ].index(st.session_state.get('selected_model', "sentence-transformers/all-MiniLM-L6-v2")),
-            help="Выберите модель для генерации эмбеддингов"
-        )
+        Для смены модели см. инструкции ниже.
+        """)
         
-        # Примеры размеров батча
-        batch_examples = [
-            {"size": 50, "description": "Малый - для тестирования"},
-            {"size": 200, "description": "Средний - оптимальный"},
-            {"size": 500, "description": "Большой - для больших объемов"},
-            {"size": 1000, "description": "Максимальный - для серверов"}
-        ]
+        # Размер батча - тоже не используется в интерфейсе, только в CLI
+        st.markdown("---")
+        st.markdown("**💡 Размер батча:**")
+        st.info("""
+        Задается через параметр `--batch-size` в CLI скрипте `generate_embeddings_hf.py`.
+        По умолчанию: 200.
         
-        st.markdown("**💡 Примеры размеров батча:**")
-        selected_batch = st.selectbox(
-            "Выберите размер батча:",
-            ["Выберите размер..."] + [f"{ex['size']} - {ex['description']}" for ex in batch_examples],
-            key="batch_example_selector"
-        )
-        
-        if selected_batch != "Выберите размер...":
-            batch_size = int(selected_batch.split(' - ')[0])
-            st.session_state.selected_batch = batch_size
-        
-        batch_size = st.number_input(
-            "Размер батча:",
-            min_value=1, max_value=1000, value=st.session_state.get('selected_batch', 200),
-            help="Размер батча для генерации эмбеддингов"
-        )
+        Пример:
+        ```bash
+        python -m src.tools.generate_embeddings_hf \\
+          --dsn "$DATABASE_URL" \\
+          --model "$HF_MODEL_NAME" \\
+          --batch-size 200
+        ```
+        """)
     
-    # Сохранение настроек
-    if st.button("💾 Сохранить настройки"):
-        settings = {
-            'similarity_threshold': similarity_threshold,
-            'max_context_length': max_context_length,
-            'embedding_model': embedding_model,
-            'batch_size': batch_size
-        }
-        
-        with open('vector_kb_settings.json', 'w') as f:
-            json.dump(settings, f, indent=2)
-        
-        st.success("Настройки сохранены!")
+    st.markdown("---")
+    st.subheader("📚 Как изменить модель эмбеддингов и перестроить индексы")
+    
+    st.markdown("""
+    ### 1. Изменение модели эмбеддингов
+    
+    **Текущая модель** задается в `config.env`:
+    ```bash
+    HF_MODEL_NAME=intfloat/multilingual-e5-base
+    ```
+    
+    **Доступные модели:**
+    - `intfloat/multilingual-e5-base` (768 dim) - текущая, многоязычная
+    - `sentence-transformers/all-MiniLM-L6-v2` (384 dim) - быстрая, компактная
+    - `sentence-transformers/all-mpnet-base-v2` (768 dim) - высокое качество
+    - `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dim) - многоязычная
+    
+    **Шаги для смены модели:**
+    1. Отредактируйте `config.env` и установите новую модель в `HF_MODEL_NAME`
+    2. Пересоздайте эмбеддинги с новой моделью (см. ниже)
+    
+    ### 2. Перестроение индексов и эмбеддингов
+    
+    **Используйте CLI скрипт:**
+    ```bash
+    # Полная перестройка всех эмбеддингов
+    python -m src.tools.generate_embeddings_hf \
+      --dsn "$DATABASE_URL" \
+      --model "$HF_MODEL_NAME" \
+      --rebuild
+    
+    # Автоматическое изменение размерности (384 → 768)
+    python -m src.tools.generate_embeddings_hf \
+      --dsn "$DATABASE_URL" \
+      --model "$HF_MODEL_NAME" \
+      --alter
+    
+    # С указанием размера батча
+    python -m src.tools.generate_embeddings_hf \
+      --dsn "$DATABASE_URL" \
+      --model "$HF_MODEL_NAME" \
+      --rebuild \
+      --batch-size 200
+    ```
+    
+    **Флаги:**
+    - `--rebuild` - полная перестройка всех эмбеддингов (удаляет старые и создает новые)
+    - `--alter` - автоматическое изменение размерности столбца `embedding` (например, 384 → 768)
+    - `--batch-size` - размер батча для обработки (по умолчанию 200)
+    
+    **Важно:** После смены модели обязательно пересоздайте индексы:
+    ```sql
+    -- Удалить старый индекс
+    DROP INDEX IF EXISTS vanna_vectors_embedding_ivf;
+    
+    -- Создать новый индекс (после пересоздания эмбеддингов)
+    CREATE INDEX vanna_vectors_embedding_ivf
+    ON vanna_vectors USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
+    ```
+    
+    ### 3. Документация
+    
+    Подробнее см.:
+    - [VECTOR_DB.md](../docs/VECTOR_DB.md) - структура и обучение векторной БД
+    - [TRAINING_GUIDE.md](../docs/TRAINING_GUIDE.md) - руководство по обучению
+    - [VECTOR_KB_INTERFACE_GUIDE.md](../docs/VECTOR_KB_INTERFACE_GUIDE.md) - руководство по интерфейсу
+    """)
+    
 
 with tab7:
     st.header("📝 Документирование базы данных")
@@ -2021,27 +2044,15 @@ with tab7:
     st.info("💡 **Подсказка:** Раскройте нужную таблицу в списке выше, чтобы добавить или отредактировать комментарий. Для комментирования колонок используйте кнопку '📋 Показать колонки для комментирования' внутри каждой таблицы. Комментарии сохраняются прямо в PostgreSQL через `COMMENT ON TABLE` и `COMMENT ON COLUMN`.")
     st.markdown("---")
 
-# Боковая панель с быстрыми действиями
+# Боковая панель
 with st.sidebar:
-    st.header("🚀 Быстрые действия")
-    
-    # Статус API
+    # Статус API - важная информация о доступности сервиса
     st.subheader("📡 Статус API")
     if test_api_connection():
         st.success(f"✅ Core API ({API_BASE_URL}) - Работает")
     else:
         st.error(f"❌ Core API ({API_BASE_URL}) - Недоступен")
         st.warning(f"Убедитесь, что сервис запущен: uvicorn src.api.main:app --host 0.0.0.0 --port 8000")
-    
-    if st.button("🔄 Перезагрузить векторку"):
-        st.info("Перезагрузка векторки...")
-    
-    if st.button("🧹 Очистить кэш"):
-        st.cache_resource.clear()
-        st.info("Кэш очищен!")
-    
-    if st.button("📊 Полный анализ"):
-        st.info("Запуск полного анализа...")
     
     st.header("📁 Документация")
     
