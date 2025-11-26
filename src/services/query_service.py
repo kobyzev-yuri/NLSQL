@@ -623,99 +623,183 @@ Generate SQL that is:
         try:
             logger.info(f"Тестирование поиска: {question} (тип: {search_type})")
             
-            # Делаем прямой поиск с метаданными из БД (не зависим от semantic_vanna)
             import asyncpg
-            from sentence_transformers import SentenceTransformer
             import os
-            
-            # Генерируем эмбеддинг для вопроса
-            # ВАЖНО: используем ту же модель, что и для создания эмбеддингов в БД!
-            model_name = os.getenv('HF_MODEL_NAME', 'intfloat/multilingual-e5-base')
-            logger.info(f"Используем модель эмбеддингов: {model_name}")
-            embedding_model = SentenceTransformer(model_name)
-            # Для multilingual-e5-base нужно добавить префикс для запросов
-            if 'multilingual-e5' in model_name.lower():
-                question_with_prefix = f"query: {question}"
-            else:
-                question_with_prefix = question
-            question_embedding = embedding_model.encode([question_with_prefix], normalize_embeddings=True)[0]
-            
-            # Подключаемся к БД
-            database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:1234@localhost:5432/test_docstructure')
-            conn = await asyncpg.connect(database_url)
             
             # Определяем content_type для поиска
             content_type_map = {
-                "semantic": "ddl",
+                "semantic": None,  # None означает поиск по всем типам
                 "ddl": "ddl",
                 "documentation": "documentation",
                 "examples": "question_sql"
             }
-            target_content_type = content_type_map.get(search_type, "ddl")
+            target_content_type = content_type_map.get(search_type, None)
             
-            # Конвертируем эмбеддинг в строку для pgvector
-            embedding_str = '[' + ','.join(map(str, question_embedding)) + ']'
+            database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:1234@localhost:5432/test_docstructure')
             
-            # Семантический поиск с метаданными (исключаем временные/тестовые таблицы)
-            query = """
-                SELECT 
-                    content, 
-                    metadata,
-                    content_type,
-                    embedding <-> $1::vector as distance
-                FROM vanna_vectors 
-                WHERE content_type = $2 
-                  AND embedding IS NOT NULL
-                  AND (
-                    metadata->>'table' IS NULL 
-                    OR (
-                      metadata->>'table' NOT LIKE 'temp_%'
-                      AND metadata->>'table' NOT LIKE 'tmp_%'
-                      AND metadata->>'table' NOT LIKE 'test_%'
-                      AND metadata->>'table' NOT LIKE 'vanna_%'
-                      AND metadata->>'table' NOT LIKE 'chroma_%'
-                    )
-                  )
-                ORDER BY embedding <-> $1::vector
-                LIMIT $3
-            """
-            
-            rows = await conn.fetch(query, embedding_str, target_content_type, limit)
-            await conn.close()
-            
-            # Форматируем результаты с метаданными
+            # Пробуем использовать методы semantic_vanna (модель загрузится при первом вызове)
             formatted_results = []
-            for i, row in enumerate(rows):
-                distance = float(row['distance'])
-                score = 1.0 - distance  # Преобразуем distance в score
-                
-                result = {
-                    "content": row['content'],
-                    "content_type": row['content_type'],
-                    "type": search_type,
-                    "rank": i + 1,
-                    "score": score,
-                    "distance": distance
-                }
-                
-                # Добавляем метаданные если есть
-                metadata = row.get('metadata')
-                if metadata:
-                    if isinstance(metadata, str):
-                        import json
+            use_semantic_vanna = False
+            
+            if self.semantic_vanna:
+                # Пробуем использовать методы semantic_vanna - модель загрузится автоматически при первом вызове
+                use_semantic_vanna = True
+                logger.info("✅ Пробуем использовать методы semantic_vanna")
+            
+            if use_semantic_vanna:
+                # Используем методы semantic_vanna
+                try:
+                    if target_content_type is None:
+                        # Поиск по всем типам
+                        all_results = []
+                        
                         try:
-                            metadata = json.loads(metadata)
-                        except:
+                            ddl_results = await self.semantic_vanna.get_related_ddl(question, limit=limit)
+                            logger.info(f"✅ Получено {len(ddl_results)} DDL результатов")
+                            all_results.extend([('ddl', c) for c in ddl_results])
+                        except Exception as e:
+                            logger.error(f"❌ Ошибка получения DDL: {e}")
+                            import traceback
+                            logger.debug(f"Traceback: {traceback.format_exc()}")
+                        
+                        try:
+                            doc_results = await self.semantic_vanna.get_related_documentation(question, limit=limit)
+                            logger.info(f"✅ Получено {len(doc_results)} результатов документации")
+                            all_results.extend([('documentation', c) for c in doc_results])
+                        except Exception as e:
+                            logger.error(f"❌ Ошибка получения документации: {e}")
+                            import traceback
+                            logger.debug(f"Traceback: {traceback.format_exc()}")
+                        
+                        try:
+                            qa_results = await self.semantic_vanna.get_similar_question_sql(question, limit=limit)
+                            logger.info(f"✅ Получено {len(qa_results)} Q/A результатов")
+                            all_results.extend([('question_sql', c) for c in qa_results])
+                        except Exception as e:
+                            logger.error(f"❌ Ошибка получения Q/A пар: {e}")
+                            import traceback
+                            logger.debug(f"Traceback: {traceback.format_exc()}")
+                        
+                        all_results = all_results[:limit]
+                        
+                        # Получаем метаданные из БД
+                        conn = await asyncpg.connect(database_url)
+                        for i, (content_type, content) in enumerate(all_results):
+                            row = await conn.fetchrow("""
+                                SELECT metadata FROM vanna_vectors 
+                                WHERE content = $1 AND content_type = $2
+                                LIMIT 1
+                            """, content, content_type)
+                            
                             metadata = {}
-                    result["metadata"] = metadata
-                
-                formatted_results.append(result)
+                            if row and row.get('metadata'):
+                                md = row['metadata']
+                                if isinstance(md, str):
+                                    import json
+                                    try:
+                                        metadata = json.loads(md)
+                                    except:
+                                        pass
+                                else:
+                                    metadata = md
+                            
+                            formatted_results.append({
+                                "content": content,
+                                "content_type": content_type,
+                                "type": search_type,
+                                "rank": i + 1,
+                                "score": 0.8 - (i * 0.1),  # Примерная оценка
+                                "distance": 0.2 + (i * 0.1),
+                                "metadata": metadata
+                            })
+                        await conn.close()
+                    else:
+                        # Поиск по конкретному типу
+                        if target_content_type == 'ddl':
+                            results = await self.semantic_vanna.get_related_ddl(question, limit=limit)
+                        elif target_content_type == 'documentation':
+                            results = await self.semantic_vanna.get_related_documentation(question, limit=limit)
+                        elif target_content_type == 'question_sql':
+                            results = await self.semantic_vanna.get_similar_question_sql(question, limit=limit)
+                        else:
+                            results = []
+                        
+                        # Получаем метаданные из БД
+                        conn = await asyncpg.connect(database_url)
+                        for i, content in enumerate(results):
+                            row = await conn.fetchrow("""
+                                SELECT metadata FROM vanna_vectors 
+                                WHERE content = $1 AND content_type = $2
+                                LIMIT 1
+                            """, content, target_content_type)
+                            
+                            metadata = {}
+                            if row and row.get('metadata'):
+                                md = row['metadata']
+                                if isinstance(md, str):
+                                    import json
+                                    try:
+                                        metadata = json.loads(md)
+                                    except:
+                                        pass
+                                else:
+                                    metadata = md
+                            
+                            formatted_results.append({
+                                "content": content,
+                                "content_type": target_content_type,
+                                "type": search_type,
+                                "rank": i + 1,
+                                "score": 0.8 - (i * 0.1),
+                                "distance": 0.2 + (i * 0.1),
+                                "metadata": metadata
+                            })
+                        await conn.close()
+                except Exception as e:
+                    logger.error(f"❌ Ошибка при использовании semantic_vanna: {e}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    use_semantic_vanna = False
+            
+            # Если semantic_vanna не сработал, возвращаем пустой результат с диагностикой
+            if not use_semantic_vanna or len(formatted_results) == 0:
+                logger.warning("⚠️ Не удалось использовать semantic_vanna, выполняем диагностику БД")
+                conn = await asyncpg.connect(database_url)
+                try:
+                    total_count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM vanna_vectors WHERE embedding IS NOT NULL"
+                    )
+                    if target_content_type:
+                        type_count = await conn.fetchval(
+                            "SELECT COUNT(*) FROM vanna_vectors WHERE content_type = $1 AND embedding IS NOT NULL",
+                            target_content_type
+                        )
+                        logger.warning(f"⚠️ Диагностика: Всего записей с эмбеддингами: {total_count}, "
+                                     f"для типа '{target_content_type}': {type_count}")
+                    else:
+                        ddl_count = await conn.fetchval(
+                            "SELECT COUNT(*) FROM vanna_vectors WHERE content_type = 'ddl' AND embedding IS NOT NULL"
+                        )
+                        doc_count = await conn.fetchval(
+                            "SELECT COUNT(*) FROM vanna_vectors WHERE content_type = 'documentation' AND embedding IS NOT NULL"
+                        )
+                        qa_count = await conn.fetchval(
+                            "SELECT COUNT(*) FROM vanna_vectors WHERE content_type = 'question_sql' AND embedding IS NOT NULL"
+                        )
+                        logger.warning(f"⚠️ Диагностика: Всего записей с эмбеддингами: {total_count} "
+                                     f"(ddl: {ddl_count}, documentation: {doc_count}, question_sql: {qa_count})")
+                except Exception as diag_error:
+                    logger.warning(f"⚠️ Не удалось выполнить диагностику: {diag_error}")
+                finally:
+                    await conn.close()
             
             logger.info(f"Найдено {len(formatted_results)} результатов для типа {search_type}")
             return formatted_results
             
         except Exception as e:
             logger.error(f"Ошибка тестирования поиска: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
 
     def is_ready(self) -> bool:

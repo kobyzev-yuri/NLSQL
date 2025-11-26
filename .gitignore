@@ -157,6 +157,10 @@ SQL_QUALITY*.txt
 *.py
 !setup.py
 !vector_kb_interface.py
+# Adapters (public structure - PostgreSQL only)
+!src/adapters/__init__.py
+!src/adapters/base.py
+!src/adapters/postgresql_adapter.py
 
 # Data files in root
 *.json
@@ -169,4 +173,15 @@ PROJECT_SUMMARY.md
 *ARCHITECTURE*.md
 *IMPROVEMENT*.md
 *QUICKSTART*.md
+
+# Oracle-specific files (private, not for GitHub)
+src/adapters/oracle_adapter.py
+src/api/oracle_routes.py
+src/interfaces/oracle_kb_interface.py
+src/tools/extract_oracle_ddl.py
+scripts/oracle_tunnel.sh
+docs/ORACLE_KB_ARCHITECTURE.md
+docs/ORACLE_PRIVATE.md
+docs/*ORACLE*.md
+oracle_schema_*.sql
 

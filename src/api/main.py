@@ -63,6 +63,16 @@ app.add_middleware(
 query_service = QueryService()
 customer_api_service = CustomerAPIService()
 
+# Подключение Oracle routes (параллельно PostgreSQL, не ломая существующий код)
+try:
+    from api.oracle_routes import router as oracle_router
+    app.include_router(oracle_router)
+    logger.info("✅ Oracle routes подключены")
+except ImportError as e:
+    logger.warning(f"⚠️ Oracle routes не подключены (возможно, не установлен драйвер): {e}")
+except Exception as e:
+    logger.warning(f"⚠️ Ошибка подключения Oracle routes: {e}")
+
 # Модели для работы с комментариями
 class CommentRequest(BaseModel):
     comment: str

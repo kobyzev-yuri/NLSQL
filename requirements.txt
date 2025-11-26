@@ -8,6 +8,10 @@ asyncpg>=0.29.0
 psycopg[binary]>=3.1.0
 psycopg2-binary>=2.9.9
 
+# Oracle Database (опционально, для Oracle KB)
+# cx_Oracle>=8.3.0  # Старый драйвер
+oracledb>=2.0.0  # Новый драйвер (рекомендуется)
+
 # Vector DB & Embeddings
 sentence-transformers>=2.2.2
 tf-keras>=2.15.0  # Compatibility with transformers/sentence-transformers

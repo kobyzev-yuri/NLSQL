@@ -568,8 +568,8 @@ with tab1:
                     
                     # Дополнительные метаданные
                     if metadata and len(metadata) > 2:
-                        with st.expander("📋 Все метаданные"):
-                            st.json(metadata)
+                        st.markdown("**📋 Все метаданные:**")
+                        st.json(metadata)
             else:
                 # Fallback для не-словарей (строки)
                 with st.expander(f"Результат {i+1} | 📋 {display_search_type}"):
