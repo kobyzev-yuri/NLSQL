@@ -11,10 +11,15 @@
 ## Решение
 
 Создан унифицированный клиент `src/tools/kb_training_client.py`, который:
-- Использует единый API `/training/example` для всех операций обучения Q/A пар
+- Использует единый API для всех операций обучения:
+  - `/training/example` - для Q/A пар
+  - `/training/ddl` - для DDL statements
+  - `/training/documentation` - для документации
 - Обеспечивает единообразие между интерфейсом и CLI скриптами
 - Поддерживает массовое добавление из JSON файлов
 - Автоматически генерирует EXPLAIN планы для оптимизированных SQL
+- Транзакционность: все операции выполняются в транзакциях с откатом при ошибках
+- Логирование изменений: при обновлении существующих записей логируются детали изменений
 
 ## Архитектура
 
@@ -25,14 +30,24 @@
 └─────────────────────┘  │
                          │  HTTP API
 ┌─────────────────────┐  │  /training/example
-│  CLI Scripts        │──┼──▶  Core API (8000)
-│  kb_training_client │  │      │
-└─────────────────────┘  │      ▼
-                         │  QueryService.add_training_example()
-┌─────────────────────┐  │      │
-│  training_script.py │──┘      ▼
-│  (legacy, fallback) │     semantic_vanna.add_question_sql()
-└─────────────────────┘           │
+│  CLI Scripts        │──┼──▶  /training/ddl
+│  kb_training_client │  │      /training/documentation
+└─────────────────────┘  │      │
+                         │      ▼
+┌─────────────────────┐  │  Core API (8000)
+│  training_script.py │──┘      │
+│  (с fallback)       │          ▼
+└─────────────────────┘     QueryService
+                                   │
+                    ┌──────────────┼──────────────┐
+                    ▼              ▼              ▼
+            add_training_  add_ddl_    add_documentation()
+            example()      statements()
+                    │              │              │
+                    └──────────────┼──────────────┘
+                                   ▼
+                            semantic_vanna
+                                   │
                                    ▼
                             PostgreSQL + pgvector
                             (vanna_vectors)

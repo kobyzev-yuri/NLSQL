@@ -31,7 +31,17 @@ class VannaTrainer:
         self.training_data_dir = Path(config.get("training_data_dir", "training_data"))
         
     def train_on_ddl(self) -> bool:
-        """Обучение на DDL statements"""
+        """
+        Обучение на DDL statements через унифицированный API клиент
+        
+        ✅ Использует KBTrainingClient для единообразного доступа к API /training/ddl.
+        Это обеспечивает транзакционность, логирование изменений и автоматическую генерацию эмбеддингов.
+        
+        ⚠️ Fallback: При недоступности Core API использует прямое добавление через vanna
+        (legacy метод). Это необходимо для автономной работы скрипта.
+        
+        См. KB_TRAINING_UNIFICATION.md для информации об унификации обучения KB.
+        """
         try:
             ddl_file = self.training_data_dir / "ddl_statements.sql"
             if not ddl_file.exists():
@@ -40,23 +50,92 @@ class VannaTrainer:
                 
             with open(ddl_file, 'r', encoding='utf-8') as f:
                 ddl_content = f.read()
-                
-            # Для DDL используем прямое добавление через vanna
-            # (API /training/example предназначен для Q/A пар)
-            if hasattr(self.vanna, 'add_ddl'):
-                self.vanna.add_ddl(ddl_content)
-            else:
-                self.vanna.train(ddl=ddl_content)
             
-            logger.info("✅ Обучение на DDL завершено")
-            return True
+            # Используем унифицированный клиент через API
+            from src.tools.kb_training_client import KBTrainingClient
+            
+            client = KBTrainingClient()
+            if not client.check_api_connection():
+                logger.warning("⚠️ Core API недоступен, используем fallback: прямое добавление через vanna")
+                # Fallback: прямое добавление через vanna (legacy способ)
+                # Используется только если Core API недоступен
+                if hasattr(self.vanna, 'add_ddl'):
+                    self.vanna.add_ddl(ddl_content)
+                else:
+                    self.vanna.train(ddl=ddl_content)
+                
+                logger.info("✅ Обучение на DDL завершено (через fallback: прямое добавление)")
+                return True
+            
+            # Парсим DDL на отдельные statements (по ;)
+            # Упрощенный парсинг: разбиваем по CREATE TABLE
+            import re
+            ddl_statements = []
+            
+            # Ищем все CREATE TABLE statements
+            create_table_pattern = r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:([^\s.]+)\.)?([^\s(]+)'
+            matches = list(re.finditer(create_table_pattern, ddl_content, re.IGNORECASE | re.MULTILINE))
+            
+            if matches:
+                # Разбиваем на отдельные CREATE TABLE statements
+                for i, match in enumerate(matches):
+                    start = match.start()
+                    end = matches[i + 1].start() if i + 1 < len(matches) else len(ddl_content)
+                    
+                    ddl_statement = ddl_content[start:end].strip().rstrip(';')
+                    if not ddl_statement.endswith(';'):
+                        ddl_statement += ';'
+                    
+                    # Извлекаем имя таблицы
+                    schema = match.group(1)
+                    table = match.group(2)
+                    table_name = f"{schema}.{table}" if schema else table
+                    
+                    ddl_statements.append({
+                        'ddl': ddl_statement,
+                        'table_name': table_name,
+                        'source': 'training_script',
+                        'version': None
+                    })
+            else:
+                # Если не удалось распарсить, добавляем весь файл как один DDL
+                logger.warning("⚠️ Не удалось распарсить DDL на отдельные statements, добавляем как один")
+                ddl_statements.append({
+                    'ddl': ddl_content,
+                    'table_name': 'unknown',
+                    'source': 'training_script',
+                    'version': None
+                })
+            
+            # Используем API клиент
+            result = client.add_ddl_statements(
+                ddl_statements=ddl_statements,
+                user_id="training_script"
+            )
+            
+            if result['failed'] == 0:
+                logger.info(f"✅ Обучение на DDL завершено: добавлено {result['added']}, обновлено {result['updated']}")
+                return True
+            else:
+                logger.warning(f"⚠️ Обучение завершено с ошибками: добавлено {result['added']}, обновлено {result['updated']}, ошибок {result['failed']}")
+                return result['added'] + result['updated'] > 0
             
         except Exception as e:
             logger.error(f"❌ Ошибка обучения на DDL: {e}")
             return False
     
     def train_on_documentation(self) -> bool:
-        """Обучение на документации (использует прямое добавление через vanna)"""
+        """
+        Обучение на документации через унифицированный API клиент
+        
+        ✅ Использует KBTrainingClient для единообразного доступа к API /training/documentation.
+        Это обеспечивает транзакционность, логирование изменений и автоматическую генерацию эмбеддингов.
+        
+        ⚠️ Fallback: При недоступности Core API использует прямое добавление через vanna
+        (legacy метод). Это необходимо для автономной работы скрипта.
+        
+        См. KB_TRAINING_UNIFICATION.md для информации об унификации обучения KB.
+        """
         try:
             doc_file = self.training_data_dir / "documentation.txt"
             if not doc_file.exists():
@@ -65,23 +144,63 @@ class VannaTrainer:
                 
             with open(doc_file, 'r', encoding='utf-8') as f:
                 doc_content = f.read()
-                
-            # Для документации используем прямое добавление через vanna
-            # (API /training/example предназначен для Q/A пар)
-            if hasattr(self.vanna, 'add_documentation'):
-                self.vanna.add_documentation(doc_content)
-            else:
-                self.vanna.train(documentation=doc_content)
             
-            logger.info("✅ Обучение на документации завершено")
-            return True
+            # Используем унифицированный клиент через API
+            from src.tools.kb_training_client import KBTrainingClient
+            
+            client = KBTrainingClient()
+            if not client.check_api_connection():
+                logger.warning("⚠️ Core API недоступен, используем fallback: прямое добавление через vanna")
+                # Fallback: прямое добавление через vanna (legacy способ)
+                # Используется только если Core API недоступен
+                if hasattr(self.vanna, 'add_documentation'):
+                    self.vanna.add_documentation(doc_content)
+                else:
+                    self.vanna.train(documentation=doc_content)
+                
+                logger.info("✅ Обучение на документации завершено (через fallback: прямое добавление)")
+                return True
+            
+            # Добавляем весь файл как один документ
+            # В будущем можно добавить парсинг на отдельные документы (по разделителям)
+            documents = [{
+                'content': doc_content,
+                'title': 'Training Documentation',
+                'source': 'training_script',
+                'domain': None,
+                'tags': []
+            }]
+            
+            # Используем API клиент
+            result = client.add_documentation(
+                documents=documents,
+                user_id="training_script"
+            )
+            
+            if result['failed'] == 0:
+                logger.info(f"✅ Обучение на документации завершено: добавлено {result['added']}, обновлено {result['updated']}")
+                return True
+            else:
+                logger.warning(f"⚠️ Обучение завершено с ошибками: добавлено {result['added']}, обновлено {result['updated']}, ошибок {result['failed']}")
+                return result['added'] + result['updated'] > 0
             
         except Exception as e:
             logger.error(f"❌ Ошибка обучения на документации: {e}")
             return False
     
     def train_on_sql_examples(self) -> bool:
-        """Обучение на SQL примерах через унифицированный API клиент"""
+        """
+        Обучение на SQL примерах через унифицированный API клиент
+        
+        ✅ Рекомендуемый способ: Использует KBTrainingClient для единообразного доступа
+        к API /training/example. Это обеспечивает автоматическую генерацию EXPLAIN планов
+        и валидацию оптимизации.
+        
+        ⚠️ Fallback: При недоступности Core API использует прямое добавление через vanna
+        (legacy метод). Это необходимо для автономной работы скрипта.
+        
+        См. KB_TRAINING_UNIFICATION.md для информации об унификации обучения KB.
+        """
         try:
             examples_file = self.training_data_dir / "sql_examples.json"
             if not examples_file.exists():
@@ -93,8 +212,9 @@ class VannaTrainer:
             
             client = KBTrainingClient()
             if not client.check_api_connection():
-                logger.warning("⚠️ Core API недоступен, используем прямое добавление через vanna")
-                # Fallback: прямое добавление через vanna (старый способ)
+                logger.warning("⚠️ Core API недоступен, используем fallback: прямое добавление через vanna")
+                # Fallback: прямое добавление через vanna (legacy способ)
+                # Используется только если Core API недоступен
                 with open(examples_file, 'r', encoding='utf-8') as f:
                     examples = json.load(f)
                 
@@ -104,7 +224,7 @@ class VannaTrainer:
                     if question and sql:
                         self.vanna.train(question=question, sql=sql)
                 
-                logger.info("✅ Обучение на SQL примерах завершено (через прямое добавление)")
+                logger.info("✅ Обучение на SQL примерах завершено (через fallback: прямое добавление)")
                 return True
             
             # Используем API клиент
@@ -126,7 +246,15 @@ class VannaTrainer:
             return False
     
     def train_on_metadata(self) -> bool:
-        """Обучение на метаданных"""
+        """
+        Обучение на метаданных
+        
+        ⚠️ Legacy метод: Использует прямое добавление через vanna.add_documentation(),
+        так как метаданные добавляются как документация. В будущем планируется добавить
+        API эндпоинт /training/documentation.
+        
+        См. KB_TRAINING_UNIFICATION.md для информации об унификации обучения KB.
+        """
         try:
             metadata_file = self.training_data_dir / "metadata.json"
             if not metadata_file.exists():
@@ -143,8 +271,28 @@ class VannaTrainer:
             db_description += f"Основные таблицы: {', '.join(metadata.get('main_tables', []))}\n"
             db_description += f"Бизнес-домены: {', '.join(metadata.get('business_domains', []))}\n"
             
-            # Добавляем в векторную БД
-            self.vanna.add_documentation(db_description)
+            # Добавляем в векторную БД через унифицированный клиент
+            from src.tools.kb_training_client import KBTrainingClient
+            
+            client = KBTrainingClient()
+            if client.check_api_connection():
+                # Используем API клиент
+                result = client.add_doc(
+                    content=db_description,
+                    title="Database Metadata",
+                    source="training_script",
+                    domain=None,
+                    user_id="training_script"
+                )
+                if result.get('success'):
+                    logger.info("✅ Метаданные добавлены через API")
+                else:
+                    logger.warning(f"⚠️ Ошибка добавления метаданных через API: {result.get('errors', [])}")
+                    # Fallback на прямое добавление
+                    self.vanna.add_documentation(db_description)
+            else:
+                # Fallback: прямое добавление через vanna
+                self.vanna.add_documentation(db_description)
                 
             logger.info("✅ Обучение на метаданных завершено")
             return True

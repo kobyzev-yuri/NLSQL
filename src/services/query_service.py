@@ -608,6 +608,409 @@ Generate SQL that is:
             logger.error(f"Ошибка получения статуса обучения: {e}")
             raise
     
+    async def add_ddl_statements(
+        self,
+        ddl_statements: List[Dict[str, Any]],
+        user_id: str = "default"
+    ) -> Dict[str, Any]:
+        """
+        Добавление DDL statements в векторную базу знаний
+        
+        Args:
+            ddl_statements: Список словарей с полями: ddl, table_name, source, version, metadata
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с полями: success, added, updated, failed, errors
+        """
+        import asyncpg
+        import json
+        from datetime import datetime
+        
+        added_count = 0
+        updated_count = 0
+        failed_count = 0
+        errors = []
+        
+        if not self.semantic_vanna:
+            return {
+                'success': False,
+                'added': 0,
+                'updated': 0,
+                'failed': len(ddl_statements),
+                'errors': ['Semantic Vanna не инициализирован']
+            }
+        
+        database_url = self.semantic_vanna.database_url
+        conn = None
+        
+        try:
+            conn = await asyncpg.connect(database_url)
+            
+            # Начинаем транзакцию
+            async with conn.transaction():
+                record_ids_to_embed = []  # Список ID записей для генерации эмбеддингов
+                
+                for ddl_item in ddl_statements:
+                    try:
+                        ddl = ddl_item.get('ddl')
+                        table_name = ddl_item.get('table_name')
+                        source = ddl_item.get('source', 'unknown')
+                        version = ddl_item.get('version')
+                        metadata = ddl_item.get('metadata', {})
+                        
+                        if not ddl or not table_name:
+                            failed_count += 1
+                            errors.append(f"Пропущен DDL: отсутствует ddl или table_name")
+                            continue
+                        
+                        # Проверяем существование записи по table_name
+                        existing = await conn.fetchrow(
+                            """
+                            SELECT id, content, metadata 
+                            FROM vanna_vectors 
+                            WHERE content_type = 'ddl' 
+                            AND metadata->>'table' = $1
+                            """,
+                            table_name
+                        )
+                        
+                        # Подготавливаем метаданные
+                        metadata_dict = {
+                            'type': 'ddl',
+                            'table': table_name,
+                            'source': source,
+                            'updated_at': datetime.now().isoformat()
+                        }
+                        if version:
+                            metadata_dict['version'] = version
+                        if metadata:
+                            metadata_dict.update(metadata)
+                        
+                        metadata_json = json.dumps(metadata_dict, ensure_ascii=False)
+                        
+                        if existing:
+                            # Обновление существующей записи
+                            old_ddl = existing['content']
+                            
+                            # Логируем изменение, если DDL изменился
+                            if old_ddl != ddl:
+                                old_length = len(old_ddl)
+                                new_length = len(ddl)
+                                diff = new_length - old_length
+                                
+                                logger.info(
+                                    f"📝 DDL обновлен для таблицы '{table_name}' "
+                                    f"(source: {source}, version: {version or 'N/A'})"
+                                )
+                                logger.info(
+                                    f"   Изменено пользователем: {user_id}"
+                                )
+                                logger.info(
+                                    f"   Старый DDL: {old_length} символов"
+                                )
+                                logger.info(
+                                    f"   Новый DDL: {new_length} символов"
+                                )
+                                logger.info(
+                                    f"   Разница: {diff:+d} символов"
+                                )
+                            
+                            # Обновляем запись
+                            await conn.execute(
+                                """
+                                UPDATE vanna_vectors 
+                                SET content = $1, metadata = $2::jsonb, embedding = NULL
+                                WHERE id = $3
+                                """,
+                                ddl, metadata_json, existing['id']
+                            )
+                            
+                            record_ids_to_embed.append(existing['id'])
+                            updated_count += 1
+                            logger.info(f"✅ DDL обновлен для таблицы '{table_name}' (ID: {existing['id']})")
+                        else:
+                            # Вставка новой записи
+                            record_id = await conn.fetchval(
+                                """
+                                INSERT INTO vanna_vectors (content, content_type, metadata, embedding)
+                                VALUES ($1, $2, $3::jsonb, NULL)
+                                RETURNING id
+                                """,
+                                ddl, 'ddl', metadata_json
+                            )
+                            
+                            record_ids_to_embed.append(record_id)
+                            added_count += 1
+                            logger.info(f"✅ DDL добавлен для таблицы '{table_name}' (ID: {record_id})")
+                    
+                    except Exception as e:
+                        failed_count += 1
+                        error_msg = f"Ошибка добавления DDL для таблицы '{ddl_item.get('table_name', 'unknown')}': {e}"
+                        errors.append(error_msg)
+                        logger.error(f"❌ {error_msg}")
+                
+                # Генерируем эмбеддинги для всех новых/обновленных записей
+                if record_ids_to_embed and self.semantic_vanna:
+                    try:
+                        logger.info(f"🔧 Генерация эмбеддингов для {len(record_ids_to_embed)} записей DDL...")
+                        
+                        for record_id in record_ids_to_embed:
+                            # Получаем контент записи
+                            record = await conn.fetchrow(
+                                "SELECT content FROM vanna_vectors WHERE id = $1",
+                                record_id
+                            )
+                            
+                            if record:
+                                content = record['content']
+                                
+                                # Генерируем эмбеддинг
+                                embedding = await self.semantic_vanna._generate_embedding(content)
+                                
+                                if embedding:
+                                    # Сохраняем эмбеддинг
+                                    embedding_str = '[' + ','.join(map(str, embedding)) + ']'
+                                    await conn.execute(
+                                        "UPDATE vanna_vectors SET embedding = $1::vector WHERE id = $2",
+                                        embedding_str, record_id
+                                    )
+                                    logger.debug(f"✅ Эмбеддинг сгенерирован для записи {record_id}")
+                                else:
+                                    logger.warning(f"⚠️ Не удалось сгенерировать эмбеддинг для записи {record_id}")
+                    
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка генерации эмбеддингов: {e}")
+                        # Откатываем транзакцию при ошибке генерации эмбеддингов
+                        raise
+            
+            logger.info(f"✅ Добавление DDL завершено: добавлено {added_count}, обновлено {updated_count}, ошибок {failed_count}")
+            
+            return {
+                'success': failed_count == 0,
+                'added': added_count,
+                'updated': updated_count,
+                'failed': failed_count,
+                'errors': errors
+            }
+        
+        except Exception as e:
+            logger.error(f"❌ Критическая ошибка добавления DDL: {e}")
+            return {
+                'success': False,
+                'added': added_count,
+                'updated': updated_count,
+                'failed': failed_count + len(ddl_statements) - added_count - updated_count,
+                'errors': errors + [f"Критическая ошибка: {str(e)}"]
+            }
+        
+        finally:
+            if conn:
+                await conn.close()
+    
+    async def add_documentation(
+        self,
+        documents: List[Dict[str, Any]],
+        user_id: str = "default"
+    ) -> Dict[str, Any]:
+        """
+        Добавление документации в векторную базу знаний
+        
+        Args:
+            documents: Список словарей с полями: content, title, source, domain, tags, metadata
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с полями: success, added, updated, failed, errors
+        """
+        import asyncpg
+        import json
+        from datetime import datetime
+        
+        added_count = 0
+        updated_count = 0
+        failed_count = 0
+        errors = []
+        
+        if not self.semantic_vanna:
+            return {
+                'success': False,
+                'added': 0,
+                'updated': 0,
+                'failed': len(documents),
+                'errors': ['Semantic Vanna не инициализирован']
+            }
+        
+        database_url = self.semantic_vanna.database_url
+        conn = None
+        
+        try:
+            conn = await asyncpg.connect(database_url)
+            
+            # Начинаем транзакцию
+            async with conn.transaction():
+                record_ids_to_embed = []  # Список ID записей для генерации эмбеддингов
+                
+                for doc_item in documents:
+                    try:
+                        content = doc_item.get('content')
+                        title = doc_item.get('title')
+                        source = doc_item.get('source', 'unknown')
+                        domain = doc_item.get('domain')
+                        tags = doc_item.get('tags', [])
+                        metadata = doc_item.get('metadata', {})
+                        
+                        if not content or not title:
+                            failed_count += 1
+                            errors.append(f"Пропущен документ: отсутствует content или title")
+                            continue
+                        
+                        # Проверяем существование записи по title
+                        existing = await conn.fetchrow(
+                            """
+                            SELECT id, content, metadata 
+                            FROM vanna_vectors 
+                            WHERE content_type = 'documentation' 
+                            AND metadata->>'title' = $1
+                            """,
+                            title
+                        )
+                        
+                        # Подготавливаем метаданные
+                        metadata_dict = {
+                            'type': 'documentation',
+                            'title': title,
+                            'source': source,
+                            'updated_at': datetime.now().isoformat()
+                        }
+                        if domain:
+                            metadata_dict['domain'] = domain
+                        if tags:
+                            metadata_dict['tags'] = tags
+                        if metadata:
+                            metadata_dict.update(metadata)
+                        
+                        metadata_json = json.dumps(metadata_dict, ensure_ascii=False)
+                        
+                        if existing:
+                            # Обновление существующей записи
+                            old_content = existing['content']
+                            
+                            # Логируем изменение, если контент изменился
+                            if old_content != content:
+                                old_length = len(old_content)
+                                new_length = len(content)
+                                diff = new_length - old_length
+                                
+                                logger.info(
+                                    f"📝 Документация обновлена: '{title}' "
+                                    f"(source: {source or 'N/A'}, domain: {domain or 'N/A'})"
+                                )
+                                logger.info(
+                                    f"   Изменено пользователем: {user_id}"
+                                )
+                                logger.info(
+                                    f"   Старый контент: {old_length} символов"
+                                )
+                                logger.info(
+                                    f"   Новый контент: {new_length} символов"
+                                )
+                                logger.info(
+                                    f"   Разница: {diff:+d} символов"
+                                )
+                            
+                            # Обновляем запись
+                            await conn.execute(
+                                """
+                                UPDATE vanna_vectors 
+                                SET content = $1, metadata = $2::jsonb, embedding = NULL
+                                WHERE id = $3
+                                """,
+                                content, metadata_json, existing['id']
+                            )
+                            
+                            record_ids_to_embed.append(existing['id'])
+                            updated_count += 1
+                            logger.info(f"✅ Документация обновлена: '{title}' (ID: {existing['id']})")
+                        else:
+                            # Вставка новой записи
+                            record_id = await conn.fetchval(
+                                """
+                                INSERT INTO vanna_vectors (content, content_type, metadata, embedding)
+                                VALUES ($1, $2, $3::jsonb, NULL)
+                                RETURNING id
+                                """,
+                                content, 'documentation', metadata_json
+                            )
+                            
+                            record_ids_to_embed.append(record_id)
+                            added_count += 1
+                            logger.info(f"✅ Документация добавлена: '{title}' (ID: {record_id})")
+                    
+                    except Exception as e:
+                        failed_count += 1
+                        error_msg = f"Ошибка добавления документации '{doc_item.get('title', 'unknown')}': {e}"
+                        errors.append(error_msg)
+                        logger.error(f"❌ {error_msg}")
+                
+                # Генерируем эмбеддинги для всех новых/обновленных записей
+                if record_ids_to_embed and self.semantic_vanna:
+                    try:
+                        logger.info(f"🔧 Генерация эмбеддингов для {len(record_ids_to_embed)} записей документации...")
+                        
+                        for record_id in record_ids_to_embed:
+                            # Получаем контент записи
+                            record = await conn.fetchrow(
+                                "SELECT content FROM vanna_vectors WHERE id = $1",
+                                record_id
+                            )
+                            
+                            if record:
+                                content = record['content']
+                                
+                                # Генерируем эмбеддинг
+                                embedding = await self.semantic_vanna._generate_embedding(content)
+                                
+                                if embedding:
+                                    # Сохраняем эмбеддинг
+                                    embedding_str = '[' + ','.join(map(str, embedding)) + ']'
+                                    await conn.execute(
+                                        "UPDATE vanna_vectors SET embedding = $1::vector WHERE id = $2",
+                                        embedding_str, record_id
+                                    )
+                                    logger.debug(f"✅ Эмбеддинг сгенерирован для записи {record_id}")
+                                else:
+                                    logger.warning(f"⚠️ Не удалось сгенерировать эмбеддинг для записи {record_id}")
+                    
+                    except Exception as e:
+                        logger.error(f"❌ Ошибка генерации эмбеддингов: {e}")
+                        # Откатываем транзакцию при ошибке генерации эмбеддингов
+                        raise
+            
+            logger.info(f"✅ Добавление документации завершено: добавлено {added_count}, обновлено {updated_count}, ошибок {failed_count}")
+            
+            return {
+                'success': failed_count == 0,
+                'added': added_count,
+                'updated': updated_count,
+                'failed': failed_count,
+                'errors': errors
+            }
+        
+        except Exception as e:
+            logger.error(f"❌ Критическая ошибка добавления документации: {e}")
+            return {
+                'success': False,
+                'added': added_count,
+                'updated': updated_count,
+                'failed': failed_count + len(documents) - added_count - updated_count,
+                'errors': errors + [f"Критическая ошибка: {str(e)}"]
+            }
+        
+        finally:
+            if conn:
+                await conn.close()
+    
     async def test_vector_search(self, question: str, search_type: str = "semantic", limit: int = 5) -> List[Dict[str, Any]]:
         """
         Тестирование семантического поиска в векторной базе данных

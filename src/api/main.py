@@ -20,8 +20,8 @@ import logging
 from typing import Dict, Any, List, Optional
 import asyncpg
 
-from models.requests import QueryRequest, TrainingExampleRequest, HealthCheckRequest
-from models.responses import SQLResponse, QueryResultResponse, ErrorResponse, HealthCheckResponse, TrainingResponse
+from models.requests import QueryRequest, TrainingExampleRequest, HealthCheckRequest, TrainingDDLRequest, TrainingDocumentationRequest
+from models.responses import SQLResponse, QueryResultResponse, ErrorResponse, HealthCheckResponse, TrainingResponse, TrainingBatchResponse
 from services.query_service import QueryService
 from services.customer_api_service import CustomerAPIService
 
@@ -373,6 +373,99 @@ async def get_training_status():
     except Exception as e:
         logger.error(f"Ошибка получения статуса обучения: {e}")
         raise HTTPException(status_code=500, detail=f"Ошибка получения статуса: {str(e)}")
+
+
+@app.post("/training/ddl", response_model=TrainingBatchResponse)
+async def add_ddl_statements(request: TrainingDDLRequest):
+    """
+    Добавление DDL statements для обучения векторной базы знаний
+    """
+    try:
+        logger.info(f"📝 Добавление DDL statements от пользователя {request.user_id}")
+        logger.info(f"   Количество DDL statements: {len(request.ddl_statements)}")
+        
+        # Преобразуем Pydantic модели в словари
+        ddl_statements = []
+        for ddl_item in request.ddl_statements:
+            ddl_statements.append({
+                'ddl': ddl_item.ddl,
+                'table_name': ddl_item.table_name,
+                'source': ddl_item.source,
+                'version': ddl_item.version,
+                'metadata': ddl_item.metadata or {}
+            })
+        
+        # Добавление DDL через QueryService
+        result = await query_service.add_ddl_statements(
+            ddl_statements=ddl_statements,
+            user_id=request.user_id
+        )
+        
+        # Формируем сообщение
+        if result['success']:
+            message = f"DDL statements успешно обработаны: добавлено {result['added']}, обновлено {result['updated']}"
+        else:
+            message = f"Обработка завершена с ошибками: добавлено {result['added']}, обновлено {result['updated']}, ошибок {result['failed']}"
+        
+        return TrainingBatchResponse(
+            success=result['success'],
+            message=message,
+            added=result['added'],
+            updated=result['updated'],
+            failed=result['failed'],
+            errors=result['errors']
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка добавления DDL: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка добавления DDL: {str(e)}")
+
+
+@app.post("/training/documentation", response_model=TrainingBatchResponse)
+async def add_documentation(request: TrainingDocumentationRequest):
+    """
+    Добавление документации для обучения векторной базы знаний
+    """
+    try:
+        logger.info(f"📝 Добавление документации от пользователя {request.user_id}")
+        logger.info(f"   Количество документов: {len(request.documents)}")
+        
+        # Преобразуем Pydantic модели в словари
+        documents = []
+        for doc_item in request.documents:
+            documents.append({
+                'content': doc_item.content,
+                'title': doc_item.title,
+                'source': doc_item.source,
+                'domain': doc_item.domain,
+                'tags': doc_item.tags or [],
+                'metadata': doc_item.metadata or {}
+            })
+        
+        # Добавление документации через QueryService
+        result = await query_service.add_documentation(
+            documents=documents,
+            user_id=request.user_id
+        )
+        
+        # Формируем сообщение
+        if result['success']:
+            message = f"Документация успешно обработана: добавлено {result['added']}, обновлено {result['updated']}"
+        else:
+            message = f"Обработка завершена с ошибками: добавлено {result['added']}, обновлено {result['updated']}, ошибок {result['failed']}"
+        
+        return TrainingBatchResponse(
+            success=result['success'],
+            message=message,
+            added=result['added'],
+            updated=result['updated'],
+            failed=result['failed'],
+            errors=result['errors']
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка добавления документации: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка добавления документации: {str(e)}")
 
 
 # ==================== Эндпоинты для работы с комментариями БД ====================

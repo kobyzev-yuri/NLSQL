@@ -206,6 +206,153 @@ class KBTrainingClient:
             print(f"📋 Загружено {len(data)} примеров из {json_file}")
         
         return self.add_training_examples_batch(data, user_id=user_id, verbose=verbose)
+    
+    def add_ddl_statements(
+        self,
+        ddl_statements: List[Dict[str, Any]],
+        user_id: str = "kb_training_client"
+    ) -> Dict[str, Any]:
+        """
+        Добавление DDL statements через API
+        
+        Args:
+            ddl_statements: Список словарей с полями: ddl, table_name, source, version, metadata
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с результатом: {success, added, updated, failed, errors}
+        """
+        if not self.check_api_connection():
+            raise ConnectionError(f"Core API недоступен на {self.api_base_url}")
+        
+        request_data = {
+            "ddl_statements": ddl_statements,
+            "user_id": user_id
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_base_url}/training/ddl",
+                json=request_data,
+                timeout=300  # Увеличенный таймаут для транзакций и генерации эмбеддингов
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise Exception(f"API вернул ошибку: {response.status_code} - {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            raise ConnectionError(f"Ошибка подключения к API: {e}")
+    
+    def add_ddl(
+        self,
+        ddl: str,
+        table_name: str,
+        source: str,
+        version: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        user_id: str = "kb_training_client"
+    ) -> Dict[str, Any]:
+        """
+        Удобный метод для добавления одного DDL statement
+        
+        Args:
+            ddl: DDL оператор (CREATE TABLE ...)
+            table_name: Имя таблицы
+            source: Источник DDL (information_schema, manual, migration, etc.)
+            version: Версия схемы (опционально)
+            metadata: Дополнительные метаданные (опционально)
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с результатом: {success, added, updated, failed, errors}
+        """
+        return self.add_ddl_statements(
+            ddl_statements=[{
+                'ddl': ddl,
+                'table_name': table_name,
+                'source': source,
+                'version': version,
+                'metadata': metadata or {}
+            }],
+            user_id=user_id
+        )
+    
+    def add_documentation(
+        self,
+        documents: List[Dict[str, Any]],
+        user_id: str = "kb_training_client"
+    ) -> Dict[str, Any]:
+        """
+        Добавление документации через API
+        
+        Args:
+            documents: Список словарей с полями: content, title, source, domain, tags, metadata
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с результатом: {success, added, updated, failed, errors}
+        """
+        if not self.check_api_connection():
+            raise ConnectionError(f"Core API недоступен на {self.api_base_url}")
+        
+        request_data = {
+            "documents": documents,
+            "user_id": user_id
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_base_url}/training/documentation",
+                json=request_data,
+                timeout=300  # Увеличенный таймаут для транзакций и генерации эмбеддингов
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise Exception(f"API вернул ошибку: {response.status_code} - {response.text}")
+                
+        except requests.exceptions.RequestException as e:
+            raise ConnectionError(f"Ошибка подключения к API: {e}")
+    
+    def add_doc(
+        self,
+        content: str,
+        title: str,
+        source: Optional[str] = None,
+        domain: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        user_id: str = "kb_training_client"
+    ) -> Dict[str, Any]:
+        """
+        Удобный метод для добавления одного документа
+        
+        Args:
+            content: Текст документации
+            title: Название документа
+            source: Источник документации (опционально)
+            domain: Домен (users, payments, assignments, etc.) (опционально)
+            tags: Список тегов для категоризации (опционально)
+            metadata: Дополнительные метаданные (опционально)
+            user_id: ID пользователя/скрипта
+            
+        Returns:
+            Dict с результатом: {success, added, updated, failed, errors}
+        """
+        return self.add_documentation(
+            documents=[{
+                'content': content,
+                'title': title,
+                'source': source,
+                'domain': domain,
+                'tags': tags or [],
+                'metadata': metadata or {}
+            }],
+            user_id=user_id
+        )
 
 
 def main():

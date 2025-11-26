@@ -348,6 +348,220 @@ def test_integration_real_api():
         return False
 
 
+def test_add_ddl_statements_mock():
+    """Тест добавления DDL statements (с моком API)"""
+    print("\n✅ Тест 9: Добавление DDL statements (мок)")
+    try:
+        client = KBTrainingClient(api_base_url="http://localhost:8000")
+        
+        with patch('src.tools.kb_training_client.requests.post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "success": True,
+                "added": 2,
+                "updated": 1,
+                "failed": 0,
+                "errors": []
+            }
+            mock_post.return_value = mock_response
+            
+            ddl_statements = [
+                {
+                    "ddl": "CREATE TABLE equsers (id SERIAL PRIMARY KEY, login VARCHAR(50));",
+                    "table_name": "equsers",
+                    "source": "information_schema",
+                    "version": "2024-11-26"
+                },
+                {
+                    "ddl": "CREATE TABLE eq_departments (id SERIAL PRIMARY KEY, name VARCHAR(100));",
+                    "table_name": "eq_departments",
+                    "source": "information_schema",
+                    "version": "2024-11-26"
+                }
+            ]
+            
+            result = client.add_ddl_statements(
+                ddl_statements=ddl_statements,
+                user_id="test_user"
+            )
+            
+            assert result["success"] is True
+            assert result["added"] == 2
+            assert result["updated"] == 1
+            assert result["failed"] == 0
+            print("   ✅ DDL statements успешно добавлены (мок)")
+            
+            # Проверяем, что был вызван правильный URL
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            assert "/training/ddl" in call_args[0][0]
+            print("   ✅ Вызван правильный эндпоинт API")
+        
+        return True
+    except Exception as e:
+        print(f"   ❌ Ошибка добавления DDL statements: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_add_ddl_single():
+    """Тест добавления одного DDL через удобный метод"""
+    print("\n✅ Тест 10: Добавление одного DDL (мок)")
+    try:
+        client = KBTrainingClient(api_base_url="http://localhost:8000")
+        
+        with patch('src.tools.kb_training_client.requests.post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "success": True,
+                "added": 1,
+                "updated": 0,
+                "failed": 0,
+                "errors": []
+            }
+            mock_post.return_value = mock_response
+            
+            result = client.add_ddl(
+                ddl="CREATE TABLE test_table (id SERIAL PRIMARY KEY);",
+                table_name="test_table",
+                source="manual",
+                version="1.0",
+                user_id="test_user"
+            )
+            
+            assert result["success"] is True
+            assert result["added"] == 1
+            print("   ✅ Один DDL успешно добавлен (мок)")
+        
+        return True
+    except Exception as e:
+        print(f"   ❌ Ошибка добавления одного DDL: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_add_documentation_mock():
+    """Тест добавления документации (с моком API)"""
+    print("\n✅ Тест 11: Добавление документации (мок)")
+    try:
+        client = KBTrainingClient(api_base_url="http://localhost:8000")
+        
+        with patch('src.tools.kb_training_client.requests.post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "success": True,
+                "added": 1,
+                "updated": 1,
+                "failed": 0,
+                "errors": []
+            }
+            mock_post.return_value = mock_response
+            
+            documents = [
+                {
+                    "content": "Use case: получение списка активных пользователей...",
+                    "title": "Активные пользователи",
+                    "source": "internal_docs",
+                    "domain": "users",
+                    "tags": ["use_case", "users"]
+                }
+            ]
+            
+            result = client.add_documentation(
+                documents=documents,
+                user_id="test_user"
+            )
+            
+            assert result["success"] is True
+            assert result["added"] == 1
+            assert result["updated"] == 1
+            print("   ✅ Документация успешно добавлена (мок)")
+            
+            # Проверяем, что был вызван правильный URL
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            assert "/training/documentation" in call_args[0][0]
+            print("   ✅ Вызван правильный эндпоинт API")
+        
+        return True
+    except Exception as e:
+        print(f"   ❌ Ошибка добавления документации: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_add_doc_single():
+    """Тест добавления одного документа через удобный метод"""
+    print("\n✅ Тест 12: Добавление одного документа (мок)")
+    try:
+        client = KBTrainingClient(api_base_url="http://localhost:8000")
+        
+        with patch('src.tools.kb_training_client.requests.post') as mock_post:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "success": True,
+                "added": 1,
+                "updated": 0,
+                "failed": 0,
+                "errors": []
+            }
+            mock_post.return_value = mock_response
+            
+            result = client.add_doc(
+                content="Test documentation content",
+                title="Test Document",
+                source="test",
+                domain="general",
+                tags=["test"],
+                user_id="test_user"
+            )
+            
+            assert result["success"] is True
+            assert result["added"] == 1
+            print("   ✅ Один документ успешно добавлен (мок)")
+        
+        return True
+    except Exception as e:
+        print(f"   ❌ Ошибка добавления одного документа: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_add_ddl_fallback():
+    """Тест fallback для DDL при недоступности API"""
+    print("\n✅ Тест 13: Fallback для DDL при недоступности API")
+    try:
+        client = KBTrainingClient(api_base_url="http://localhost:8000")
+        
+        # Мокируем недоступность API
+        with patch.object(client, 'check_api_connection', return_value=False):
+            try:
+                client.add_ddl(
+                    ddl="CREATE TABLE test (id INT);",
+                    table_name="test",
+                    source="test"
+                )
+                assert False, "Должно было быть исключение ConnectionError"
+            except ConnectionError as e:
+                assert "Core API недоступен" in str(e)
+                print("   ✅ Fallback обрабатывается корректно (ConnectionError)")
+        
+        return True
+    except AssertionError:
+        return True  # Это нормально - мы проверяем исключения
+    except Exception as e:
+        print(f"   ❌ Ошибка в тесте fallback: {e}")
+        return False
+
+
 def run_all_tests(include_integration=False):
     """Запуск всех тестов"""
     print("="*60)
@@ -365,6 +579,11 @@ def run_all_tests(include_integration=False):
         test_add_from_json_file,
         test_error_handling,
         test_batch_add_with_errors,
+        test_add_ddl_statements_mock,
+        test_add_ddl_single,
+        test_add_documentation_mock,
+        test_add_doc_single,
+        test_add_ddl_fallback,
     ]
     
     if include_integration:

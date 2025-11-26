@@ -71,3 +71,16 @@ class TrainingResponse(BaseModel):
     rows_optimized: Optional[float] = Field(None, description="Rows (строк) оптимизированного SQL")
     rows_improvement_percent: Optional[float] = Field(None, description="Улучшение rows в процентах")
     optimization_warning: Optional[str] = Field(None, description="Предупреждение если оптимизация не подтверждена")
+
+
+class TrainingBatchResponse(BaseModel):
+    """
+    Ответ на запрос массового обучения (DDL или документация)
+    """
+    success: bool = Field(..., description="Успешность операции")
+    message: str = Field(..., description="Сообщение")
+    added: int = Field(0, description="Количество добавленных записей")
+    updated: int = Field(0, description="Количество обновленных записей")
+    failed: int = Field(0, description="Количество неудачных операций")
+    errors: List[str] = Field(default_factory=list, description="Список ошибок")
+    timestamp: datetime = Field(default_factory=datetime.now)
