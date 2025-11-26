@@ -41,8 +41,13 @@ class VannaTrainer:
             with open(ddl_file, 'r', encoding='utf-8') as f:
                 ddl_content = f.read()
                 
-            # Обучаем на DDL
-            self.vanna.train(ddl=ddl_content)
+            # Для DDL используем прямое добавление через vanna
+            # (API /training/example предназначен для Q/A пар)
+            if hasattr(self.vanna, 'add_ddl'):
+                self.vanna.add_ddl(ddl_content)
+            else:
+                self.vanna.train(ddl=ddl_content)
+            
             logger.info("✅ Обучение на DDL завершено")
             return True
             
@@ -51,7 +56,7 @@ class VannaTrainer:
             return False
     
     def train_on_documentation(self) -> bool:
-        """Обучение на документации"""
+        """Обучение на документации (использует прямое добавление через vanna)"""
         try:
             doc_file = self.training_data_dir / "documentation.txt"
             if not doc_file.exists():
@@ -61,8 +66,13 @@ class VannaTrainer:
             with open(doc_file, 'r', encoding='utf-8') as f:
                 doc_content = f.read()
                 
-            # Обучаем на документации
-            self.vanna.train(documentation=doc_content)
+            # Для документации используем прямое добавление через vanna
+            # (API /training/example предназначен для Q/A пар)
+            if hasattr(self.vanna, 'add_documentation'):
+                self.vanna.add_documentation(doc_content)
+            else:
+                self.vanna.train(documentation=doc_content)
+            
             logger.info("✅ Обучение на документации завершено")
             return True
             
@@ -71,25 +81,45 @@ class VannaTrainer:
             return False
     
     def train_on_sql_examples(self) -> bool:
-        """Обучение на SQL примерах"""
+        """Обучение на SQL примерах через унифицированный API клиент"""
         try:
             examples_file = self.training_data_dir / "sql_examples.json"
             if not examples_file.exists():
                 logger.error(f"❌ Файл SQL примеров не найден: {examples_file}")
                 return False
+            
+            # Используем унифицированный клиент через API
+            from src.tools.kb_training_client import KBTrainingClient
+            
+            client = KBTrainingClient()
+            if not client.check_api_connection():
+                logger.warning("⚠️ Core API недоступен, используем прямое добавление через vanna")
+                # Fallback: прямое добавление через vanna (старый способ)
+                with open(examples_file, 'r', encoding='utf-8') as f:
+                    examples = json.load(f)
                 
-            with open(examples_file, 'r', encoding='utf-8') as f:
-                examples = json.load(f)
+                for example in examples:
+                    question = example.get("question")
+                    sql = example.get("sql")
+                    if question and sql:
+                        self.vanna.train(question=question, sql=sql)
                 
-            # Обучаем на каждом примере
-            for example in examples:
-                question = example.get("question")
-                sql = example.get("sql")
-                if question and sql:
-                    self.vanna.train(question=question, sql=sql)
-                    
-            logger.info("✅ Обучение на SQL примерах завершено")
-            return True
+                logger.info("✅ Обучение на SQL примерах завершено (через прямое добавление)")
+                return True
+            
+            # Используем API клиент
+            stats = client.add_from_json_file(
+                json_file=examples_file,
+                user_id="training_script",
+                verbose=False
+            )
+            
+            if stats['failed'] == 0:
+                logger.info(f"✅ Обучение на SQL примерах завершено: {stats['success']}/{stats['total']} добавлено")
+                return True
+            else:
+                logger.warning(f"⚠️ Обучение завершено с ошибками: {stats['success']}/{stats['total']} успешно, {stats['failed']} ошибок")
+                return stats['success'] > 0
             
         except Exception as e:
             logger.error(f"❌ Ошибка обучения на SQL примерах: {e}")

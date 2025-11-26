@@ -872,21 +872,36 @@ with tab2:
                             st.error(f"❌ Core API недоступен на {API_BASE_URL}. Убедитесь, что сервис запущен.")
                             st.stop()
                         
-                        with st.spinner(f"Импортирую {len(valid_pairs)} Q/A пар..."):
-                            # Пока что используем CLI скрипт, так как API для массового добавления еще не реализован
-                            st.info("⚠️ Массовое добавление Q/A пар через интерфейс пока не поддерживается. Используйте CLI скрипт:")
-                            
-                            # Сохраняем валидные пары во временный файл
-                            import tempfile
-                            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as tmp_file:
-                                json.dump(valid_pairs, tmp_file, ensure_ascii=False, indent=2)
-                                tmp_path = tmp_file.name
-                            
-                            st.code(f"python qa_management_script.py --action add --input {tmp_path} --validate")
-                            st.info(f"💾 Валидные пары сохранены во временный файл: {tmp_path}")
-                            st.success(f"✅ Готово к импорту {len(valid_pairs)} Q/A пар!")
-                            
-                            # В будущем здесь будет вызов API для массового добавления
+                        with st.spinner(f"Импортирую {len(valid_pairs)} Q/A пар через API..."):
+                            try:
+                                # Используем унифицированный клиент через API
+                                from src.tools.kb_training_client import KBTrainingClient
+                                
+                                client = KBTrainingClient(api_base_url=API_BASE_URL)
+                                stats = client.add_training_examples_batch(
+                                    examples=valid_pairs,
+                                    user_id="vector_kb_interface",
+                                    verbose=False
+                                )
+                                
+                                # Показываем результаты
+                                if stats['failed'] == 0:
+                                    st.success(f"✅ Успешно импортировано {stats['success']}/{stats['total']} Q/A пар!")
+                                else:
+                                    st.warning(f"⚠️ Импортировано {stats['success']}/{stats['total']} пар, {stats['failed']} ошибок")
+                                    if stats['errors']:
+                                        with st.expander("❌ Детали ошибок"):
+                                            for error in stats['errors'][:10]:
+                                                st.text(error)
+                                
+                                st.info("💡 После добавления примеров сгенерируйте эмбеддинги:")
+                                st.code("python -m src.tools.generate_embeddings_hf --dsn \"$DATABASE_URL\" --model \"$HF_MODEL_NAME\"")
+                                
+                            except Exception as e:
+                                st.error(f"❌ Ошибка импорта: {e}")
+                                import traceback
+                                with st.expander("Детали ошибки"):
+                                    st.code(traceback.format_exc())
                             # api_result = call_api_bulk_add_qa(valid_pairs)
                 else:
                     st.error("❌ Нет валидных Q/A пар для импорта")
