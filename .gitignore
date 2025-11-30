@@ -157,6 +157,10 @@ SQL_QUALITY*.txt
 *.py
 !setup.py
 !vector_kb_interface.py
+# KB population scripts
+!src/tools/load_docstructure_schema.py
+!src/tools/extract_sql_from_docstructure.py
+!src/tools/generate_embeddings_hf.py
 # Adapters (public structure - PostgreSQL only)
 !src/adapters/__init__.py
 !src/adapters/base.py
