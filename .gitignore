@@ -53,6 +53,9 @@ logs/
 *.sqlite3
 chroma_db/
 training_examples/
+# SQL dumps (except KB dumps)
+*.sql
+!data/dumps/*.sql
 
 # Environment variables
 .env
