@@ -82,20 +82,39 @@ class SimpleOpenAISQL:
         Генерация SQL с прямым вызовом OpenAI
         
         Args:
-            question: Вопрос на естественном языке
+            question: Вопрос на естественном языке ИЛИ готовый промпт от QueryService
             timeout: Таймаут в секундах
             
         Returns:
             str: Сгенерированный SQL
         """
         try:
-            logger.info(f"🔄 Генерация SQL для: {question}")
+            logger.info(f"🔄 Генерация SQL для: {question[:200]}...")
             
-            # Получаем схему таблиц
-            schema = self.get_table_schema()
+            # Проверяем, является ли question уже готовым промптом от QueryService
+            # (содержит системные инструкции, DDL, примеры)
+            is_smart_prompt = any(marker in question for marker in [
+                "===Domain:", "===Tables", "===Examples", "PERFORMANCE PRIORITY",
+                "OPTIMIZED SQL", "EXPLAIN PLAN"
+            ])
             
-            # Создаем промпт с приоритетом оптимизации
-            system_prompt = f"""You are a PostgreSQL expert. Generate ONLY valid, OPTIMIZED SQL code without any explanations.
+            if is_smart_prompt:
+                # Это умный промпт от QueryService - используем его напрямую
+                # Добавляем только базовые системные инструкции
+                system_prompt = """You are a PostgreSQL expert. Generate ONLY valid, OPTIMIZED SQL code without any explanations.
+
+IMPORTANT:
+- Return ONLY SQL code, no markdown, no explanations, no comments
+- Follow the patterns and instructions provided in the prompt
+- Use the examples and EXPLAIN PLANs as guidance for optimization
+- Ensure the SQL is syntactically correct and executable"""
+                
+                user_prompt = question
+            else:
+                # Это обычный вопрос - строим промпт с схемой БД
+                schema = self.get_table_schema()
+                
+                system_prompt = f"""You are a PostgreSQL expert. Generate ONLY valid, OPTIMIZED SQL code without any explanations.
 
 Database Schema:
 {schema}
@@ -106,6 +125,7 @@ PERFORMANCE OPTIMIZATION RULES (PRIORITY):
 3. Use INNER JOIN instead of LEFT JOIN when possible (faster execution)
 4. Add ORDER BY for logical sorting when needed
 5. Consider indexes: filter on indexed columns when possible
+6. Always add WHERE deleted = FALSE when filtering records
 
 Rules:
 - Use ONLY tables from the schema above
@@ -113,16 +133,18 @@ Rules:
 - Use proper JOINs when needed
 - Return ONLY SQL code, no markdown, no explanations
 - Prefer efficient SQL patterns (specific columns, filters, proper JOINs)
-"""
+- Always filter deleted records: WHERE deleted = FALSE"""
+                
+                user_prompt = question
             
             # Вызываем OpenAI с таймаутом
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": question}
+                    {"role": "user", "content": user_prompt}
                 ],
-                max_tokens=500,
+                max_tokens=1000,  # Увеличиваем для сложных промптов с примерами
                 temperature=self.temperature,
                 timeout=timeout
             )

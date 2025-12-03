@@ -49,14 +49,19 @@ SQL: SELECT * FROM equsers WHERE deleted = false
 - 👨‍💼 **manager** - данные своего отдела
 - 👤 **user** - только свои данные
 
-### 3. **RAG (Retrieval Augmented Generation)**
+### 3. **Поддержка нескольких LLM провайдеров**
+- 🤖 **GPT-4o** (OpenAI/ProxyAPI) - быстрая генерация (~2-5 сек)
+- 🦙 **Qwen** (Ollama локально) - бесплатная локальная модель (~30-200 сек)
+- Переключение через интерфейс или `config.env`
+
+### 4. **RAG (Retrieval Augmented Generation)**
 - Семантический поиск по векторной базе
 - Использование обучающих примеров (DDL, документация, Q/A)
 - Идеология обучения основана на [vanna-ai](https://github.com/vanna-ai/vanna) ([исследование](https://github.com/vanna-ai/vanna/blob/v2/papers/ai-sql-accuracy-2023-08-17.md), [документация](https://vanna.ai/docs))
 - Расширено оптимизированными SQL с EXPLAIN планами
 - Top-K retrieval
 
-### 4. **Интерфейс обучения Vector KB**
+### 5. **Интерфейс обучения Vector KB**
 - Тестирование семантического поиска
 - Добавление Q/A пар
 - Обучение на примерах DDL/SQL
@@ -139,10 +144,21 @@ curl http://localhost:3000
 **Файл:** `config.env`
 
 ```bash
-# LLM модель
+# LLM провайдер (openai или ollama)
+LLM_PROVIDER=openai
+
+# OpenAI/ProxyAPI конфигурация
 OPENAI_API_KEY=sk-...              # Ключ ProxyAPI или OpenAI
 OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
 OPENAI_MODEL=gpt-4o
+OPENAI_TEMPERATURE=0.2
+OPENAI_TIMEOUT=60                 # Таймаут генерации SQL (секунды)
+
+# Ollama конфигурация (для локальных моделей)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5-coder:1.5b   # или qwen3:8b, qwen2.5:1.5b
+OLLAMA_TEMPERATURE=0.2
+OLLAMA_TIMEOUT=500                # Таймаут для Ollama (секунды, больше из-за медленности)
 
 # База данных
 DATABASE_URL=postgresql://postgres:1234@localhost:5432/test_docstructure
@@ -151,6 +167,21 @@ DATABASE_URL=postgresql://postgres:1234@localhost:5432/test_docstructure
 VECTOR_TABLE=vanna_vectors
 TRAINING_DATA_DIR=training_data
 ```
+
+### Переключение между LLM провайдерами
+
+**В интерфейсе:**
+- Simple UI (3000) и Streamlit (8501) имеют выпадающий список для выбора провайдера
+- Таймауты настраиваются отдельно для каждого запроса
+
+**В config.env:**
+- Измените `LLM_PROVIDER=ollama` или `LLM_PROVIDER=openai`
+- Перезапустите сервисы: `./run_stack.sh restart`
+
+**Документация:**
+- `LLM_PROVIDER_SWITCHING_GUIDE.md` - подробное руководство
+- `OLLAMA_TROUBLESHOOTING.md` - решение проблем с Ollama
+- `TIMEOUT_CONFIGURATION.md` - настройка таймаутов
 
 ---
 
@@ -283,10 +314,23 @@ NLSQL/
 ## Технологии
 
 - **Backend:** Python 3.10, FastAPI, Streamlit
-- **LLM:** GPT-4o (ProxyAPI.ru), Ollama (опционально)
+- **LLM:** GPT-4o (ProxyAPI.ru), Ollama/Qwen (локально, опционально)
 - **Database:** PostgreSQL 14+
 - **Vector DB:** pgvector
 - **Embeddings:** intfloat/multilingual-e5-base (768d)
+
+## Оптимизация SQL запросов
+
+Система включает инструменты для анализа и оптимизации медленных запросов:
+
+- **Анализ планов выполнения:** автоматическая генерация EXPLAIN планов
+- **Рекомендации по индексам:** выявление проблемных запросов
+- **Скрипты оптимизации:** автоматическое создание индексов
+
+**Примеры:**
+- `analyze_slow_query.py` - анализ медленного запроса
+- `apply_optimization.py` - применение оптимизаций
+- `SLOW_QUERY_ANALYSIS.md` - документация по оптимизации
 
 ---
 
@@ -353,4 +397,12 @@ ps aux | grep "uvicorn\|streamlit"
 
 ---
 
-**Дата последнего обновления:** 4 ноября 2025
+**Дата последнего обновления:** 3 декабря 2025
+
+## Последние обновления
+
+- ✅ Поддержка Ollama/Qwen для локальной генерации SQL
+- ✅ Настраиваемые таймауты в интерфейсах
+- ✅ Инструменты анализа и оптимизации медленных запросов
+- ✅ Расширенные примеры запросов в интерфейсах
+- ✅ Автоматическая обработка NULL значений в датах

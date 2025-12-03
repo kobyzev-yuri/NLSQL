@@ -17,6 +17,7 @@ from typing import Dict, Any, Optional, List
 from src.vanna.optimized_dual_pipeline import OptimizedDualPipeline
 from src.vanna.vanna_semantic_fixed import create_semantic_vanna_client
 from src.vanna.simple_openai_sql import create_simple_sql_generator
+from src.vanna.ollama_native_sql import create_ollama_native_sql_generator
 
 logger = logging.getLogger(__name__)
 
@@ -37,21 +38,37 @@ class QueryService:
     
     def _initialize_pipeline(self):
         """
-        Инициализация простого SQL генератора (без Vanna AI)
+        Инициализация SQL генератора (OpenAI или Ollama)
         """
         try:
-            # Используем ProxyAPI GPT-4o
-            config = {
-                'model': 'gpt-4o',
-                'database_url': 'postgresql://postgres:1234@localhost:5432/test_docstructure',
-                'api_key': os.getenv("OPENAI_API_KEY"),
-                'base_url': os.getenv("OPENAI_BASE_URL", 'https://api.proxyapi.ru/openai/v1'),
-                'temperature': float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
-            }
+            llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
+            database_url = os.getenv("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/test_docstructure")
             
-            self.pipeline = create_simple_sql_generator(config)
-            self._has_gpt4_key = bool(config['api_key'])
-            logger.info("✅ GPT-4o SQL генератор инициализирован через ProxyAPI")
+            if llm_provider == "ollama":
+                # Используем Ollama
+                config = {
+                    'model': os.getenv("OLLAMA_MODEL", "qwen3:8b"),
+                    'database_url': database_url,
+                    'ollama_url': os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+                    'temperature': float(os.getenv("OLLAMA_TEMPERATURE", "0.2"))
+                }
+                
+                self.pipeline = create_ollama_native_sql_generator(config)
+                self._has_gpt4_key = False
+                logger.info(f"✅ Ollama SQL генератор инициализирован (model={config['model']})")
+            else:
+                # Используем OpenAI/ProxyAPI
+                config = {
+                    'model': os.getenv("OPENAI_MODEL", "gpt-4o"),
+                    'database_url': database_url,
+                    'api_key': os.getenv("OPENAI_API_KEY"),
+                    'base_url': os.getenv("OPENAI_BASE_URL", "https://api.proxyapi.ru/openai/v1"),
+                    'temperature': float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
+                }
+                
+                self.pipeline = create_simple_sql_generator(config)
+                self._has_gpt4_key = bool(config['api_key'])
+                logger.info(f"✅ OpenAI SQL генератор инициализирован (model={config['model']})")
             
         except Exception as e:
             logger.error(f"❌ Ошибка инициализации генератора: {e}")
@@ -364,17 +381,22 @@ Generate SQL that is:
             logger.error(f"Ошибка гибридного ретривера: {e}")
             return ""
 
-    async def generate_sql(self, question: str, user_context: Dict[str, Any]) -> str:
+    async def generate_sql(self, question: str, user_context: Dict[str, Any], timeout: int = None) -> str:
         """
         Генерация SQL запроса на основе вопроса с универсальным доменным подходом
         
         Args:
             question: Вопрос пользователя
             user_context: Контекст пользователя
+            timeout: Таймаут в секундах (если None, берется из config.env)
             
         Returns:
             str: SQL запрос
         """
+        import time
+        import os
+        start_time = time.time()
+        
         try:
             logger.info(f"Генерация SQL для вопроса: {question}")
 
@@ -405,15 +427,39 @@ Generate SQL that is:
             logger.info(f"🧠 Построен умный промпт для домена {domain}")
 
             # Шаг 5: Генерируем SQL через простой генератор
-            logger.info("🔄 Используем прямой вызов OpenAI GPT-4o...")
+            llm_provider = os.getenv("LLM_PROVIDER", "openai").lower()
+            provider_name = "Ollama" if llm_provider == "ollama" else "OpenAI GPT-4o"
+            logger.info(f"🔄 Используем {provider_name}...")
+            
+            # Определяем таймаут: из параметра, или из config.env, или по умолчанию
+            if timeout is None:
+                if llm_provider == "ollama":
+                    timeout = int(os.getenv("OLLAMA_TIMEOUT", "500"))
+                else:
+                    timeout = int(os.getenv("OPENAI_TIMEOUT", "60"))
+            
+            logger.info(f"⏱️ Используется таймаут: {timeout} сек")
+            
             # Обертываем синхронный вызов в thread pool, чтобы не блокировать event loop
             import asyncio
-            sql = await asyncio.to_thread(self.pipeline.generate_sql, smart_question, 60)
+            sql = await asyncio.to_thread(self.pipeline.generate_sql, smart_question, timeout)
             result = {'success': True, 'sql': sql, 'model': 'gpt-4o-direct'}
 
             if result and result.get('success') and result.get('sql'):
                 sql = result['sql']
                 logger.info(f"✅ SQL сгенерирован: {sql}")
+                
+                # Автоматически добавляем проверки IS NOT NULL для дат
+                # Гарантируем, что некорректные данные (с NULL датами) не попадут в результаты
+                from src.utils.sql_date_null_fix import add_null_checks_for_dates
+                sql = add_null_checks_for_dates(sql)
+                logger.info(f"🔒 SQL обновлен с проверками NULL для дат: {sql}")
+                
+                # Вычисляем время генерации
+                end_time = time.time()
+                generation_time = end_time - start_time
+                logger.info(f"⏱️ Время генерации SQL: {generation_time:.2f} сек")
+                
                 return sql
             else:
                 raise Exception("Не удалось сгенерировать SQL")

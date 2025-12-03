@@ -1,0 +1,154 @@
+
+
+Результаты использовании стандартных тестовых запросов:
+
+
+Тест 1.
+Запрос:
+{
+"query": "Список пользователей из equsers, имеющих имя Иван.",
+  "role": "manager"
+}
+
+
+Ожидаемый результат:
+данные запроса "select" к таблице "equsers" с условием "where firstname = 'Иван'"
+
+
+Фактический результат:
+{
+  "status": "ok",
+  "message": "План успешно сгенерирован",
+  "model": "qwen2:1.5b",
+  "response_time_sec": 14.71,
+  "data": {
+    "status": "ok",
+    "message": "План успешно сгенерирован",
+    "model": "qwen2:1.5b",
+    "response_time_sec": 14.71,
+    "data": {
+      "action": "select",
+      "tables": [
+        "eq_users"
+      ],
+      "fields": [
+        "user_name"
+      ],
+      "conditions": null,
+      "group_by": null,
+      "order_by": null,
+      "limit": 100
+    },
+    "raw_output": "{\n  \"action\": \"select\",\n  \"tables\": [\"eq_users\"],\n  \"fields\": [\"user_name\"],\n  \"conditions\": null,\n  \"group_by\": null,\n  \"order_by\": null,\n  \"limit\": 100\n}"
+  }
+}
+
+Таблица "eq_users" имеет лишнюю нижнюю черту в названии, нигде не отражено условие WHERE.
+
+
+
+
+Тест 2.
+Запрос:
+{
+"query": "Фильтр по валютам в tbl_currencies с курсом выше 100.",
+  "role": "manager"
+}
+
+
+Ожидаемый результат:
+данные запроса "select" к таблице "tbl_currencies" с условием "where rate > 100"
+
+
+Фактический результат: 
+{
+  "status": "ok",
+  "message": "План успешно сгенерирован",
+  "model": "qwen2:1.5b",
+  "response_time_sec": 16.67,
+  "data": {
+    "status": "ok",
+    "message": "План успешно сгенерирован",
+    "model": "qwen2:1.5b",
+    "response_time_sec": 16.67,
+    "data": {
+      "action": "select",
+      "tables": [
+        {
+          "name": "tbl_incoming_payments"
+        }
+      ],
+      "fields": [
+        "contract_id",
+        "amount"
+      ],
+      "conditions": null,
+      "group_by": null,
+      "order_by": null,
+      "limit": 100
+    },
+    "raw_output": "```json\n{\n  \"action\": \"select\",\n  \"tables\": [\n    {\n      \"name\": \"tbl_incoming_payments\"\n    }\n  ],\n  \"fields\": [\n    \"contract_id\",\n    \"amount\"\n  ],\n  \"conditions\": null,\n  \"group_by\": null,\n  \"order_by\": null,\n  \"limit\": 100\n}\n```"
+  }
+}
+
+Неправильная таблица "tbl_incoming_payments", нет условия WHERE.
+
+
+
+Тест 3.
+Запрос:
+{
+"query": "Список бизнес-единиц с комментариями из tbl_business_unit_comment.",
+  "role": "manager"
+}
+
+Ожидаемый результат:
+данные запроса "select" к таблице "tbl_business_unit" с условием "WHERE EXISTS(SELECT * FROM tbl_business_unit_comment WHERE docid = tbl_business_unit.id)"
+
+
+{
+  "status": "ok",
+  "message": "План успешно сгенерирован",
+  "model": "qwen2:1.5b",
+  "response_time_sec": 15.59,
+  "data": {
+    "status": "ok",
+    "message": "План успешно сгенерирован",
+    "model": "qwen2:1.5b",
+    "response_time_sec": 15.59,
+    "data": {
+      "action": "select",
+      "tables": [
+        "tbl_business_unit_comments"
+      ],
+      "fields": [
+        "business_unit_id",
+        "comment_text"
+      ],
+      "conditions": null,
+      "group_by": null,
+      "order_by": null,
+      "limit": 100
+    },
+    "raw_output": "{\n  \"action\": \"select\",\n  \"tables\": [\"tbl_business_unit_comments\"],\n  \"fields\": [\"business_unit_id\", \"comment_text\"],\n  \"conditions\": null,\n  \"group_by\": null,\n  \"order_by\": null,\n  \"limit\": 100\n}"
+  }
+}
+
+Запрос понят так, будто следует получить список комментариев из таблицы tbl_business_unit_comments, при этом имена полей приведены неправильные (в таблице tbl_business_unit_comments нет полей business_unit_id и comment_text). 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

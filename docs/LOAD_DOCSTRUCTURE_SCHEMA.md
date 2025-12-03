@@ -130,3 +130,4 @@ DOCSTRUCTURE_DIR=data/DocStructureSchema
 - База данных доступна
 - Есть права на запись в таблицу `vanna_vectors`
 
+

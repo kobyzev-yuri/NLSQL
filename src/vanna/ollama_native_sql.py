@@ -31,7 +31,7 @@ class OllamaNativeSQL:
         logger.info(f"✅ OllamaNativeSQL инициализирован (model={self.model})")
     
     def get_table_schema(self) -> str:
-        """Получение схемы основных таблиц из БД"""
+        """Получение схемы основных таблиц из БД (упрощенная версия)"""
         try:
             conn = psycopg.connect(self.database_url)
             cur = conn.cursor()
@@ -42,27 +42,35 @@ class OllamaNativeSQL:
             
             schema_parts = []
             for table in tables:
+                # Ограничиваем количество колонок для ускорения
                 cur.execute(f"""
                     SELECT column_name, data_type 
                     FROM information_schema.columns 
                     WHERE table_name = %s AND table_schema = 'public'
                     ORDER BY ordinal_position
+                    LIMIT 20
                 """, (table,))
                 
                 columns = cur.fetchall()
                 if columns:
-                    cols_str = ", ".join([f"{col[0]} {col[1]}" for col in columns])
+                    # Берем только первые 15 колонок для упрощения промпта
+                    cols_str = ', '.join([f"{col[0]} ({col[1]})" for col in columns[:15]])
                     schema_parts.append(f"Table {table}: {cols_str}")
             
             cur.close()
             conn.close()
             
-            return "\n".join(schema_parts)
+            schema = "\n".join(schema_parts)
+            # Ограничиваем общий размер схемы
+            if len(schema) > 2000:
+                schema = schema[:2000] + "..."
+            
+            return schema
         except Exception as e:
             logger.warning(f"Не удалось получить схему БД: {e}")
-            return ""
+            return "equsers: id, login, email, deleted, creationdatetime\neq_departments: id, name, deleted"
     
-    def generate_sql(self, question: str, timeout: int = 60) -> str:
+    def generate_sql(self, question: str, timeout: int = 500) -> str:
         """
         Генерация SQL через нативный Ollama API
         
@@ -79,12 +87,20 @@ class OllamaNativeSQL:
             # Получаем схему БД
             schema = self.get_table_schema()
             
-            # Короткий промпт для быстрой генерации
-            prompt = f"""Generate PostgreSQL SELECT query. Return ONLY SQL, no text.
+            # Упрощенный промпт для быстрой генерации
+            system_prompt = """You are a PostgreSQL expert. Generate ONLY SQL code without any explanations or text.
 
-Schema: equsers(id, name, email), eq_departments(id, name)
+Rules:
+- Return ONLY SQL query
+- No explanations, no markdown, no comments
+- Use specific columns, not SELECT *
+- Add WHERE deleted = FALSE when filtering"""
+            
+            user_prompt = f"""Schema:
+{schema}
 
 Question: {question}
+
 SQL:"""
             
             # Запрос к нативному Ollama API (передаем таймаут явно)
@@ -93,13 +109,14 @@ SQL:"""
                 json={
                     "model": self.model,
                     "messages": [
-                        {"role": "user", "content": prompt}
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
                     ],
                     "stream": False,
                     "options": {
                         "temperature": self.temperature,
-                        "num_predict": 100,
-                        "num_ctx": 512
+                        "num_predict": 300,
+                        "num_ctx": 2048
                     }
                 },
                 timeout=(10, timeout)  # (connect_timeout, read_timeout)
@@ -110,7 +127,14 @@ SQL:"""
                 sql = data.get('message', {}).get('content', '').strip()
                 
                 # Очистка SQL от markdown
-                sql = sql.replace('```sql', '').replace('```', '').strip()
+                if '```sql' in sql:
+                    sql = sql.split('```sql')[1].split('```')[0].strip()
+                elif '```' in sql:
+                    sql = sql.split('```')[1].split('```')[0].strip()
+                
+                # Убираем точку с запятой в конце
+                if sql.endswith(';'):
+                    sql = sql[:-1]
                 
                 logger.info(f"✅ SQL сгенерирован: {sql[:100]}")
                 return sql

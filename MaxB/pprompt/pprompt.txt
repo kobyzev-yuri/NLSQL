@@ -1,0 +1,81 @@
+
+
+
+Примеры тестовых промптов к системе ИИ-помощника Tradeco.
+
+
+
+
+
+
+Запрос: "Выведи список пользователей, зарегистрированных после 1 августа 2025 года"
+
+Примерно ожидаемый результат:
+SELECT * FROM equsers WHERE creationdatetime > '2025-08-1 00:00:00'
+
+
+
+
+Запрос: "Выведи список пользователей, являющихся менеджерами"
+
+Примерно ожидаемый результат:
+SELECT * FROM equsers JOIN eqgroupmembers ON eqgroupmembers.userorgroupid = equsers.id JOIN eqgroups ON eqgroupmembers.groupid = eqgroups.id WHERE eqgroups.groupname LIKE 'Менеджер%'
+
+
+
+
+Запрос: "Выведи список профилей, находящихся в статусе 'На доработке в КЦ'", или "Выведи список профилей, находящихся на доработке в КЦ"
+
+Примерно ожидаемый результат:
+SELECT * FROM  tbl_business_unit WHERE (SELECT statename FROM eqdocstates WHERE eqdocstates.id = tbl_business_unit.status_id) = 'На доработке в КЦ'
+
+
+
+
+Запрос: "Выведи список профилей компаний, работающих в Уральском федеральном округе и отсортируй его по дате регистрации"
+
+Примерно ожидаемый результат:
+SELECT * from  tbl_business_unit WHERE (SELECT name FROM tbl_regions_operation WHERE tbl_regions_operation.id = tbl_business_unit.regions_operation) LIKE 'Уральский%' ORDER BY creationdatetime
+
+
+
+Запрос: "Выведи список профилей компаний, имеющих соглашения"
+
+Примерно ожидаемый результат:
+SELECT * FROM tbl_business_unit WHERE EXISTS (SELECT * FROM tbl_business_unit_agreements WHERE docid = tbl_business_unit.id) 
+
+
+
+
+Запрос: "Выведи список всех поручений, относящихся к канцтоварам"
+
+Примерно ожидаемый результат:
+SELECT * FROM tbl_principal_assignment WHERE (select name FROM tbl_product_categories where tbl_product_categories.id = tbl_principal_assignment.product_category) = 'Канцтовары'
+
+
+
+
+Запрос: "Выведи регистрационные номера и наименования банков для 10 самых дорогих поручений (по сумме платежа в рублях), находящихся в статусе 'Отправлен в рейс'"
+
+Примерно ожидаемый результат:
+SELECT reg_number, bank_name, payment_count_in_rub from  tbl_principal_assignment JOIN eqdocstates ON eqdocstates.id = tbl_principal_assignment.status_id WHERE eqdocstates.statename = 'Отправлен в рейс' ORDER BY tbl_principal_assignment.payment_count_in_rub DESC LIMIT 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

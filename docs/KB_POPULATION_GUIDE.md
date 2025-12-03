@@ -281,3 +281,4 @@ WITH (lists = 100);
 - [VECTOR_DB.md](VECTOR_DB.md) - Структура векторной базы данных
 - [LOAD_DOCSTRUCTURE_SCHEMA.md](LOAD_DOCSTRUCTURE_SCHEMA.md) - Детали загрузки DocStructureSchema
 
+

@@ -47,11 +47,18 @@ ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(768);
 Кодовые точки:
 - `src/vanna/vanna_pgvector_native.py` (класс `DocStructureVectorDB` / `DocStructureVannaNative`):
   - `_create_vector_table()` (создание таблицы — при необходимости расширьте по образцу выше)
-  - `add_ddl`, `add_documentation`, `add_question_sql` — запись контента
+  - `add_ddl`, `add_documentation` — запись контента (legacy, пока нет API эндпоинтов)
+  - `add_question_sql` — запись Q/A пар (legacy, рекомендуется использовать `KBTrainingClient`)
+- `src/tools/kb_training_client.py` (унифицированный клиент):
+  - `KBTrainingClient.add_training_example()` — добавление Q/A пар через API `/training/example`
+  - `KBTrainingClient.add_from_json_file()` — массовое добавление из JSON файла
+  - Автоматическая генерация EXPLAIN планов и валидация оптимизации
 - `src/vanna/vanna_semantic_fixed.py` (семантический поиск):
   - ожидает `embedding` и использует pgvector `<->` cosine
 
 ### 3) Обучение/ингест
+
+> **⚠️ Важно:** Для Q/A пар рекомендуется использовать унифицированный клиент `KBTrainingClient` через API `/training/example`. Это обеспечивает единообразие, автоматическую генерацию EXPLAIN планов и валидацию оптимизации. См. [KB_TRAINING_UNIFICATION.md](KB_TRAINING_UNIFICATION.md) и [TRAINING_GUIDE.md](TRAINING_GUIDE.md) для деталей.
 
 **Варианты обучения:**
 
@@ -59,9 +66,10 @@ ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(768);
 Шаги:
 1. Создайте таблицу и индексы (см. DDL выше)
 2. Сгенерируйте обучающий контент:
-   - **Схема БД** → `train(plan=...)` из `DocStructureVannaNative`
-   - **Документация** → `add_documentation(doc_text)`
-   - **Q/A пары** → `add_question_sql(question, sql)`
+   - **Схема БД** → `train(plan=...)` из `DocStructureVannaNative` (legacy, пока нет API)
+   - **Документация** → `add_documentation(doc_text)` (legacy, пока нет API)
+   - **Q/A пары** → **✅ Рекомендуется:** `KBTrainingClient.add_training_example()` через API `/training/example`
+     - **⚠️ Legacy:** `add_question_sql(question, sql)` напрямую через `vanna`
 3. Сгенерируйте эмбеддинги для записей и сохраните в `embedding`:
    ```bash
    python -m src.tools.generate_embeddings_hf --dsn "$DATABASE_URL" --model "$HF_MODEL_NAME"
@@ -74,14 +82,33 @@ ALTER TABLE vanna_vectors ADD COLUMN IF NOT EXISTS embedding vector(768);
    [
        {
            "question": "Покажи всех пользователей",
+           "sql": "SELECT id, login, email FROM equsers WHERE deleted = FALSE",
            "sql_basic": "SELECT * FROM equsers",
-           "sql_optimized": "SELECT id, login, email FROM equsers WHERE deleted = FALSE",
            "improvement": "50% меньше данных, быстрее выполнение"
        }
    ]
    ```
 2. Добавьте оптимизированные Q/A в векторную базу:
+   
+   **✅ Рекомендуемый способ (через унифицированный клиент):**
    ```python
+   from src.tools.kb_training_client import KBTrainingClient
+   
+   client = KBTrainingClient(api_base_url="http://localhost:8000")
+   client.add_training_example(
+       question="Покажи всех пользователей",
+       sql="SELECT id, login, email FROM equsers WHERE deleted = FALSE",
+       sql_basic="SELECT * FROM equsers",
+       improvement="50% меньше данных, быстрее выполнение"
+   )
+   ```
+   > **Преимущества:** Автоматическая генерация EXPLAIN планов, валидация оптимизации.
+   
+   **⚠️ Legacy способ (прямое добавление через vanna):**
+   ```python
+   from src.vanna.vanna_pgvector_native import DocStructureVannaNative
+   
+   vanna = DocStructureVannaNative()
    vanna.add_question_sql(
        question="Покажи всех пользователей",
        sql="SELECT id, login, email FROM equsers WHERE deleted = FALSE",

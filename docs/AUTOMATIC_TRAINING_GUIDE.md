@@ -301,3 +301,6 @@ if __name__ == "__main__":
 - [TRAINING_GUIDE.md](TRAINING_GUIDE.md) - общее руководство по обучению
 - [API_REFERENCE.md](API_REFERENCE.md) - описание API эндпоинтов
 
+
+
+

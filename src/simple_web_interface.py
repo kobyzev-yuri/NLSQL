@@ -236,16 +236,35 @@ async def home():
             <h1>🤖 NL→SQL Ассистент</h1>
             
             <div class="examples">
-                <h3>💡 Примеры вопросов:</h3>
-                <div class="example" onclick="setQuestion('Покажи всех пользователей с email')">Покажи всех пользователей с email</div>
-                <div class="example" onclick="setQuestion('Сколько всего поручений в системе?')">Сколько всего поручений в системе?</div>
-                <div class="example" onclick="setQuestion('Покажи последние 10 поручений')">Покажи последние 10 поручений</div>
-                <div class="example" onclick="setQuestion('Список всех бизнес-единиц с ИНН')">Список всех бизнес-единиц с ИНН</div>
-                <div class="example" onclick="setQuestion('Сколько платежей в системе?')">Сколько платежей в системе?</div>
-                <div class="example" onclick="setQuestion('Пользователи с фамилией Смирнов')">Пользователи с фамилией Смирнов</div>
-                <div class="example" onclick="setQuestion('Бизнес-единицы с указанным телефоном')">Бизнес-единицы с указанным телефоном</div>
-                <div class="example" onclick="setQuestion('Поручения за последний месяц')">Поручения за последний месяц</div>
-                <div class="example" onclick="setQuestion('Пользователи с yandex.ru в email')">Пользователи с yandex.ru в email</div>
+                <h3>💡 Примеры вопросов (тестовые из MaxB):</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px;">
+                    <div>
+                        <h4 style="margin: 10px 0 5px 0; color: #495057; font-size: 14px;">👥 Пользователи:</h4>
+                        <div class="example" onclick="setQuestion('Выведи список пользователей, зарегистрированных после 1 августа 2025 года')">Выведи список пользователей, зарегистрированных после 1 августа 2025 года</div>
+                        <div class="example" onclick="setQuestion('Выведи список пользователей, являющихся менеджерами')">Выведи список пользователей, являющихся менеджерами</div>
+                        <div class="example" onclick="setQuestion('Список пользователей из equsers, имеющих имя Иван')">Список пользователей из equsers, имеющих имя Иван</div>
+                        <div class="example" onclick="setQuestion('Покажи всех активных пользователей с их контактными данными')">Покажи всех активных пользователей с их контактными данными</div>
+                    </div>
+                    <div>
+                        <h4 style="margin: 10px 0 5px 0; color: #495057; font-size: 14px;">🏢 Профили компаний:</h4>
+                        <div class="example" onclick="setQuestion('Выведи список профилей, находящихся в статусе На доработке в КЦ')">Выведи список профилей, находящихся в статусе На доработке в КЦ</div>
+                        <div class="example" onclick="setQuestion('Выведи список профилей компаний, работающих в Уральском федеральном округе и отсортируй его по дате регистрации')">Выведи список профилей компаний, работающих в Уральском федеральном округе и отсортируй его по дате регистрации</div>
+                        <div class="example" onclick="setQuestion('Выведи список профилей компаний, имеющих соглашения')">Выведи список профилей компаний, имеющих соглашения</div>
+                        <div class="example" onclick="setQuestion('Список бизнес-единиц с комментариями из tbl_business_unit_comment')">Список бизнес-единиц с комментариями из tbl_business_unit_comment</div>
+                    </div>
+                    <div>
+                        <h4 style="margin: 10px 0 5px 0; color: #495057; font-size: 14px;">📋 Поручения:</h4>
+                        <div class="example" onclick="setQuestion('Выведи список всех поручений, относящихся к канцтоварам')">Выведи список всех поручений, относящихся к канцтоварам</div>
+                        <div class="example" onclick="setQuestion('Выведи регистрационные номера и наименования банков для 10 самых дорогих поручений (по сумме платежа в рублях), находящихся в статусе Отправлен в рейс')">Выведи регистрационные номера и наименования банков для 10 самых дорогих поручений (по сумме платежа в рублях), находящихся в статусе Отправлен в рейс</div>
+                        <div class="example" onclick="setQuestion('Покажи поручения, созданные за последний месяц, отсортированные по сумме платежа')">Покажи поручения, созданные за последний месяц, отсортированные по сумме платежа</div>
+                    </div>
+                    <div>
+                        <h4 style="margin: 10px 0 5px 0; color: #495057; font-size: 14px;">💰 Валюты и фильтры:</h4>
+                        <div class="example" onclick="setQuestion('Фильтр по валютам в tbl_currencies с курсом выше 100')">Фильтр по валютам в tbl_currencies с курсом выше 100</div>
+                        <div class="example" onclick="setQuestion('Найди профили компаний с ИНН, начинающимся с 77')">Найди профили компаний с ИНН, начинающимся с 77</div>
+                        <div class="example" onclick="setQuestion('Покажи поручения с суммой платежа больше 100000 рублей в статусе Отправлен в рейс')">Покажи поручения с суммой платежа больше 100000 рублей в статусе Отправлен в рейс</div>
+                    </div>
+                </div>
             </div>
             
             <form id="sqlForm">
@@ -254,6 +273,21 @@ async def home():
                     <textarea id="question" name="question" placeholder="Например: Покажи всех пользователей с email, Сколько поручений в системе?, Список бизнес-единиц с ИНН" required></textarea>
                 </div>
                 <div class="form-group" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+                    <div>
+                        <label for="llm_provider">🤖 LLM Провайдер:</label>
+                        <select id="llm_provider" name="llm_provider" style="width: 100%; padding: 8px; border: 2px solid #e1e5e9; border-radius: 8px;" onchange="updateTimeout()">
+                            <option value="openai">GPT-4o (OpenAI/ProxyAPI)</option>
+                            <option value="ollama">Qwen (Ollama локально)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="timeout">⏱️ Таймаут генерации (сек):</label>
+                        <input type="number" id="timeout" name="timeout" value="500" min="10" max="600" step="10" style="width: 100%; padding: 8px; border: 2px solid #e1e5e9; border-radius: 8px;" title="Таймаут для генерации SQL в секундах">
+                    </div>
+                    <div>
+                        <label for="exec_timeout">⏱️ Таймаут выполнения (сек):</label>
+                        <input type="number" id="exec_timeout" name="exec_timeout" value="60" min="10" max="600" step="10" style="width: 100%; padding: 8px; border: 2px solid #e1e5e9; border-radius: 8px;" title="Таймаут для выполнения SQL запроса в секундах">
+                    </div>
                     <div>
                         <label for="role">Роль:</label>
                         <select id="role" name="role">
@@ -311,6 +345,29 @@ async def home():
             function setQuestion(text) {
                 document.getElementById('question').value = text;
             }
+            
+            function updateTimeout() {
+                const provider = document.getElementById('llm_provider').value;
+                const timeoutInput = document.getElementById('timeout');
+                // Устанавливаем значения по умолчанию в зависимости от провайдера
+                if (provider === 'ollama') {
+                    timeoutInput.value = 500;
+                    timeoutInput.placeholder = 'Рекомендуется: 500 сек';
+                } else {
+                    timeoutInput.value = 90;
+                    timeoutInput.placeholder = 'Рекомендуется: 90 сек';
+                    // Обновляем таймаут выполнения при переключении провайдера
+                    const execTimeoutInput = document.getElementById('exec_timeout');
+                    if (execTimeoutInput) {
+                        execTimeoutInput.value = 60; // Стандартный таймаут для выполнения SQL
+                    }
+                }
+            }
+            
+            // Инициализация при загрузке страницы
+            document.addEventListener('DOMContentLoaded', function() {
+                updateTimeout();
+            });
 
             document.getElementById('sqlForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -318,6 +375,8 @@ async def home():
                 const question = document.getElementById('question').value;
                 const role = document.getElementById('role').value;
                 const department = document.getElementById('department').value;
+                const llm_provider = document.getElementById('llm_provider').value;
+                const timeoutSeconds = parseInt(document.getElementById('timeout').value) || (llm_provider === 'ollama' ? 500 : 90);
                 const resultDiv = document.getElementById('result');
                 const resultContent = document.getElementById('resultContent');
                 
@@ -329,26 +388,63 @@ async def home():
                 // Показываем загрузку
                 resultDiv.style.display = 'block';
                 resultDiv.className = 'result loading';
-                resultContent.innerHTML = '🤖 Генерирую SQL и план запроса...';
+                resultContent.innerHTML = `🤖 Генерирую SQL и план запроса... (таймаут: ${timeoutSeconds} сек)`;
+                
+                // Засекаем время начала генерации
+                const startTime = performance.now();
                 
                 try {
                     const formData = new FormData();
                     formData.append('question', question);
                     formData.append('role', role);
                     formData.append('department', department);
+                    formData.append('llm_provider', llm_provider);
+                    formData.append('timeout', timeoutSeconds.toString());
                     
-                    // Увеличиваем таймаут для генерации SQL (может занимать до 90 секунд)
+                    // Таймаут в миллисекундах для fetch
+                    const timeout = timeoutSeconds * 1000;
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 секунд
+                    const timeoutId = setTimeout(() => controller.abort(), timeout);
                     
-                    const response = await fetch('/generate-sql', {
-                        method: 'POST',
-                        body: formData,
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
+                    let response;
+                    try {
+                        response = await fetch('/generate-sql', {
+                            method: 'POST',
+                            body: formData,
+                            signal: controller.signal
+                        });
+                        clearTimeout(timeoutId);
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        if (fetchError.name === 'AbortError' || fetchError.message.includes('aborted')) {
+                            const providerName = llm_provider === 'ollama' ? 'Qwen (Ollama)' : 'GPT-4o';
+                            const timeoutSec = timeout / 1000;
+                            throw new Error(`⏱️ Таймаут при генерации через ${providerName} (${timeoutSec} сек). ${llm_provider === 'ollama' ? 'Модель работает очень медленно. Попробуйте более простой запрос или переключитесь на GPT-4o. Проверьте Ollama: curl http://localhost:11434/api/tags' : 'Попробуйте более простой запрос.'}`);
+                        }
+                        throw fetchError;
+                    }
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        let errorData;
+                        try {
+                            errorData = JSON.parse(errorText);
+                        } catch {
+                            errorData = { error: errorText };
+                        }
+                        throw new Error(errorData.error || `HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+                    }
                     
                     const data = await response.json();
+                    
+                    // Вычисляем время генерации (клиентское время)
+                    const endTime = performance.now();
+                    const clientTime = ((endTime - startTime) / 1000).toFixed(2);
+                    const providerName = llm_provider === 'ollama' ? 'Qwen (Ollama)' : 'GPT-4o';
+                    
+                    // Используем время генерации из ответа API, если доступно
+                    const generationTime = data.generation_time || clientTime;
+                    const totalTime = data.total_time || clientTime;
                     
                     if (data.success) {
                         resultDiv.className = 'result success';
@@ -357,7 +453,14 @@ async def home():
                         const sqlWithRoles = (data.sql_with_roles || data.final_sql || '').trim();
                         const sqlGenerated = (data.sql || '').trim();
 
-                        let html = '';
+                        let html = `<div style="background: #e8f5e9; padding: 12px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
+                            <strong>✅ SQL успешно сгенерирован</strong><br>
+                            <span style="color: #666; font-size: 14px;">
+                                ⏱️ <strong>Время генерации SQL:</strong> ${generationTime} сек | 
+                                ⏱️ <strong>Общее время:</strong> ${totalTime} сек | 
+                                🤖 <strong>Провайдер:</strong> ${providerName}
+                            </span>
+                        </div>`;
 
                         // Покажем шаблон, только если он отличается от исправленного/итогового
                         if (sqlTemplate && sqlTemplate !== sqlCorrected && sqlTemplate !== sqlWithRoles) {
@@ -400,10 +503,31 @@ async def home():
                     }
                 } catch (error) {
                     resultDiv.className = 'result error';
+                    let errorMessage = error.message || String(error);
+                    
+                    // Улучшаем сообщения об ошибках для Ollama
+                    if (llm_provider === 'ollama') {
+                        if (errorMessage.includes('timeout') || errorMessage.includes('Таймаут') || errorMessage.includes('AbortError') || errorMessage.includes('aborted') || errorMessage.includes('signal')) {
+                            errorMessage = `⏱️ <strong>Таймаут при генерации через Qwen (Ollama)</strong><br><br>
+                            💡 <strong>Рекомендации:</strong><br>
+                            • Используйте более простой запрос<br>
+                            • Переключитесь на GPT-4o для быстрой генерации<br>
+                            • Проверьте, что Ollama запущен: <code>curl http://localhost:11434/api/tags</code><br>
+                            • Проверьте модель: <code>ollama list | grep qwen</code>`;
+                        } else if (errorMessage.includes('11434') || errorMessage.includes('connection') || errorMessage.includes('ECONNREFUSED')) {
+                            errorMessage = `❌ <strong>Не удалось подключиться к Ollama</strong><br><br>
+                            💡 <strong>Проверьте:</strong><br>
+                            • Запущен ли Ollama: <code>ollama serve</code><br>
+                            • Доступна ли модель: <code>ollama list | grep qwen</code><br>
+                            • Если модель отсутствует: <code>ollama pull qwen2.5-coder:1.5b</code>`;
+                        }
+                    }
+                    
                     resultContent.innerHTML = `
                         <h4>❌ Ошибка соединения:</h4>
-                        <p>${error.message}</p>
+                        <div>${errorMessage}</div>
                     `;
+                    console.error('Ошибка генерации SQL:', error);
                 }
             });
             
@@ -425,15 +549,31 @@ async def home():
                 resultContent.innerHTML = '🤖 Генерирую SQL и выполняю запрос...';
                 
                 try {
+                    const execTimeout = parseInt(document.getElementById('exec_timeout').value) || 60;
                     const formData = new FormData();
                     formData.append('question', question);
                     formData.append('role', role);
                     formData.append('department', department);
                     
-                    const response = await fetch('/execute-sql', {
-                        method: 'POST',
-                        body: formData
-                    });
+                    // Используем AbortController для таймаута выполнения SQL
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), execTimeout * 1000);
+                    
+                    let response;
+                    try {
+                        response = await fetch('/execute-sql', {
+                            method: 'POST',
+                            body: formData,
+                            signal: controller.signal
+                        });
+                        clearTimeout(timeoutId);
+                    } catch (fetchError) {
+                        clearTimeout(timeoutId);
+                        if (fetchError.name === 'AbortError' || fetchError.message.includes('aborted')) {
+                            throw new Error(`⏱️ Таймаут при выполнении SQL (${execTimeout} сек). Запрос выполняется слишком долго.`);
+                        }
+                        throw fetchError;
+                    }
                     
                     let data;
                     if (!response.ok) {
@@ -552,30 +692,67 @@ async def home():
     </html>
     """
 
+def get_query_service_with_provider(llm_provider: str = None):
+    """Создает QueryService с указанным провайдером"""
+    import os
+    from src.services.query_service import QueryService
+    
+    # Временно переключаем провайдер
+    original_provider = os.getenv("LLM_PROVIDER")
+    if llm_provider:
+        os.environ["LLM_PROVIDER"] = llm_provider
+    
+    try:
+        service = QueryService()
+        return service
+    finally:
+        # Восстанавливаем оригинальный провайдер
+        if original_provider:
+            os.environ["LLM_PROVIDER"] = original_provider
+        elif "LLM_PROVIDER" in os.environ:
+            del os.environ["LLM_PROVIDER"]
+
 @app.post("/generate-sql")
 async def generate_sql(
     question: str = Form(...),
     role: str = Form("admin"),
-    department: str = Form("Департамент продаж")
+    department: str = Form("Департамент продаж"),
+    llm_provider: str = Form("openai"),
+    timeout: str = Form(None)
 ):
     """Генерация SQL через QueryService с KB"""
+    import time
+    import os
+    start_time = time.time()
     global query_service
     
     try:
-        logger.info(f"Генерация SQL для вопроса: {question}")
+        # Определяем таймаут из параметра или config.env
+        if timeout:
+            request_timeout = int(timeout)
+        else:
+            # Используем значения из config.env
+            if llm_provider == "ollama":
+                request_timeout = int(os.getenv("OLLAMA_TIMEOUT", "500"))
+            else:
+                request_timeout = int(os.getenv("OPENAI_TIMEOUT", "60"))
         
-        # Инициализируем QueryService если нужно
-        if query_service is None:
-            query_service = get_query_service()
-            if query_service is None:
-                return JSONResponse(
-                    status_code=500,
-                    content={"success": False, "error": "Не удалось инициализировать QueryService"}
-                )
+        logger.info(f"Генерация SQL для вопроса: {question} (провайдер: {llm_provider}, таймаут: {request_timeout} сек)")
+        
+        # Создаем QueryService с нужным провайдером
+        service = get_query_service_with_provider(llm_provider)
+        if service is None:
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "error": "Не удалось инициализировать QueryService"}
+            )
         
         # Генерируем SQL через QueryService (с KB и правильными данными)
         import asyncio
-        sql = await query_service.generate_sql(question, {})
+        sql_generation_start = time.time()
+        sql = await service.generate_sql(question, {}, timeout=request_timeout)
+        sql_generation_time = time.time() - sql_generation_start
+        
         sql = extract_sql_from_text(sql)
         sql = normalize_sql_for_postgres(sql)
 
@@ -637,6 +814,9 @@ async def generate_sql(
             # Тихо игнорируем, если Mock API недоступен; UI покажет только sql+plan
             pass
         
+        # Вычисляем общее время обработки
+        total_time = time.time() - start_time
+        
         return JSONResponse(content={
             "success": True,
             "sql": sql,
@@ -646,7 +826,9 @@ async def generate_sql(
             "final_sql": final_sql,  # Для совместимости
             "restrictions": restrictions,
             "explanation": "SQL сгенерирован QueryService с KB и правильными данными, план построен конвертером SQL→План; при наличии Mock API показан финальный SQL с ролевыми ограничениями",
-            "agent_type": "QueryService с KB"
+            "agent_type": "QueryService с KB",
+            "generation_time": round(sql_generation_time, 2),  # Время генерации SQL в секундах
+            "total_time": round(total_time, 2)  # Общее время обработки запроса
         })
                 
     except Exception as e:

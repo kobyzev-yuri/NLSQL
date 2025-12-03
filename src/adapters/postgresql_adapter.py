@@ -248,3 +248,6 @@ class PostgreSQLAdapter(DatabaseAdapter):
 
 
 
+
+
+
