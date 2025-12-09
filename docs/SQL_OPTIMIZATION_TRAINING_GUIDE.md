@@ -247,7 +247,8 @@ python qa_management_script.py --action test --input optimized_sql_examples.json
 ## 📚 Дополнительные ресурсы
 
 ### Связанные документы:
-- [VANNA_TRAINING_GUIDE.md](VANNA_TRAINING_GUIDE.md) - базовое руководство по обучению
+- [KB_TRAINING_FROM_SCRATCH.md](KB_TRAINING_FROM_SCRATCH.md) ⭐ - полное руководство по обучению KB с нуля
+- [TRAINING_GUIDE.md](TRAINING_GUIDE.md) - базовое руководство по обучению RAG
 - [VECTOR_KB_IMPROVEMENT_PLAN.md](../VECTOR_KB_IMPROVEMENT_PLAN.md) - план улучшения векторки
 - [SERVICES_STARTUP_GUIDE.md](SERVICES_STARTUP_GUIDE.md) - руководство по сервисам
 

@@ -1336,7 +1336,7 @@ tail -f ~/.ollama/logs/server.log
 ## 📚 Дополнительные ресурсы
 
 - [TRAINING_GUIDE.md](TRAINING_GUIDE.md) - Основное руководство по обучению RAG
-- [KB_POPULATION_GUIDE.md](KB_POPULATION_GUIDE.md) - Детали пополнения KB
+- [TRAINING_GUIDE.md](TRAINING_GUIDE.md) - Основное руководство по обучению RAG
 - [VECTOR_KB_INTERFACE_GUIDE.md](VECTOR_KB_INTERFACE_GUIDE.md) - Работа с интерфейсом
 - [VECTOR_DB.md](VECTOR_DB.md) - Структура векторной базы данных
 - [SQL_OPTIMIZATION_TRAINING_GUIDE.md](SQL_OPTIMIZATION_TRAINING_GUIDE.md) - Обучение на оптимизированных SQL

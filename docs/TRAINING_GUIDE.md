@@ -11,7 +11,7 @@
 - **Documentation** - документация и бизнес-логика
 - **Question_SQL** - Q/A пары (вопрос → SQL)
 
-> **💡 Workflow:** Основная цель - **автоматическое обучение KB** на материалах заказчика (дампах БД, документации, SQL примерах) через скрипты и API. Интерфейс используется для **корректировки уже созданной KB**. См. [AUTOMATIC_TRAINING_GUIDE.md](AUTOMATIC_TRAINING_GUIDE.md) для деталей автоматического обучения.
+> **💡 Workflow:** Основная цель - **автоматическое обучение KB** на материалах заказчика (дампах БД, документации, SQL примерах) через скрипты и API. Интерфейс используется для **корректировки уже созданной KB**. См. [KB_TRAINING_FROM_SCRATCH.md](KB_TRAINING_FROM_SCRATCH.md) для полного руководства по обучению с нуля.
 
 ## 🚀 Варианты обучения
 
@@ -299,7 +299,7 @@ curl -X POST http://localhost:8000/semantic-search \
   -d '{"query":"Покажи всех пользователей","limit":5}' | jq .
 ```
 
-**Быстрый тест:** [QUICK_TEST.md](QUICK_TEST.md)
+**Быстрый тест:** См. [KB_TESTING_GUIDE.md](KB_TESTING_GUIDE.md) для руководства по тестированию
 
 ## 📝 Рекомендации
 
@@ -361,22 +361,17 @@ curl -X POST http://localhost:8000/semantic-search \
 
 ## 📚 Связанные документы
 
-- [QUICK_ADD_OPTIMIZED_SQL.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/QUICK_ADD_OPTIMIZED_SQL.md) — быстрое добавление оптимизированного SQL
-- [QUICK_TEST.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/QUICK_TEST.md) — быстрый тест EXPLAIN планов
-- [TEST_EXPLAIN_PLAN.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/TEST_EXPLAIN_PLAN.md) — тестирование EXPLAIN планов
-- [VECTOR_DB.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/VECTOR_DB.md) — структура/индексация векторной таблицы (pgvector, 768d)
-- [SQL_OPTIMIZATION_TRAINING_GUIDE.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/SQL_OPTIMIZATION_TRAINING_GUIDE.md) — детали обучения на оптимизированных SQL
-- [OPTIMIZED_SQL_MARKING.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/OPTIMIZED_SQL_MARKING.md) — маркировка оптимизированных примеров
-- [EXPLAIN_PLAN_INTEGRATION.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/EXPLAIN_PLAN_INTEGRATION.md) — интеграция EXPLAIN планов в контекст RAG
-- [EXPLAIN_PLAN_OPTIMIZATION.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/EXPLAIN_PLAN_OPTIMIZATION.md) — использование планов при оптимизации
-- [EXPLAIN_PLAN_USAGE_ANALYSIS.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/EXPLAIN_PLAN_USAGE_ANALYSIS.md) — анализ применения планов
-- [KB_TESTING_GUIDE.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/KB_TESTING_GUIDE.md) — методика тестирования KB
-- [RETRIEVAL_BENCHMARKS.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/RETRIEVAL_BENCHMARKS.md) — сверка Top‑1/Top‑3/MRR и Accuracy
-- [RAG_QUALITY_REPORT.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/RAG_QUALITY_REPORT.md) — отчёт по качеству ретривера
-- [TEST_RESULTS.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/TEST_RESULTS.md) — результаты экспериментов (EXPLAIN, оптимизация)
-- [EVALUATION_METHODOLOGY.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/EVALUATION_METHODOLOGY.md) — методика оценки качества SQL
-- [METRICS_EXPLANATION.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/METRICS_EXPLANATION.md) — справочник по метрикам
-- [SERVICES_STARTUP_GUIDE.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/SERVICES_STARTUP_GUIDE.md) — запуск/порты/проверки
+- [KB_TRAINING_FROM_SCRATCH.md](KB_TRAINING_FROM_SCRATCH.md) ⭐ — **полное руководство по обучению KB с нуля** (рекомендуется)
+- [VECTOR_DB.md](VECTOR_DB.md) — структура/индексация векторной таблицы (pgvector, 768d)
+- [SQL_OPTIMIZATION_TRAINING_GUIDE.md](SQL_OPTIMIZATION_TRAINING_GUIDE.md) — детали обучения на оптимизированных SQL
+- [OPTIMIZED_SQL_MARKING.md](OPTIMIZED_SQL_MARKING.md) — маркировка оптимизированных примеров
+- [EXPLAIN_PLAN_INTEGRATION.md](EXPLAIN_PLAN_INTEGRATION.md) — интеграция EXPLAIN планов в контекст RAG
+- [EXPLAIN_PLAN_OPTIMIZATION.md](EXPLAIN_PLAN_OPTIMIZATION.md) — использование планов при оптимизации
+- [KB_TESTING_GUIDE.md](KB_TESTING_GUIDE.md) — методика тестирования KB
+- [RETRIEVAL_BENCHMARKS.md](RETRIEVAL_BENCHMARKS.md) — сверка Top‑1/Top‑3/MRR и Accuracy
+- [EVALUATION_METHODOLOGY.md](EVALUATION_METHODOLOGY.md) — методика оценки качества SQL
+- [METRICS_EXPLANATION.md](METRICS_EXPLANATION.md) — справочник по метрикам
+- [SERVICES_STARTUP_GUIDE.md](SERVICES_STARTUP_GUIDE.md) — запуск/порты/проверки
 - [VECTOR_KB_INTERFACE_GUIDE.md](https://github.com/kobyzev-yuri/NLSQL/blob/main/docs/VECTOR_KB_INTERFACE_GUIDE.md) — работа с интерфейсом
 
 
