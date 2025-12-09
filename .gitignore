@@ -101,6 +101,13 @@ celerybeat.pid
 # Cursor IDE files
 .cursor/
 
+# Archive directories (old code and docs)
+archive/
+docs/archive/
+docs/scripts/
+docs/analysis/
+docs/customer_requests/
+
 # SageMath parsed files
 *.sage.py
 
