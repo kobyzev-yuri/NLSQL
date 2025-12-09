@@ -108,6 +108,14 @@ docs/scripts/
 docs/analysis/
 docs/customer_requests/
 
+# Database dumps (too large for git)
+*.sql
+*.dump
+data/dumps/
+!TradecoTemplateDBAndDocStructure/TradecoTemplateTestDB.sql
+!**/schema*.sql
+!**/ddl*.sql
+
 # SageMath parsed files
 *.sage.py
 
