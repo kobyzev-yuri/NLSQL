@@ -84,7 +84,7 @@
   - 🎓 Обучение на примерах DDL/SQL
   - 📊 Метрики и бенчмарки retrieval (Top‑1/Top‑3/MRR)
 - **URL:** `http://localhost:8503` (если 8503 занят — 8504)
-- **Скрипт запуска:** `./start_vector_kb.sh`
+- **Скрипт запуска:** `./run_stack.sh start-vector-kb`
 
 ### 2. **Core API (порт 8000)**
 
@@ -251,7 +251,7 @@ cd NLSQL
 ### Запуск интерфейса обучения
 
 ```bash
-./start_vector_kb.sh       # Запуск Vector KB Interface
+./run_stack.sh start-vector-kb       # Запуск Vector KB Interface
 ```
 
 ### Проверка здоровья
@@ -290,7 +290,7 @@ NLSQL/
 ├── config.env                       # Конфигурация
 ├── start_all_services.sh           # Запуск всех сервисов
 ├── run_stack.sh                    # Управление сервисами
-└── start_vector_kb.sh              # Запуск Vector KB 🆕
+└── run_stack.sh start-vector-kb              # Запуск Vector KB 🆕
 ```
 
 ## 🔧 Конфигурация

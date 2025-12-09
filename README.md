@@ -126,7 +126,7 @@ User Interface (3000/8501/8503)
 ```bash
 ./run_stack.sh start core_api    # Запуск Core API
 ./run_stack.sh stop mock_api     # Остановка Mock API
-./start_vector_kb.sh             # Запуск Vector KB
+./run_stack.sh start-vector-kb   # Запуск Vector KB
 ```
 
 ### Проверка здоровья

@@ -25,7 +25,7 @@ cd NLSQL
 ### 2. Запуск Vector KB Interface
 ```bash
 cd NLSQL
-./start_vector_kb.sh  # если 8503 занят, скрипт использует 8504
+./run_stack.sh start-vector-kb  # если 8503 занят, скрипт использует 8504
 ```
 
 ### 3. Доступ к интерфейсу
