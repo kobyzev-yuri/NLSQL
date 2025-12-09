@@ -88,6 +88,222 @@ svc_status() {
   fi
 }
 
+# Check if ngrok is installed
+check_ngrok() {
+  if ! command -v ngrok &> /dev/null; then
+    echo "⚠️  ngrok не установлен"
+    echo "   Установите: sudo snap install ngrok"
+    echo "   Или: wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz"
+    return 1
+  fi
+  return 0
+}
+
+# Check if Ollama is installed
+check_ollama() {
+  if ! command -v ollama &> /dev/null; then
+    echo "⚠️  Ollama не установлен"
+    echo "   Установите: curl -fsSL https://ollama.com/install.sh | sh"
+    return 1
+  fi
+  return 0
+}
+
+# Check if Ollama is running
+is_ollama_running() {
+  curl -s http://localhost:11434/api/tags >/dev/null 2>&1
+}
+
+# Start Ollama service
+start_ollama() {
+  local pidf="$PID_DIR/ollama.pid"
+  local log_file="$LOG_DIR/ollama.log"
+  
+  # Check if already running
+  if is_ollama_running; then
+    echo "[skip] Ollama already running"
+    return 0
+  fi
+  
+  # Check if Ollama is installed
+  if ! check_ollama; then
+    echo "[skip] Ollama not installed, skipping"
+    return 1
+  fi
+  
+  # Clean up stale PID file
+  [ -f "$pidf" ] && rm -f "$pidf"
+  
+  echo "[start] Ollama service"
+  nohup ollama serve > "$log_file" 2>&1 &
+  local ollama_pid=$!
+  echo $ollama_pid > "$pidf"
+  sleep 3
+  
+  # Verify startup
+  if is_ollama_running; then
+    echo "[ok]   Ollama started (pid $ollama_pid)"
+    return 0
+  else
+    echo "[fail] Ollama failed to start, check $log_file"
+    rm -f "$pidf"
+    return 1
+  fi
+}
+
+# Stop Ollama service
+stop_ollama() {
+  local pidf="$PID_DIR/ollama.pid"
+  if [ -f "$pidf" ]; then
+    local pid
+    pid=$(cat "$pidf")
+    if kill -0 "$pid" 2>/dev/null; then
+      echo "[stop] Ollama (pid $pid)"
+      kill "$pid" || true
+      sleep 1 || true
+    fi
+    rm -f "$pidf"
+  else
+    # Try to find and kill ollama process
+    local ollama_pids=$(pgrep -f "ollama serve" 2>/dev/null || true)
+    if [ -n "$ollama_pids" ]; then
+      echo "[stop] Ollama (found processes: $ollama_pids)"
+      echo "$ollama_pids" | xargs kill 2>/dev/null || true
+    else
+      echo "[skip] Ollama not running"
+    fi
+  fi
+}
+
+# Check LLM provider and start Ollama if needed
+check_and_start_llm_provider() {
+  # Reload config to get latest LLM_PROVIDER
+  if [[ -f "$REPO_DIR/config.env" ]]; then
+    source "$REPO_DIR/config.env"
+  fi
+  
+  local provider="${LLM_PROVIDER:-openai}"
+  provider=$(echo "$provider" | tr '[:upper:]' '[:lower:]')
+  
+  echo "🔍 LLM Provider: $provider"
+  
+  if [ "$provider" = "ollama" ]; then
+    echo "🤖 Ollama провайдер выбран, проверяю Ollama..."
+    if ! is_ollama_running; then
+      echo "   Ollama не запущен, запускаю..."
+      start_ollama
+    else
+      echo "   ✅ Ollama уже запущен"
+    fi
+  else
+    echo "🤖 OpenAI/GPT-4 провайдер выбран (Ollama не требуется)"
+  fi
+  echo ""
+}
+
+# Start ngrok tunnels for both web UIs (using single ngrok process with config)
+start_ngrok_tunnels() {
+  local pidf="$PID_DIR/ngrok.pid"
+  local log_file="$LOG_DIR/ngrok.log"
+  local config_file="$PID_DIR/ngrok_config.yml"
+  
+  # Check if already running
+  if [ -f "$pidf" ] && kill -0 "$(cat "$pidf")" 2>/dev/null; then
+    echo "[skip] ngrok already running (pid $(cat "$pidf"))"
+    return 0
+  fi
+  
+  # Clean up stale PID file
+  [ -f "$pidf" ] && rm -f "$pidf"
+  
+  # Try to read authtoken from default ngrok config locations
+  local authtoken=""
+  local ngrok_config_locations=(
+    "$HOME/.ngrok2/ngrok.yml"
+    "$HOME/.config/ngrok/ngrok.yml"
+    "$HOME/.ngrok/ngrok.yml"
+  )
+  
+  for config_loc in "${ngrok_config_locations[@]}"; do
+    if [ -f "$config_loc" ]; then
+      authtoken=$(grep -i "^[[:space:]]*authtoken:" "$config_loc" 2>/dev/null | sed 's/^[[:space:]]*authtoken:[[:space:]]*//' | head -1)
+      if [ -n "$authtoken" ]; then
+        break
+      fi
+    fi
+  done
+  
+  # Create ngrok config file with two tunnels
+  if [ -n "$authtoken" ]; then
+    cat > "$config_file" <<EOF
+version: "2"
+authtoken: $authtoken
+tunnels:
+  simple_ui:
+    addr: 3000
+    proto: http
+  streamlit:
+    addr: 8501
+    proto: http
+EOF
+  else
+    # Try without authtoken (might be set via env var or default config)
+    cat > "$config_file" <<EOF
+version: "2"
+tunnels:
+  simple_ui:
+    addr: 3000
+    proto: http
+  streamlit:
+    addr: 8501
+    proto: http
+EOF
+  fi
+  
+  echo "[start] ngrok tunnels for ports 3000 and 8501"
+  ngrok start --all --config "$config_file" > "$log_file" 2>&1 &
+  local ngrok_pid=$!
+  echo $ngrok_pid > "$pidf"
+  sleep 4
+  
+  # Verify startup
+  if [ -f "$pidf" ] && kill -0 "$ngrok_pid" 2>/dev/null; then
+    echo "[ok]   ngrok started (pid $ngrok_pid)"
+    return 0
+  else
+    echo "[fail] ngrok failed to start, check $log_file"
+    rm -f "$pidf" "$config_file"
+    return 1
+  fi
+}
+
+# Get ngrok URL for a tunnel by name
+get_ngrok_url() {
+  local tunnel_name="$1"
+  # Use default ngrok web interface port 4040
+  local url=$(curl -s "http://localhost:4040/api/tunnels" 2>/dev/null | \
+    python3 -c "import sys, json; data=json.load(sys.stdin); \
+    tunnels=[t for t in data.get('tunnels', []) if t.get('name') == '$tunnel_name']; \
+    print(tunnels[0]['public_url'] if tunnels else '')" 2>/dev/null)
+  echo "$url"
+}
+
+# Stop ngrok tunnels
+stop_ngrok_tunnels() {
+  local pidf="$PID_DIR/ngrok.pid"
+  local config_file="$PID_DIR/ngrok_config.yml"
+  if [ -f "$pidf" ]; then
+    local pid
+    pid=$(cat "$pidf")
+    if kill -0 "$pid" 2>/dev/null; then
+      echo "[stop] ngrok (pid $pid)"
+      kill "$pid" || true
+      sleep 0.5 || true
+    fi
+    rm -f "$pidf" "$config_file"
+  fi
+}
+
 # Start core services (Core API + Mock API)
 start_core() {
   echo "=== Starting core services ==="
@@ -100,6 +316,16 @@ start_web_uis() {
   echo "=== Starting web UIs ==="
   svc_start simple_ui "uvicorn src.simple_web_interface:app --host 0.0.0.0 --port 3000 --reload" 3000
   svc_start streamlit "streamlit run src/streamlit_main.py --server.port 8501 --server.address 0.0.0.0" 8501
+  
+  # Start ngrok tunnels if ngrok is available
+  if check_ngrok; then
+    echo ""
+    echo "🌐 Starting ngrok tunnels..."
+    start_ngrok_tunnels
+  else
+    echo ""
+    echo "⚠️  ngrok не установлен, туннели не будут созданы"
+  fi
 }
 
 # Start Vector KB Interface
@@ -118,6 +344,10 @@ start_vector_kb() {
 # Start all services (web mode)
 start_web() {
   echo "🚀 Starting web mode: Core services + Web UIs"
+  
+  # Check LLM provider and start Ollama if needed
+  check_and_start_llm_provider
+  
   start_core
   start_web_uis
   echo ""
@@ -126,11 +356,46 @@ start_web() {
   echo "   • Mock API:      http://localhost:8081/health"
   echo "   • Simple UI:     http://localhost:3000"
   echo "   • Streamlit UI:  http://localhost:8501"
+  
+  # Show ngrok URLs if available
+  if check_ngrok >/dev/null 2>&1; then
+    sleep 3  # Give ngrok time to initialize
+    local ngrok_url_3000=$(get_ngrok_url "simple_ui" 2>/dev/null)
+    local ngrok_url_8501=$(get_ngrok_url "streamlit" 2>/dev/null)
+    
+    if [ -n "$ngrok_url_3000" ] || [ -n "$ngrok_url_8501" ]; then
+      echo ""
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "🌐 Ngrok туннели:"
+      if [ -n "$ngrok_url_3000" ]; then
+        echo "   • Simple UI (ngrok):     $ngrok_url_3000"
+      else
+        echo "   • Simple UI (ngrok):     ⚠️  Туннель не активен (проверьте логи)"
+      fi
+      if [ -n "$ngrok_url_8501" ]; then
+        echo "   • Streamlit UI (ngrok):   $ngrok_url_8501"
+      else
+        echo "   • Streamlit UI (ngrok):   ⚠️  Туннель не активен (проверьте логи)"
+      fi
+      echo ""
+      echo "📊 Ngrok веб-интерфейс: http://localhost:4040"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    else
+      echo ""
+      echo "⚠️  Ngrok туннели запущены, но URL недоступны"
+      echo "   Проверьте логи: tail -f logs/ngrok_*.log"
+      echo "   Или веб-интерфейсы: http://localhost:4040 и http://localhost:4041"
+    fi
+  fi
 }
 
 # Start vector KB mode
 start_vector_kb_mode() {
   echo "🚀 Starting vector KB mode: Core services + Vector KB Interface"
+  
+  # Check LLM provider and start Ollama if needed
+  check_and_start_llm_provider
+  
   start_core
   start_vector_kb
   echo ""
@@ -154,6 +419,7 @@ stop_core() {
 stop_web_uis() {
   svc_stop streamlit 8501
   svc_stop simple_ui 3000
+  stop_ngrok_tunnels
 }
 
 stop_vector_kb() {
@@ -164,8 +430,18 @@ stop_vector_kb() {
 stop_all() {
   echo "🛑 Stopping all services..."
   stop_vector_kb
-  stop_web_uis
+  stop_web_uis  # This will also stop ngrok tunnels
   stop_core
+  
+  # Stop Ollama if running (only if LLM_PROVIDER=ollama)
+  if [[ -f "$REPO_DIR/config.env" ]]; then
+    source "$REPO_DIR/config.env"
+    local provider="${LLM_PROVIDER:-openai}"
+    provider=$(echo "$provider" | tr '[:upper:]' '[:lower:]')
+    if [ "$provider" = "ollama" ]; then
+      stop_ollama
+    fi
+  fi
 }
 
 # Status
@@ -177,6 +453,12 @@ status_core() {
 status_web_uis() {
   svc_status simple_ui 3000
   svc_status streamlit 8501
+  local ngrok_pidf="$PID_DIR/ngrok.pid"
+  if [ -f "$ngrok_pidf" ] && kill -0 "$(cat "$ngrok_pidf")" 2>/dev/null; then
+    echo "[up]   ngrok tunnels (pid $(cat "$ngrok_pidf"))"
+  else
+    echo "[down] ngrok tunnels"
+  fi
 }
 
 status_vector_kb() {
@@ -185,6 +467,23 @@ status_vector_kb() {
 }
 
 status_all() {
+  echo "=== LLM Provider ==="
+  if [[ -f "$REPO_DIR/config.env" ]]; then
+    source "$REPO_DIR/config.env"
+    local provider="${LLM_PROVIDER:-openai}"
+    provider=$(echo "$provider" | tr '[:upper:]' '[:lower:]')
+    echo "Provider: $provider"
+    if [ "$provider" = "ollama" ]; then
+      if is_ollama_running; then
+        echo "[up]   Ollama service"
+      else
+        echo "[down] Ollama service"
+      fi
+    else
+      echo "[skip] Ollama not required (using OpenAI/GPT-4)"
+    fi
+  fi
+  echo ""
   echo "=== Core Services ==="
   status_core
   echo ""

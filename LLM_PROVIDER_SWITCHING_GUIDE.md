@@ -108,3 +108,7 @@ tail -50 logs/core_api_8000.out
 - Ollama доступен (если используете Ollama)
 - API ключ OpenAI установлен (если используете OpenAI)
 
+
+
+
+

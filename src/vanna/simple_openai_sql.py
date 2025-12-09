@@ -77,17 +77,20 @@ class SimpleOpenAISQL:
             logger.error(f"❌ Ошибка получения схемы: {e}")
             return "equsers: id, login, firstname, lastname, departmentid\neq_departments: id, departmentname"
     
-    def generate_sql(self, question: str, timeout: int = 20) -> str:
+    def generate_sql(self, question: str, timeout: int = None) -> str:
         """
         Генерация SQL с прямым вызовом OpenAI
         
         Args:
             question: Вопрос на естественном языке ИЛИ готовый промпт от QueryService
-            timeout: Таймаут в секундах
+            timeout: Таймаут в секундах (если None, берется из OPENAI_TIMEOUT)
             
         Returns:
             str: Сгенерированный SQL
         """
+        # Если таймаут не указан, берем из config.env
+        if timeout is None:
+            timeout = int(os.getenv('OPENAI_TIMEOUT', '60'))
         try:
             logger.info(f"🔄 Генерация SQL для: {question[:200]}...")
             

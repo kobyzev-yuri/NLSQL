@@ -190,3 +190,7 @@ ORDER BY bu.name
 **Автор:** AI Assistant  
 **Версия:** 1.0
 
+
+
+
+

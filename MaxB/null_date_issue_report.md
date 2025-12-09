@@ -138,3 +138,7 @@ ALTER COLUMN creationdatetime SET DEFAULT CURRENT_TIMESTAMP;
 **Автор:** AI Assistant  
 **Версия:** 1.0
 
+
+
+
+
