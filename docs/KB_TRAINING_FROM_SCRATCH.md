@@ -40,7 +40,7 @@ KB обучается на **трех типах данных**:
 ```bash
 # Массовое добавление Q/A пар из JSON файла
 python -m src.tools.kb_training_client \
-    --file training_data/sql_examples.json \
+    --file data/training_data/sql_examples.json \
     --api-url http://localhost:8000
 
 # Тихий режим (без подробного вывода)

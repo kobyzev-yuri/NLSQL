@@ -73,7 +73,7 @@
    
    Или массовое добавление из JSON файла:
    ```bash
-   python -m src.tools.kb_training_client --file training_data/sql_examples.json
+   python -m src.tools.kb_training_client --file data/training_data/sql_examples.json
    ```
    
    **⚠️ Legacy способ (прямое добавление через vanna):**
@@ -192,7 +192,7 @@
 
 ```bash
 # Массовое добавление из JSON файла через API
-python -m src.tools.kb_training_client --file training_data/sql_examples.json
+python -m src.tools.kb_training_client --file data/training_data/sql_examples.json
 
 # С указанием API URL
 python -m src.tools.kb_training_client --file qa_pairs.json --api-url http://localhost:8000
@@ -211,7 +211,7 @@ client = KBTrainingClient(api_base_url="http://localhost:8000")
 
 # Массовое добавление из файла
 stats = client.add_from_json_file(
-    json_file=Path("training_data/sql_examples.json"),
+    json_file=Path("data/training_data/sql_examples.json"),
     user_id="my_script"
 )
 

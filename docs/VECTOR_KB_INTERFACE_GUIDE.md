@@ -198,7 +198,7 @@ psql -h localhost -U postgres -d test_docstructure -c "SELECT version();"
 **Решение**: Убедитесь, что векторка содержит данные
 ```bash
 # Проверка данных в векторке
-python qa_management_script.py --action test --input training_data/sql_examples.json
+python qa_management_script.py --action test --input data/training_data/sql_examples.json
 ```
 
 ## Разработка

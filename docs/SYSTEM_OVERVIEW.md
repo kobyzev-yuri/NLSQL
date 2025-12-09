@@ -286,7 +286,7 @@ NLSQL/
 ├── vector_kb_interface.py          # Vector KB Interface 🆕
 ├── docs/                            # Документация
 ├── logs/                            # Логи сервисов
-├── training_data/                   # Данные для обучения
+├── data/training_data/             # Примеры данных для обучения
 ├── config.env                       # Конфигурация
 ├── start_all_services.sh           # Запуск всех сервисов
 ├── run_stack.sh                    # Управление сервисами

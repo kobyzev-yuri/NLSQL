@@ -64,7 +64,7 @@
 
 ```bash
 # Массовое добавление из JSON файла
-python -m src.tools.kb_training_client --file training_data/sql_examples.json
+python -m src.tools.kb_training_client --file data/training_data/sql_examples.json
 
 # С указанием API URL
 python -m src.tools.kb_training_client --file qa_pairs.json --api-url http://localhost:8000
@@ -90,7 +90,7 @@ result = client.add_training_example(
 
 # Массовое добавление
 stats = client.add_from_json_file(
-    json_file=Path("training_data/sql_examples.json"),
+    json_file=Path("data/training_data/sql_examples.json"),
     user_id="my_script"
 )
 ```
