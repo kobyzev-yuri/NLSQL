@@ -179,9 +179,9 @@ TRAINING_DATA_DIR=training_data
 - Перезапустите сервисы: `./run_stack.sh restart`
 
 **Документация:**
-- `LLM_PROVIDER_SWITCHING_GUIDE.md` - подробное руководство
-- `OLLAMA_TROUBLESHOOTING.md` - решение проблем с Ollama
-- `TIMEOUT_CONFIGURATION.md` - настройка таймаутов
+- [LLM_PROVIDER_SWITCHING_GUIDE.md](docs/LLM_PROVIDER_SWITCHING_GUIDE.md) - подробное руководство
+- [OLLAMA_TROUBLESHOOTING.md](docs/OLLAMA_TROUBLESHOOTING.md) - решение проблем с Ollama
+- [TIMEOUT_CONFIGURATION.md](docs/TIMEOUT_CONFIGURATION.md) - настройка таймаутов
 
 ---
 
@@ -330,7 +330,7 @@ NLSQL/
 **Примеры:**
 - `analyze_slow_query.py` - анализ медленного запроса
 - `apply_optimization.py` - применение оптимизаций
-- `SLOW_QUERY_ANALYSIS.md` - документация по оптимизации
+- [SLOW_QUERY_ANALYSIS.md](docs/SLOW_QUERY_ANALYSIS.md) - документация по оптимизации
 
 ---
 

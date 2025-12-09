@@ -49,10 +49,11 @@
 - **[customer_requests/INTEGRATION_DATAFLOW.md](customer_requests/INTEGRATION_DATAFLOW.md)** - Интеграция с заказчиком
 - **[analysis/DATABASE_SCHEMA_ANALYSIS.md](analysis/DATABASE_SCHEMA_ANALYSIS.md)** - Анализ схемы базы данных
 
-## 🔧 Документы в корне проекта
-- **[LLM_PROVIDER_SWITCHING_GUIDE.md](../LLM_PROVIDER_SWITCHING_GUIDE.md)** - Переключение между Ollama и GPT
-- **[OLLAMA_TROUBLESHOOTING.md](../OLLAMA_TROUBLESHOOTING.md)** - Устранение проблем с Ollama
-- **[TIMEOUT_CONFIGURATION.md](../TIMEOUT_CONFIGURATION.md)** - Настройка таймаутов
+## ⚙️ Конфигурация и настройка
+- **[LLM_PROVIDER_SWITCHING_GUIDE.md](LLM_PROVIDER_SWITCHING_GUIDE.md)** - Переключение между Ollama и GPT
+- **[OLLAMA_TROUBLESHOOTING.md](OLLAMA_TROUBLESHOOTING.md)** - Устранение проблем с Ollama
+- **[TIMEOUT_CONFIGURATION.md](TIMEOUT_CONFIGURATION.md)** - Настройка таймаутов
+- **[SLOW_QUERY_ANALYSIS.md](SLOW_QUERY_ANALYSIS.md)** - Анализ и оптимизация медленных запросов
 
 ---
 
