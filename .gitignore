@@ -98,6 +98,9 @@ celerybeat.pid
 *.pid
 !celerybeat.pid
 
+# Cursor IDE files
+.cursor/
+
 # SageMath parsed files
 *.sage.py
 
